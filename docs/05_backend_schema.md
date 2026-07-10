@@ -1,0 +1,120 @@
+# 05 · Backend Schema
+
+Database: Supabase Postgres. All tables live in the `public` schema unless
+noted. Every table has RLS enabled (see 07 · Security Plan for policies) —
+schema and security are designed together, not bolted on after.
+
+## Core tables
+
+### `venues`
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| name | text | |
+| city | text | |
+| capacity | int | |
+| created_at | timestamptz | default now() |
+
+### `zones`
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| venue_id | uuid, fk → venues.id | |
+| label | text | e.g. "Zone C — East Concourse" |
+| capacity | int | |
+
+### `zone_telemetry` (append-only, simulated sensor feed)
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint, pk, identity | |
+| zone_id | uuid, fk → zones.id | |
+| occupancy | int | |
+| recorded_at | timestamptz | default now(), indexed |
+
+### `gates`
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| venue_id | uuid, fk → venues.id | |
+| label | text | |
+
+### `gate_scans` (append-only)
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint, pk, identity | |
+| gate_id | uuid, fk → gates.id | |
+| scan_count | int | scans in the last interval, not cumulative |
+| recorded_at | timestamptz | indexed |
+
+### `sustainability_metrics` (append-only)
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint, pk, identity | |
+| venue_id | uuid, fk → venues.id | |
+| metric_type | text | `energy_kwh` \| `water_l` \| `waste_diverted_pct` |
+| value | numeric | |
+| target | numeric | |
+| recorded_at | timestamptz | indexed |
+
+### `alerts`
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| venue_id | uuid, fk → venues.id | |
+| zone_id | uuid, fk → zones.id, nullable | |
+| severity | text | `warn` \| `critical` |
+| message | text | human-readable description |
+| ai_recommendation | text | AI-drafted action, generated at alert creation |
+| status | text | `open` \| `handled` |
+| created_at | timestamptz | |
+| handled_by | uuid, fk → auth.users.id, nullable | |
+| handled_at | timestamptz, nullable | |
+
+### `volunteers`
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| venue_id | uuid, fk → venues.id | |
+| zone_id | uuid, fk → zones.id, nullable | current assignment |
+| name | text | |
+| status | text | `assigned` \| `available` |
+
+### `copilot_queries` (short-lived, session-scoped log)
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, pk | |
+| user_id | uuid, fk → auth.users.id | |
+| question | text | |
+| grounded_data_summary | text | what data was injected, for auditability |
+| answer | text | |
+| created_at | timestamptz | |
+
+> **Retention note:** `copilot_queries` is purged on a schedule (e.g.
+> nightly job deletes rows older than 24h) — this keeps the DB small and
+> limits how long user-submitted text is retained, relevant to both the
+> repo-size constraint's spirit and general data-minimization practice.
+
+## User roles (via `auth.users.raw_user_meta_data`)
+
+```json
+{ "role": "admin" | "ops_manager" | "sustainability_lead" | "volunteer_coordinator" }
+```
+
+Role is set at account creation (admin-provisioned for the demo — no public
+self-signup, since this is an internal organizer tool).
+
+## Indexing notes
+
+- All `recorded_at` / `created_at` columns on append-only tables are
+  indexed — dashboards always query "last N minutes," so this keeps reads
+  fast without needing a time-series DB.
+- Consider a nightly job to roll up `zone_telemetry` older than 24h into
+  hourly aggregates and drop raw rows, if the simulator runs for an
+  extended demo period — keeps storage flat.
+
+## Migrations
+
+Kept as numbered SQL files in `/supabase/migrations/`, applied via the
+Supabase CLI (`supabase db push`). Never hand-edit schema directly in the
+dashboard for anything you want reproducible — migrations are the source
+of truth and get committed to git (they're small text files, no bloat risk).
