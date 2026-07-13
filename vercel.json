@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/simulate-tick",
+            "schedule": "* * * * *"
+        }
+    ]
+}
