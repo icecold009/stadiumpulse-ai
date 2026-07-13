@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 type Role =
     | "admin"
@@ -35,7 +39,21 @@ const roleLabels: Record<Role, string> = {
 };
 
 export default function RoleNav({ role }: { role: Role }) {
-    const visibleItems = role === "admin" ? navItems : navItems.filter((item) => item.role === role);
+    const router = useRouter();
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const visibleItems =
+        role === "admin"
+            ? navItems
+            : navItems.filter((item) => item.role === role);
+
+    async function handleSignOut() {
+        await supabase.auth.signOut();
+        router.push("/login");
+    }
 
     return (
         <aside className="flex h-full flex-col border-r border-[#26303a] bg-[#0b0f14]/95 px-5 py-6 backdrop-blur-sm">
@@ -71,6 +89,13 @@ export default function RoleNav({ role }: { role: Role }) {
                     Metrics, alerts, and AI guidance stay visible while you move between dashboard views.
                 </p>
             </div>
+
+            <button
+                onClick={handleSignOut}
+                className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-[#26303a] bg-transparent text-sm font-medium text-[#8b96a3] transition hover:border-[#3dd6c4] hover:text-[#3dd6c4]"
+            >
+                Sign out
+            </button>
         </aside>
     );
 }
