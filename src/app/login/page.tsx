@@ -1,10 +1,56 @@
 "use client";
 
-export default function LoginPage() {
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
-        // TODO: Wire up Supabase Auth sign-in here in Phase 1.
+type Role = "admin" | "ops_manager" | "sustainability_lead" | "volunteer_coordinator";
+
+const roleRedirects: Record<Role, string> = {
+    admin: "/overview",
+    ops_manager: "/ops",
+    sustainability_lead: "/sustainability",
+    volunteer_coordinator: "/volunteers",
+};
+
+export default function LoginPage() {
+    const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setError(null);
+        setLoading(true);
+
+        const formData = new FormData(event.currentTarget);
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (authError) {
+            setError(authError.message);
+            setLoading(false);
+            return;
+        }
+
+        const role = data.user?.user_metadata?.role as string | undefined;
+        let destination = "/overview";
+        if (role === "admin" || role === "ops_manager") destination = "/ops";
+        else if (role === "sustainability_lead") destination = "/sustainability";
+        else if (role === "volunteer_coordinator") destination = "/volunteers";
+
+        router.refresh();
+        router.replace(destination);
     }
 
     return (
@@ -47,11 +93,18 @@ export default function LoginPage() {
                         />
                     </label>
 
+                    {error && (
+                        <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                            {error}
+                        </p>
+                    )}
+
                     <button
                         type="submit"
-                        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#3dd6c4] px-4 text-sm font-semibold text-[#0b0f14] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#3dd6c4] focus:ring-offset-2 focus:ring-offset-[#141a21]"
+                        disabled={loading}
+                        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#3dd6c4] px-4 text-sm font-semibold text-[#0b0f14] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#3dd6c4] focus:ring-offset-2 focus:ring-offset-[#141a21] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Sign in
+                        {loading ? "Signing in…" : "Sign in"}
                     </button>
                 </form>
             </section>
