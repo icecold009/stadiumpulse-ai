@@ -13,21 +13,29 @@ type Role =
 type NavItem = {
     href: string;
     label: string;
-    role: Role;
+    roles: Role[];
 };
 
 const navItems: NavItem[] = [
-    { href: "/overview", label: "Overview", role: "admin" },
-    { href: "/ops", label: "Ops", role: "ops_manager" },
+    {
+        href: "/overview",
+        label: "Overview",
+        roles: ["admin", "ops_manager", "sustainability_lead", "volunteer_coordinator"],
+    },
+    {
+        href: "/ops",
+        label: "Ops",
+        roles: ["admin", "ops_manager"],
+    },
     {
         href: "/sustainability",
         label: "Sustainability",
-        role: "sustainability_lead",
+        roles: ["admin", "sustainability_lead"],
     },
     {
         href: "/volunteers",
         label: "Volunteers",
-        role: "volunteer_coordinator",
+        roles: ["admin", "volunteer_coordinator"],
     },
 ];
 
@@ -45,10 +53,7 @@ export default function RoleNav({ role }: { role: Role }) {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const visibleItems =
-        role === "admin"
-            ? navItems
-            : navItems.filter((item) => item.role === role);
+    const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
     async function handleSignOut() {
         await supabase.auth.signOut();
