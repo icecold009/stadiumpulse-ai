@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
     };
 
     for (const [route, allowedRoles] of Object.entries(roleGuards)) {
-        if (pathname.startsWith(route) && role && !allowedRoles.includes(role)) {
+        if (pathname.startsWith(route) && !(role && allowedRoles.includes(role))) {
             return NextResponse.redirect(new URL("/overview", request.url));
         }
     }
