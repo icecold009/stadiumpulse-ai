@@ -57,11 +57,11 @@ export default function SustainabilityTrend({
             <h3 className="mb-3 text-base font-semibold">{title}</h3>
 
             {data.length === 0 ? (
-                <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+                <div className="flex h-70 items-center justify-center text-sm text-muted-foreground">
                     No sustainability trend data available.
                 </div>
             ) : (
-                <div className="h-[280px] w-full">
+                <div className="h-70 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
