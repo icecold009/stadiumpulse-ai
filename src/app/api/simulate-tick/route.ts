@@ -1,15 +1,28 @@
 // src/app/api/simulate-tick/route.ts
 import { NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import type {
-    ZoneTelemetryInsert,
-    GateScanInsert,
-    SustainabilityMetricInsert,
-    SustainabilityMetricType,
-    ZoneRow,
-    GateRow,
-    VenueRow,
-} from "@/types/database";
+import type { Database } from "@/types/database";
+
+type ZoneTelemetryInsert =
+    Database["public"]["Tables"]["zone_telemetry"]["Insert"];
+
+type GateScanInsert =
+    Database["public"]["Tables"]["gate_scans"]["Insert"];
+
+type SustainabilityMetricInsert =
+    Database["public"]["Tables"]["sustainability_metrics"]["Insert"];
+
+type SustainabilityMetricType =
+    Database["public"]["Tables"]["sustainability_metrics"]["Row"]["metric_type"];
+
+type ZoneRow =
+    Database["public"]["Tables"]["zones"]["Row"];
+
+type GateRow =
+    Database["public"]["Tables"]["gates"]["Row"];
+
+type VenueRow =
+    Database["public"]["Tables"]["venues"]["Row"];
 
 // ─── Match-phase simulation ────────────────────────────────────────────────
 function matchPhase(): { phaseName: string; occupancyFactor: number } {
