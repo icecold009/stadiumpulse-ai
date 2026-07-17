@@ -75,7 +75,7 @@ genuine data feed later without touching AI or UI code.
 - Copilot response starts streaming < 3s after submit.
 - All secrets server-side only — enforced by convention: nothing under
   `src/app/**/page.tsx` or any `"use client"` component ever references
-  `ANTHROPIC_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY`; only `NEXT_PUBLIC_`-
+   `FIREWORKS_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY`; only `NEXT_PUBLIC_`-
   prefixed values are allowed in client code, and neither secret carries
   that prefix.
 - Accessibility: color-blind-safe heatmap palette, keyboard-navigable
