@@ -2,49 +2,206 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, MessageSquareText, SendHorizonal } from "lucide-react";
-
 import ChatBubble from "@/components/copilot/chat-bubble";
 
 type CopilotMessage = {
     id: string;
     role: "user" | "assistant";
     content: string;
+    groundedSummary?: string;
 };
 
 const initialMessages: CopilotMessage[] = [
     {
         id: "welcome",
         role: "assistant",
-        content: "Ask about live venue data, incidents, sustainability trends, or staffing recommendations.",
+        content:
+            "Ask about live venue data, incidents, sustainability trends, or staffing recommendations.",
     },
 ];
+
+type StreamEvent =
+    | {
+        type: "meta";
+        groundedSummary?: string;
+        dataWindowMinutes?: number;
+        zonesIncluded?: string[];
+        alertCount?: number;
+    }
+    | {
+        type: "delta";
+        text: string;
+    }
+    | {
+        type: "done";
+        groundedSummary?: string;
+    }
+    | {
+        type: "error";
+        error: string;
+    };
 
 export default function CopilotPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const [draft, setDraft] = useState("");
     const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const trimmedDraft = useMemo(() => draft.slice(0, 500), [draft]);
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         const nextDraft = trimmedDraft.trim();
-        if (!nextDraft) {
-            return;
-        }
+        if (!nextDraft || isSubmitting) return;
+
+        const userMessage: CopilotMessage = {
+            id: crypto.randomUUID(),
+            role: "user",
+            content: nextDraft,
+        };
+
+        const assistantId = crypto.randomUUID();
 
         setMessages((currentMessages) => [
             ...currentMessages,
+            userMessage,
             {
-                id: crypto.randomUUID(),
-                role: "user",
-                content: nextDraft,
+                id: assistantId,
+                role: "assistant",
+                content: "",
             },
         ]);
         setDraft("");
+        setIsSubmitting(true);
 
-        // TODO: Call /api/copilot with the question and grounded data slice, then append the streamed assistant response.
+        try {
+            const response = await fetch("/api/copilot", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ question: nextDraft }),
+            });
+
+            if (!response.ok || !response.body) {
+                let errorMessage = "Failed to contact copilot.";
+                try {
+                    const data = await response.json();
+                    errorMessage = data.error ?? errorMessage;
+                } catch { }
+                throw new Error(errorMessage);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            let buffer = "";
+            let assistantText = "";
+            let groundedSummary = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split("\n\n");
+                buffer = parts.pop() ?? "";
+
+                for (const part of parts) {
+                    const line = part
+                        .split("\n")
+                        .find((entry) => entry.startsWith("data: "));
+                    if (!line) continue;
+
+                    const payload = line.slice(6).trim();
+                    if (!payload || payload === "[DONE]") continue;
+
+                    const parsed = JSON.parse(payload) as StreamEvent;
+
+                    if (parsed.type === "meta") {
+                        groundedSummary = parsed.groundedSummary ?? groundedSummary;
+                        setMessages((currentMessages) =>
+                            currentMessages.map((message) =>
+                                message.id === assistantId
+                                    ? {
+                                        ...message,
+                                        groundedSummary,
+                                    }
+                                    : message
+                            )
+                        );
+                        continue;
+                    }
+
+                    if (parsed.type === "delta") {
+                        assistantText += parsed.text;
+                        setMessages((currentMessages) =>
+                            currentMessages.map((message) =>
+                                message.id === assistantId
+                                    ? {
+                                        ...message,
+                                        content: assistantText,
+                                        groundedSummary,
+                                    }
+                                    : message
+                            )
+                        );
+                        continue;
+                    }
+
+                    if (parsed.type === "done") {
+                        groundedSummary = parsed.groundedSummary ?? groundedSummary;
+                        setMessages((currentMessages) =>
+                            currentMessages.map((message) =>
+                                message.id === assistantId
+                                    ? {
+                                        ...message,
+                                        content: assistantText.trim(),
+                                        groundedSummary,
+                                    }
+                                    : message
+                            )
+                        );
+                        continue;
+                    }
+
+                    if (parsed.type === "error") {
+                        throw new Error(parsed.error);
+                    }
+                }
+            }
+
+            setMessages((currentMessages) =>
+                currentMessages.map((message) =>
+                    message.id === assistantId
+                        ? {
+                            ...message,
+                            content:
+                                message.content.trim() ||
+                                "I could not generate a response from the available data.",
+                            groundedSummary,
+                        }
+                        : message
+                )
+            );
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "Unexpected error.";
+
+            setMessages((currentMessages) =>
+                currentMessages.map((entry) =>
+                    entry.id === assistantId
+                        ? {
+                            ...entry,
+                            content: `Sorry — ${message}`,
+                        }
+                        : entry
+                )
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -93,6 +250,7 @@ export default function CopilotPanel() {
                                 key={message.id}
                                 role={message.role}
                                 content={message.content}
+                                groundedSummary={message.groundedSummary}
                             />
                         ))}
                     </div>
@@ -108,6 +266,7 @@ export default function CopilotPanel() {
                             maxLength={500}
                             placeholder="Ask about alerts, staffing, or sustainability trends..."
                             className="min-h-26 w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/25"
+                            disabled={isSubmitting}
                         />
                     </label>
 
@@ -115,10 +274,11 @@ export default function CopilotPanel() {
                         <span>{trimmedDraft.length}/500 characters</span>
                         <button
                             type="submit"
-                            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface-raised"
+                            disabled={isSubmitting || !trimmedDraft.trim()}
+                            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface-raised"
                         >
                             <SendHorizonal className="h-4 w-4" />
-                            Send
+                            {isSubmitting ? "Sending..." : "Send"}
                         </button>
                     </div>
                 </form>
