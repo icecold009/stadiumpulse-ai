@@ -1,10 +1,21 @@
-// src/app/(dashboard)/layout.tsx
 import { redirect } from "next/navigation";
 import RoleNav from "@/components/layout/role-nav";
 import { DashboardPoller } from "@/components/dashboard-poller";
+import CopilotPanel from "@/components/copilot/copilot-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type Role = "admin" | "ops_manager" | "sustainability_lead" | "volunteer_coordinator";
+type Role =
+    | "admin"
+    | "ops_manager"
+    | "sustainability_lead"
+    | "volunteer_coordinator";
+
+const VALID_ROLES: Role[] = [
+    "admin",
+    "ops_manager",
+    "sustainability_lead",
+    "volunteer_coordinator",
+];
 
 export default async function DashboardLayout({
     children,
@@ -16,7 +27,10 @@ export default async function DashboardLayout({
 
     if (!user) redirect("/login");
 
-    const role = (user.user_metadata?.role ?? "admin") as Role;
+    const rawRole = user.user_metadata?.role;
+    const role: Role = VALID_ROLES.includes(rawRole as Role)
+        ? (rawRole as Role)
+        : "volunteer_coordinator";
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(61,214,196,0.1),transparent_30%),linear-gradient(180deg,#0b0f14_0%,#091015_100%)] text-[#edeff2]">
@@ -29,6 +43,8 @@ export default async function DashboardLayout({
                     </div>
                 </main>
             </div>
+
+            <CopilotPanel />
         </div>
     );
 }
