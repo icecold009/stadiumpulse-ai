@@ -155,22 +155,38 @@ async function runTick() {
     };
 }
 
-// POST — for manual dashboard trigger / local dev
-export async function POST() {
-    const result = await runTick();
+function jsonResult(result: Awaited<ReturnType<typeof runTick>>) {
     if (!result.ok) {
         const status = result.error === "no_seed_data" ? 422 : 500;
         return NextResponse.json(result, { status });
     }
+
     return NextResponse.json(result);
+}
+
+async function handleTick() {
+    try {
+        const result = await runTick();
+        return jsonResult(result);
+    } catch (error) {
+        console.error("simulate-tick: unexpected error", error);
+        return NextResponse.json(
+            {
+                ok: false,
+                error: "unexpected_error",
+                details: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+        );
+    }
+}
+
+// POST — for manual dashboard trigger / local dev
+export async function POST() {
+    return handleTick();
 }
 
 // GET — for Vercel Cron (cron jobs call GET by default)
 export async function GET() {
-    const result = await runTick();
-    if (!result.ok) {
-        const status = result.error === "no_seed_data" ? 422 : 500;
-        return NextResponse.json(result, { status });
-    }
-    return NextResponse.json(result);
+    return handleTick();
 }
