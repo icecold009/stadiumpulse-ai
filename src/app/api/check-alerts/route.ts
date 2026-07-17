@@ -1,8 +1,7 @@
-// src/app/api/check-alerts/route.ts
 import "server-only";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import { getAnthropicClient, ANTHROPIC_HAIKU_MODEL } from "@/lib/ai/client";
+import { getAnthropicClient, COPILOT_MODEL } from "@/lib/ai/client";
 import type { Database } from "@/types/database";
 
 type AlertInsert = Database["public"]["Tables"]["alerts"]["Insert"];
@@ -17,10 +16,6 @@ type LatestTelemetry = {
     recorded_at: string;
 };
 
-type InsertedAlertId = {
-    id: string;
-};
-
 export async function POST() {
     const db = createSupabaseServiceRoleClient();
 
@@ -28,14 +23,14 @@ export async function POST() {
         .from("zones")
         .select("id, venue_id, label, capacity");
 
-    const zones = (zonesQuery.data ?? []) as ZoneRow[];
-
     if (zonesQuery.error) {
         return NextResponse.json(
             { error: zonesQuery.error.message },
             { status: 500 }
         );
     }
+
+    const zones = (zonesQuery.data ?? []) as ZoneRow[];
 
     const openAlertsQuery = await db
         .from("alerts")
@@ -60,6 +55,7 @@ export async function POST() {
 
     for (const zone of zones) {
         if (openAlertZoneIds.has(zone.id)) continue;
+        if (!zone.capacity || zone.capacity <= 0) continue;
 
         const telemetryQuery = await db
             .from("zone_telemetry")
@@ -69,12 +65,9 @@ export async function POST() {
             .limit(1)
             .maybeSingle();
 
-        if (telemetryQuery.error) {
-            continue;
-        }
+        if (telemetryQuery.error) continue;
 
         const telemetry = telemetryQuery.data as LatestTelemetry | null;
-
         if (!telemetry) continue;
 
         const pct = telemetry.occupancy / zone.capacity;
@@ -95,7 +88,7 @@ export async function POST() {
 
         try {
             const response = await ai.messages.create({
-                model: ANTHROPIC_HAIKU_MODEL,
+                model: COPILOT_MODEL,
                 max_tokens: 120,
                 system:
                     "You are a stadium operations AI. Reply with one short actionable recommendation, maximum 2 sentences, specific and operational.",
@@ -112,7 +105,7 @@ export async function POST() {
                 ai_recommendation = firstBlock.text.trim();
             }
         } catch {
-            // fall back to default recommendation
+            // fallback stays in place
         }
 
         const newAlert: AlertInsert = {
@@ -124,14 +117,13 @@ export async function POST() {
             status: "open",
         };
 
-        const insertQuery = await (db.from("alerts" as any) as any)
-            .insert([newAlert])
+        const insertQuery = await db
+            .from("alerts")
+            .insert(newAlert)
             .select("id")
             .single();
 
-        if (insertQuery.error) {
-            continue;
-        }
+        if (insertQuery?.error) continue;
 
         const inserted = insertQuery.data as { id: string } | null;
         if (inserted?.id) created.push(inserted.id);
