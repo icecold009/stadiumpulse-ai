@@ -4,6 +4,8 @@ import TrendLine from "@/components/dashboard/trend-line";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
+export const dynamic = "force-dynamic";
+
 type ZoneRow = Database["public"]["Tables"]["zones"]["Row"];
 type ZoneTelemetryRow = Database["public"]["Tables"]["zone_telemetry"]["Row"];
 type AlertRow = Database["public"]["Tables"]["alerts"]["Row"];
@@ -78,6 +80,14 @@ export default async function OpsPage() {
             occupancy: row.occupancy ?? 0,
             recorded_at: row.recorded_at as string,
         }));
+
+    console.log({
+        zones: zones.length,
+        telemetry: telemetry.length,
+        alerts: alerts.length,
+        totalOccupancy,
+        totalCapacity,
+    });
 
     return (
         <section className="space-y-6">
