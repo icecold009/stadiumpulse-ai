@@ -5,69 +5,27 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAnthropicClient, COPILOT_MODEL } from "@/lib/ai/client";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
-import { isRole } from "@/lib/auth/roles";
+import { copilotDataAccessForRole, isRole } from "@/lib/auth/roles";
+import { parseCopilotQuestion } from "@/lib/api/contracts";
+import {
+    buildCopilotContext,
+    type RawAlert,
+    type RawSustainabilityMetric,
+    type RawTelemetry,
+    type RawVenueAccess,
+    type RawVolunteer,
+    type RawZone,
+} from "@/lib/ai/copilot-context";
 import {
     COPILOT_SYSTEM_PROMPT,
     buildCopilotUserContent,
     buildDataBlock,
     parseGroundedResponse,
-    type DataSlice,
 } from "@/lib/ai/copilot-prompt";
 
 export const runtime = "nodejs";
 
 const WINDOW_MINUTES = 15;
-
-type CopilotRequestBody = {
-    question?: unknown;
-};
-
-type RawTelemetry = {
-    zone_id: string;
-    occupancy: number;
-    recorded_at: string;
-};
-
-type RawZone = {
-    id: string;
-    label: string;
-    capacity: number;
-    venues: { name: string } | null;
-};
-
-type RawAlert = {
-    id: string;
-    severity: "warn" | "critical";
-    message: string;
-    ai_recommendation: string | null;
-    status: "open" | "handled";
-    created_at: string;
-    zones: {
-        label: string;
-        venues: { name: string } | null;
-    } | null;
-    venues: { name: string } | null;
-};
-
-type RawSustainabilityMetric = {
-    metric_type: string;
-    value: number;
-    target: number;
-    recorded_at: string;
-    venues: { name: string } | null;
-};
-
-type RawVolunteer = {
-    name: string;
-    status: string;
-    venues: { name: string } | null;
-    zones: { label: string } | null;
-};
-
-type RawVenueAccess = {
-    venue_id: string;
-    venues: { name: string } | null;
-};
 
 function getCopilotErrorMessage(err: unknown): string {
     if (err && typeof err === "object") {
@@ -89,36 +47,19 @@ function getCopilotErrorMessage(err: unknown): string {
 }
 
 export async function POST(request: Request) {
-    let body: CopilotRequestBody;
+    let body: unknown;
 
     try {
-        body = (await request.json()) as CopilotRequestBody;
+        body = await request.json();
     } catch {
         return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
-    if (typeof body.question !== "string") {
-        return NextResponse.json(
-            { error: "question is required and must be a string." },
-            { status: 400 }
-        );
+    const parsedQuestion = parseCopilotQuestion(body);
+    if (!parsedQuestion.ok) {
+        return NextResponse.json({ error: parsedQuestion.error }, { status: 400 });
     }
-
-    const question = body.question.trim();
-
-    if (!question) {
-        return NextResponse.json(
-            { error: "question must not be empty." },
-            { status: 400 }
-        );
-    }
-
-    if (question.length > 500) {
-        return NextResponse.json(
-            { error: "question must be 500 characters or fewer." },
-            { status: 400 }
-        );
-    }
+    const question = parsedQuestion.value;
 
     const supabase = await createSupabaseServerClient();
     const {
@@ -248,18 +189,9 @@ export async function POST(request: Request) {
 
     const zones = (zoneData ?? []) as unknown as RawZone[];
     const zoneIds = zones.map((zone) => zone.id);
-    const zonesById = new Map(zones.map((zone) => [zone.id, zone]));
-    const includeTelemetry =
-        role === "admin" ||
-        role === "ops_manager" ||
-        role === "volunteer_coordinator";
-    const includeAlerts = role === "admin" || role === "ops_manager";
-    const includeSustainability =
-        role === "admin" || role === "sustainability_lead";
-    const includeVolunteers =
-        role === "admin" || role === "volunteer_coordinator";
+    const dataAccess = copilotDataAccessForRole(role);
 
-    const telemetryQuery = includeTelemetry && zoneIds.length > 0
+    const telemetryQuery = dataAccess.telemetry && zoneIds.length > 0
         ? supabase
               .from("zone_telemetry")
               .select("zone_id, occupancy, recorded_at")
@@ -268,7 +200,7 @@ export async function POST(request: Request) {
               .order("recorded_at", { ascending: false })
               .limit(50)
         : Promise.resolve({ data: [], error: null });
-    const alertsQuery = includeAlerts
+    const alertsQuery = dataAccess.alerts
         ? supabase
               .from("alerts")
               .select("id, severity, message, ai_recommendation, status, created_at, zones(label, venues(name)), venues(name)")
@@ -277,7 +209,7 @@ export async function POST(request: Request) {
               .order("created_at", { ascending: false })
               .limit(20)
         : Promise.resolve({ data: [], error: null });
-    const sustainabilityQuery = includeSustainability
+    const sustainabilityQuery = dataAccess.sustainability
         ? supabase
               .from("sustainability_metrics")
               .select("metric_type, value, target, recorded_at, venues(name)")
@@ -286,7 +218,7 @@ export async function POST(request: Request) {
               .order("recorded_at", { ascending: false })
               .limit(50)
         : Promise.resolve({ data: [], error: null });
-    const volunteersQuery = includeVolunteers
+    const volunteersQuery = dataAccess.volunteers
         ? supabase
               .from("volunteers")
               .select("name, status, venues(name), zones(label)")
@@ -334,60 +266,19 @@ export async function POST(request: Request) {
         );
     }
 
-    const telemetry = ((telemetryResult.data ?? []) as unknown as RawTelemetry[]).map((row) => ({
-        zone_id: row.zone_id,
-        zone_label: zonesById.get(row.zone_id)?.label ?? "Unknown zone",
-        venue_name: zonesById.get(row.zone_id)?.venues?.name ?? "Unknown venue",
-        occupancy: row.occupancy,
-        zone_capacity: zonesById.get(row.zone_id)?.capacity ?? 0,
-        recorded_at: row.recorded_at,
-    }));
-
-    const alerts = ((alertsResult.data ?? []) as unknown as RawAlert[]).map((row) => ({
-        id: row.id,
-        zone_label: row.zones?.label ?? "Venue-wide",
-        venue_name: row.zones?.venues?.name ?? row.venues?.name ?? "Unknown venue",
-        severity: row.severity,
-        message: row.message,
-        ai_recommendation: row.ai_recommendation ?? "",
-        created_at: row.created_at,
-    }));
-
-    const sustainability = ((sustainabilityResult.data ?? []) as unknown as RawSustainabilityMetric[]).map((row) => ({
-        venue_name: row.venues?.name ?? "Unknown venue",
-        metric_type: row.metric_type,
-        value: row.value,
-        target: row.target,
-        recorded_at: row.recorded_at,
-    }));
-
-    const volunteers = ((volunteersResult.data ?? []) as unknown as RawVolunteer[]).map((row) => ({
-        venue_name: row.venues?.name ?? "Unknown venue",
-        zone_label: row.zones?.label ?? "Unassigned",
-        name: row.name,
-        status: row.status,
-    }));
-
-    const slice: DataSlice = {
-        requesterRole: role,
+    const { slice, groundedSummary } = buildCopilotContext({
+        role,
+        venueIds,
         venueNames,
-        telemetry,
-        alerts,
-        sustainability,
-        volunteers,
+        zones,
+        telemetryRows: (telemetryResult.data ?? []) as unknown as RawTelemetry[],
+        alertRows: (alertsResult.data ?? []) as unknown as RawAlert[],
+        sustainabilityRows: (sustainabilityResult.data ?? []) as unknown as RawSustainabilityMetric[],
+        volunteerRows: (volunteersResult.data ?? []) as unknown as RawVolunteer[],
         windowMinutes: WINDOW_MINUTES,
-        fetchedAt: new Date().toISOString(),
-    };
-
+    });
     const dataBlock = buildDataBlock(slice);
-    const groundedSummary = [
-        `${venueIds.length} authorized venues`,
-        `${telemetry.length} telemetry rows`,
-        `${alerts.length} open alerts`,
-        `${sustainability.length} sustainability rows`,
-        `${volunteers.length} volunteer rows`,
-        `window ${WINDOW_MINUTES} min`,
-    ].join(" | ");
+    const { telemetry, alerts } = slice;
 
     const ai = getAnthropicClient();
 
@@ -395,7 +286,8 @@ export async function POST(request: Request) {
     try {
         stream = await ai.messages.create({
             model: COPILOT_MODEL,
-            max_tokens: 512,
+            max_tokens: 768,
+            thinking: { type: "disabled" },
             system: COPILOT_SYSTEM_PROMPT,
             messages: [
                 {
@@ -452,6 +344,10 @@ export async function POST(request: Request) {
                         );
                     }
 
+                }
+
+                if (!rawAnswer.trim()) {
+                    throw new Error("The AI service returned no answer. Try again shortly.");
                 }
 
                 const { answer, groundedSummary: parsedGroundedSummary } =

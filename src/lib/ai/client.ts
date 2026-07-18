@@ -1,10 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-
-export const COPILOT_MODEL = "accounts/fireworks/models/kimi-k2p6";
-export const RECOMMENDATION_MODEL =
-    process.env.FIREWORKS_RECOMMENDATION_MODEL ??
-    "accounts/fireworks/models/deepseek-v4-pro";
+export { COPILOT_MODEL, RECOMMENDATION_MODEL } from "@/lib/ai/config";
 
 let anthropicClient: Anthropic | null = null;
 

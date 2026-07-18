@@ -2,12 +2,10 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseVolunteerZoneId, UUID_PATTERN } from "@/lib/api/contracts";
 import type { Database } from "@/types/database";
 
 type VolunteerUpdate = Database["public"]["Tables"]["volunteers"]["Update"];
-
-const UUID_PATTERN =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function PATCH(
     request: NextRequest,
@@ -18,18 +16,20 @@ export async function PATCH(
         return NextResponse.json({ error: "Invalid volunteer id." }, { status: 400 });
     }
 
-    let zoneId: unknown;
+    let body: unknown;
     try {
-        ({ zoneId } = (await request.json()) as { zoneId?: unknown });
+        body = await request.json();
     } catch {
         return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
-    if (zoneId !== null && (typeof zoneId !== "string" || !UUID_PATTERN.test(zoneId))) {
+    const parsedZoneId = parseVolunteerZoneId(body);
+    if (!parsedZoneId.ok) {
         return NextResponse.json(
-            { error: "zoneId must be a valid UUID or null." },
+            { error: parsedZoneId.error },
             { status: 400 }
         );
     }
+    const zoneId = parsedZoneId.value;
 
     const supabase = await createSupabaseServerClient();
     const {

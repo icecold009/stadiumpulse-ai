@@ -43,7 +43,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Real email/password login | Complete | Login calls `signInWithPassword` and routes after success |
-| Session and role route guard | Complete in code, verification remains | Proxy and dashboard layout verify the session, query protected `user_roles`, and redirect by the documented matrix |
+| Session and role route guard | Complete | The deployed four-role page matrix passed on 2026-07-18: allowed pages returned 200 and forbidden pages redirected to each role's trusted default |
 | Pass real role to `RoleNav` | Complete | Dashboard layout derives the role from the authenticated user and passes it to role-filtered navigation |
 | Create four demo users | Complete | Remote Auth audit found four users on 2026-07-18 |
 | Configure demo-user roles | Complete | All four Auth users have protected `user_roles` rows; no remote users were left unassigned |
@@ -63,7 +63,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Replace four placeholder dashboards | Complete for Phase 3 | Overview, Ops, Sustainability, and Volunteer views read real data; gate throughput is implemented and the unsupported advisor placeholder is removed until Phase 6 |
 | Wire Realtime dashboard updates | Complete in code, verification remains | Ops gauges/trends/heatmap/gates, sustainability, volunteers, overview, and alerts now respond to Realtime changes; hosted publication and tick behavior require P0-13 verification |
-| Confirm role-appropriate dashboard UX | Complete in code, verification remains | Navigation, login destinations, proxy guards, and trusted role lookup follow the documented matrix; four-role manual verification remains |
+| Confirm role-appropriate dashboard UX | Complete | Passwordless sessions for all four deployed roles reached only their documented pages; cross-role pages redirected to the trusted default |
 
 ### Phase 4 — Alerts
 
@@ -79,7 +79,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Fetch context, call model, and stream | Complete in code, external verification remains | The route resolves the trusted role and applied explicit venue access before querying. Ops receives crowd/alert context, Sustainability receives metric context, Volunteer receives occupancy/assignment context, and Admin receives the combined authorized slice. DATA and QUESTION are separate content blocks; verify each role against the deployed Copilot route |
-| Apply prompt-injection defenses | Partial | Fixed system instructions, input cap, separate DATA/question content blocks, text-only rendering, and stale/missing rules are in place. The committed suite is a static contract harness; it has not sent an adversarial question to the live model |
+| Apply prompt-injection defenses | Complete | Fixed instructions, input cap, DATA/question separation, and text-only rendering are covered statically; the configured live model blocked prompt extraction and handled missing/stale data on 2026-07-18 |
 | Connect `CopilotPanel` to API | Complete | Panel posts questions and consumes the SSE stream |
 | Show grounding indicator | Complete | Metadata and final grounding summary are rendered on assistant messages |
 | Log copilot exchanges | Complete in code, persistence verification remains | The post-stream service-role insert checks returned errors and logs failures without converting a completed answer into a client failure. Successful hosted persistence is not yet verified |
@@ -98,7 +98,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Rate-limit copilot and simulation APIs | Complete | Migration `0006` is applied; atomic exhaustion and route-level 429 behavior are verified, and all limits are consumed before paid or privileged work |
 | Top-level React error boundary | Complete | App-level and global boundaries provide safe retry states, state that no operational action occurred, and keep stack details out of the browser |
-| Adversarial prompt-injection test | Partial | `npm.cmd run eval:prompts` statically verifies normal/warning/critical/missing/stale data handling, prompt instructions, DATA/QUESTION separation, parsing, and fallback contracts. It does not call the live model with an adversarial question |
+| Adversarial prompt-injection test | Complete | Static contracts pass and `verify:prompt-injection-live` confirmed no protected prompt disclosure, preserved output structure, and safe missing/stale behavior against the configured live model |
 | Verify RLS on every live table | Complete for current schema | Applied migrations enable RLS on every documented table; live role reads, anonymous denial, cross-role write denial, authorized writes, and server-only limiter access were verified on 2026-07-18 |
 | Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
 | Confirm `.env*` ignored throughout history | Partial | No `.env*` file appears in tracked history, but the root commit did not yet contain the `.env*` ignore rule, so the stricter doc-07 wording "gitignored from the first commit" is not satisfied |
@@ -111,7 +111,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Accessibility pass | Partial | Skip navigation, simulated-context semantics, chart summaries/accessibility layers, Copilot dialog focus trap/Escape restoration, live regions, visible focus, and reduced motion are implemented. A recorded keyboard, screen-reader, contrast, and zoom audit still remains |
+| Accessibility pass | Partial | Deployed login scored Lighthouse Accessibility 100 and axe WCAG A/AA found 0 violations. Source inspection covers focus, dialog, charts, live regions, non-color context, and reduced motion; authenticated keyboard, screen-reader, contrast, and zoom checks remain |
 | Repository size check | Complete for current state | Prospective tracked files including the P0 work total about 583 KB and loose Git objects remain under 1 MB, comfortably below 10 MB; recheck immediately before submission |
 | Single-branch check | Complete for current state | Local and remote branch listing contains only `main` (plus `origin/HEAD` pointing to `origin/main`); recheck before submission |
 | Submission README | Complete | README documents prerequisites, safe variables, migrations, seeds, role provisioning, commands, architecture, recovery, deterministic demo steps, simulation disclosure, and LinkedIn submission scope |
@@ -145,15 +145,15 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P1-02 | done | Gate throughput chart | Ops aggregates timestamped scans into a live trend, identifies the busiest gate, and provides an accessible text equivalent |
 | P1-03 | in_progress | Volunteer reassignment | Authenticated API validation and accessible UI are implemented through the session client and existing RLS policy; verify Admin/Coordinator success and cross-role denial in the hosted UI |
 | P1-04 | done | Human feedback on AI recommendations | Migration `0008`, the authenticated API, and UI record Accept/Reject separately from Mark handled; all three transitions passed the live Ops RLS policy and the test alert was restored |
-| P1-05 | in_progress | Role-flow consistency | Code follows the documented role matrix and trusted table; complete the four-account manual route/API matrix before marking done |
-| P1-06 | in_progress | Copilot data relevance | Role-specific queries and explicit venue scoping are implemented and migration `0009` is applied; verify all four deployed Copilot roles, including fail-closed behavior for an unassigned non-admin, before marking done |
+| P1-05 | done | Role-flow consistency | Deployed passwordless sessions verified all four page matrices and alert API permissions on 2026-07-18; unauthorized pages redirected to the trusted role default |
+| P1-06 | in_progress | Copilot data relevance | Route and data-category policies are tested, venue scoping is applied, and the four-role page/API matrix passes. Deployed Copilot emitted no text; a local reasoning-disabled fix passed direct live-model checks and needs publish/retest |
 | P1-07 | ready | Copilot retention job | Query logs older than the documented retention window are removed by a protected scheduled job and the policy is documented |
 | P1-08 | done | Error and empty states | App/global error boundaries and affected dashboard/alert states provide safe retry, error, empty, and degraded messages without stack traces or fabricated data |
-| P1-09 | in_progress | Accessibility pass | Code-level skip link, focus management, dialog semantics, live regions, chart equivalents, non-color context, and reduced-motion support are implemented; manual keyboard, screen-reader, contrast, and zoom evidence remains |
+| P1-09 | in_progress | Accessibility pass | Lighthouse Accessibility 100 and axe WCAG A/AA 0 violations are recorded for login; manual keyboard, screen-reader, contrast, and zoom evidence on authenticated dashboards remains |
 | P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and publication migration cover Phase 3 dashboards; verify hosted writes and UI changes without refresh under P0-13 |
 | P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, and safe states are implemented; verify hosted insert/update behavior before marking done |
 | P1-12 | in_progress | Make copilot audit logging reliable | Returned insert errors and thrown logging exceptions are recorded server-side without breaking the completed user stream. Verify successful hosted persistence; retention remains tracked by P1-07 |
-| P1-13 | ready | Run live-model adversarial Copilot evaluation | Submit an injection attempt and stale/missing-data questions to the configured live model, record that it follows the fixed contract without revealing instructions or inventing facts, and keep the static CI harness labeled accurately |
+| P1-13 | done | Run live-model adversarial Copilot evaluation | `verify:prompt-injection-live` passed injection, missing-data, and stale-data scenarios against Kimi K2.6 on 2026-07-18 without revealing protected prompt text or inventing current facts |
 | P1-14 | in_progress | Sustainability intervention advisor | Role-scoped structured AI/fallback interventions, evidence, limitations, target semantics, Realtime refresh, and manual retry are implemented; verify Admin/Sustainability Lead hosted behavior before marking done |
 | P1-15 | in_progress | Passwordless judge role chooser | A disabled-by-default, rate-limited server route creates normal Supabase sessions for four fixed demo emails after verifying trusted roles; configure Vercel variables and verify all buttons before marking done |
 
@@ -170,8 +170,8 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 ## Current local verification
 
-On 2026-07-18, lint, TypeScript, three resource-advisor contract tests, the
-static prompt contract evaluation, and the production build all pass. The
+On 2026-07-18, lint, TypeScript, thirteen auth/API/Copilot/advisor contract tests,
+the static prompt contract evaluation, and the production build all pass. The
 non-mutating public smoke test also passes login-shell, protected-route, and
 protected-API checks against `stadiumpulse-ai-nine.vercel.app`. The build uses
 local font packages, makes no Google Fonts request, and no longer reports the
@@ -183,6 +183,7 @@ because `PULSEOPS_APP_URL` was not supplied to that privileged run.
 `npm.cmd audit --omit=dev` reports zero known
 vulnerabilities after a narrow PostCSS 8.5.10 override for the advisory in
 Next.js 16.2.10's transitive dependency.
+The concise evidence table is recorded in `docs/09_verification_report.md`.
 
 ## Prompt Wars submission work
 

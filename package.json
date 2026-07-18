@@ -15,7 +15,9 @@
         "verify:roles": "node scripts/verify-role-access.mjs",
         "verify:p0-hosted": "node scripts/verify-hosted-p0.mjs",
         "verify:alert-loop": "node scripts/verify-alert-loop.mjs",
-        "verify:public": "node scripts/verify-public-app.mjs"
+        "verify:public": "node scripts/verify-public-app.mjs",
+        "verify:submission-live": "node scripts/verify-live-submission.mjs",
+        "verify:prompt-injection-live": "node --experimental-strip-types scripts/verify-live-prompt-injection.mjs"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.110.0",

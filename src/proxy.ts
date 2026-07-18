@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { defaultRouteForRole, isRole, type Role } from "@/lib/auth/roles";
+import { canAccessPath, defaultRouteForRole, isRole } from "@/lib/auth/roles";
 
 export async function proxy(request: NextRequest) {
     const response = NextResponse.next({ request });
@@ -55,19 +55,10 @@ export async function proxy(request: NextRequest) {
         );
     }
 
-    const roleGuards: Record<string, Role[]> = {
-        "/ops": ["admin", "ops_manager"],
-        "/sustainability": ["admin", "sustainability_lead"],
-        "/volunteers": ["admin", "volunteer_coordinator"],
-        "/overview": ["admin"],
-    };
-
-    for (const [route, allowedRoles] of Object.entries(roleGuards)) {
-        if (pathname.startsWith(route) && !allowedRoles.includes(role)) {
-            return NextResponse.redirect(
-                new URL(defaultRouteForRole(role), request.url)
-            );
-        }
+    if (!canAccessPath(role, pathname)) {
+        return NextResponse.redirect(
+            new URL(defaultRouteForRole(role), request.url)
+        );
     }
 
     return response;

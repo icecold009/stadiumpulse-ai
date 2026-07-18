@@ -1,6 +1,7 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseAlertAction, UUID_PATTERN } from "@/lib/api/contracts";
 import type { Database } from "@/types/database";
 
 type AlertsUpdate = Database["public"]["Tables"]["alerts"]["Update"];
@@ -10,23 +11,25 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    if (!UUID_PATTERN.test(id)) {
         return NextResponse.json({ error: "Invalid alert id." }, { status: 400 });
     }
 
-    let action: unknown;
+    let body: unknown;
     try {
-        ({ action } = (await request.json()) as { action?: unknown });
+        body = await request.json();
     } catch {
         return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
-    if (!['accept', 'reject', 'handled'].includes(String(action))) {
+    const parsedAction = parseAlertAction(body);
+    if (!parsedAction.ok) {
         return NextResponse.json(
-            { error: "action must be accept, reject, or handled." },
+            { error: parsedAction.error },
             { status: 400 }
         );
     }
+    const action = parsedAction.value;
     const db = await createSupabaseServerClient();
 
     const {

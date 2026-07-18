@@ -12,6 +12,7 @@ Use this page to find the minimum context needed for a task.
 | `06_implementation_plan.md` | Build order, critical demo path, and Prompt Wars submission package | Planning implementation or demo work |
 | `07_security_plan.md` | RLS, secrets, authorization, prompt injection, rate limits, logging, and recovery | Changing any API, auth, AI, or database behavior |
 | `08_project_backlog.md` | Prioritized, status-tracked future work | Starting or completing any planned task |
+| `09_verification_report.md` | Concise CI, security, latency, accessibility, and live-role evidence | Reviewing submission readiness or judge-facing quality claims |
 
 ## Recommended reading paths
 
