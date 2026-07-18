@@ -1,16 +1,18 @@
-// src/middleware.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { defaultRouteForRole, isRole, type Role } from "@/lib/auth/roles";
 
 export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({ request });
+    const response = NextResponse.next({ request });
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                getAll() { return request.cookies.getAll(); },
+                getAll() {
+                    return request.cookies.getAll();
+                },
                 setAll(cookiesToSet) {
                     for (const { name, value, options } of cookiesToSet) {
                         request.cookies.set(name, value);
@@ -21,32 +23,50 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
     const { pathname } = request.nextUrl;
+    const isPublicAuthPage = pathname === "/login" || pathname === "/unauthorized";
 
-    // Not logged in → send to /login (except if already there)
-    if (!user && pathname !== "/login") {
+    if (!user && !isPublicAuthPage) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Already logged in → don't let them sit on /login
-    if (user && pathname === "/login") {
-        return NextResponse.redirect(new URL("/overview", request.url));
+    if (!user) return response;
+
+    const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (!isRole(roleRow?.role)) {
+        if (pathname !== "/unauthorized") {
+            return NextResponse.redirect(new URL("/unauthorized", request.url));
+        }
+        return response;
     }
 
-    const role = user?.user_metadata?.role as string | undefined;
+    const role = roleRow.role;
+    if (isPublicAuthPage) {
+        return NextResponse.redirect(
+            new URL(defaultRouteForRole(role), request.url)
+        );
+    }
 
-    // Role-based route protection
-    const roleGuards: Record<string, string[]> = {
+    const roleGuards: Record<string, Role[]> = {
         "/ops": ["admin", "ops_manager"],
         "/sustainability": ["admin", "sustainability_lead"],
         "/volunteers": ["admin", "volunteer_coordinator"],
-        "/overview": ["admin", "ops_manager", "sustainability_lead", "volunteer_coordinator"],
+        "/overview": ["admin"],
     };
 
     for (const [route, allowedRoles] of Object.entries(roleGuards)) {
-        if (pathname.startsWith(route) && !(role && allowedRoles.includes(role))) {
-            return NextResponse.redirect(new URL("/overview", request.url));
+        if (pathname.startsWith(route) && !allowedRoles.includes(role)) {
+            return NextResponse.redirect(
+                new URL(defaultRouteForRole(role), request.url)
+            );
         }
     }
 

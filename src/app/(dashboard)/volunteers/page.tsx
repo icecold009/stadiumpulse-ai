@@ -1,24 +1,19 @@
-import MetricGaugeGrid from "@/components/dashboard/metric-gauge-grid";
-import EmptyState from "@/components/ui/empty-state";
+import VolunteerDeploymentSummary from "@/components/dashboard/volunteer-deployment-summary";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
 type VolunteerRow = Database["public"]["Tables"]["volunteers"]["Row"];
-type ZoneTelemetryRow = Database["public"]["Tables"]["zone_telemetry"]["Row"];
+type ZoneRow = Database["public"]["Tables"]["zones"]["Row"];
 
 export default async function VolunteersPage() {
     const supabase = await createSupabaseServerClient();
 
-    const [volunteersRes, telemetryRes] = await Promise.all([
+    const [volunteersRes, zonesRes] = await Promise.all([
         supabase.from("volunteers").select("id, venue_id, zone_id, name, status"),
-        supabase
-            .from("zone_telemetry")
-            .select("zone_id, occupancy, recorded_at")
-            .order("recorded_at", { ascending: false })
-            .limit(5000),
+        supabase.from("zones").select("id, venue_id, label, capacity"),
     ]);
 
-    if (volunteersRes.error || telemetryRes.error) {
+    if (volunteersRes.error || zonesRes.error) {
         return (
             <section className="space-y-3">
                 <h1 className="text-2xl font-semibold">Volunteers</h1>
@@ -28,42 +23,15 @@ export default async function VolunteersPage() {
     }
 
     const volunteers = (volunteersRes.data ?? []) as VolunteerRow[];
-    const telemetry = (telemetryRes.data ?? []) as ZoneTelemetryRow[];
-
-    if (volunteers.length === 0) {
-        return (
-            <section className="space-y-6">
-                <h1 className="text-2xl font-semibold">Volunteers</h1>
-                <EmptyState
-                    title="No volunteers found"
-                    description="No volunteer rows are available yet. Add volunteers to start tracking assigned and available counts."
-                />
-            </section>
-        );
-    }
-
-    const assigned = volunteers.filter((v) => v.status === "assigned").length;
-    const available = volunteers.filter((v) => v.status === "available").length;
-
-    const gaugeMetrics = [
-        { label: "Assigned Volunteers", value: assigned, target: volunteers.length, unit: "" },
-        { label: "Available Volunteers", value: available, target: volunteers.length, unit: "" },
-    ];
-
-    const latestByZone = new Map<string, ZoneTelemetryRow>();
-    for (const row of telemetry) {
-        if (row.zone_id == null) continue;
-        const key = String(row.zone_id);
-        if (!latestByZone.has(key)) latestByZone.set(key, row);
-    }
+    const zones = (zonesRes.data ?? []) as ZoneRow[];
 
     return (
         <section className="space-y-6">
             <h1 className="text-2xl font-semibold">Volunteers</h1>
-            <MetricGaugeGrid metrics={gaugeMetrics} />
-            <p className="text-sm text-muted-foreground">
-                Latest telemetry coverage: {latestByZone.size} zones reporting.
-            </p>
+            <VolunteerDeploymentSummary
+                initialVolunteers={volunteers}
+                zones={zones}
+            />
         </section>
     );
 }

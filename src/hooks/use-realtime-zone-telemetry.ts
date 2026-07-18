@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 
@@ -26,18 +26,15 @@ function mergeTelemetry(
 
 export function useRealtimeZoneTelemetry(initialData: ZoneTelemetryRow[]) {
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+    const subscriptionId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
     const [rows, setRows] = useState<ZoneTelemetryRow[]>(
         sortNewestFirst(initialData).slice(0, 200)
     );
 
     useEffect(() => {
-        setRows(sortNewestFirst(initialData).slice(0, 200));
-    }, [initialData]);
-
-    useEffect(() => {
         // Realtime for public.zone_telemetry must be enabled in Supabase replication settings.
         const channel = supabase
-            .channel("zone_telemetry_changes")
+            .channel(`zone_telemetry_changes_${subscriptionId}`)
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "zone_telemetry" },
@@ -51,7 +48,7 @@ export function useRealtimeZoneTelemetry(initialData: ZoneTelemetryRow[]) {
         return () => {
             void supabase.removeChannel(channel);
         };
-    }, [supabase]);
+    }, [subscriptionId, supabase]);
 
     return rows;
 }

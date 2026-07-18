@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-
-type Role =
-    | "admin"
-    | "ops_manager"
-    | "sustainability_lead"
-    | "volunteer_coordinator";
+import type { Role } from "@/lib/auth/roles";
 
 type NavItem = {
     href: string;
@@ -20,11 +15,16 @@ const navItems: NavItem[] = [
     {
         href: "/overview",
         label: "Overview",
-        roles: ["admin", "ops_manager", "sustainability_lead", "volunteer_coordinator"],
+        roles: ["admin"],
     },
     {
         href: "/ops",
         label: "Ops",
+        roles: ["admin", "ops_manager"],
+    },
+    {
+        href: "/ops/alerts",
+        label: "Alerts",
         roles: ["admin", "ops_manager"],
     },
     {

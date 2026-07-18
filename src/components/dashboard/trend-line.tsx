@@ -10,12 +10,10 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
+import { useRealtimeZoneTelemetry } from "@/hooks/use-realtime-zone-telemetry";
+import type { Database } from "@/types/database";
 
-type TrendPoint = {
-    zone_id: string;
-    occupancy: number;
-    recorded_at: string;
-};
+type TrendPoint = Database["public"]["Tables"]["zone_telemetry"]["Row"];
 
 type TrendLineProps = {
     title: string;
@@ -30,13 +28,28 @@ export default function TrendLine({
     zoneId,
     hoursBack,
 }: TrendLineProps) {
-    const data = useMemo(() => {
-        const nowMs = Date.now();
-        const cutoffMs = nowMs - Math.max(hoursBack, 0) * 60 * 60 * 1000;
+    const liveData = useRealtimeZoneTelemetry(initialData);
 
-        return initialData
-            .filter((row) => (zoneId ? row.zone_id === zoneId : true))
-            .filter((row) => new Date(row.recorded_at).getTime() >= cutoffMs)
+    const data = useMemo(() => {
+        const newestMs = liveData.reduce(
+            (latest, row) =>
+                Math.max(latest, new Date(row.recorded_at).getTime()),
+            0
+        );
+        const cutoffMs = newestMs - Math.max(hoursBack, 0) * 60 * 60 * 1000;
+
+        const totalsByTime = new Map<string, number>();
+        for (const row of liveData) {
+            if (zoneId && row.zone_id !== zoneId) continue;
+            if (new Date(row.recorded_at).getTime() < cutoffMs) continue;
+            totalsByTime.set(
+                row.recorded_at,
+                (totalsByTime.get(row.recorded_at) ?? 0) + row.occupancy
+            );
+        }
+
+        return Array.from(totalsByTime.entries())
+            .map(([recorded_at, occupancy]) => ({ recorded_at, occupancy }))
             .sort(
                 (a, b) =>
                     new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
@@ -48,7 +61,7 @@ export default function TrendLine({
                     minute: "2-digit",
                 }),
             }));
-    }, [initialData, zoneId, hoursBack]);
+    }, [liveData, zoneId, hoursBack]);
 
     return (
         <section className="w-full rounded-lg border p-4">
@@ -59,7 +72,11 @@ export default function TrendLine({
                     No telemetry data available for the selected range.
                 </div>
             ) : (
-                <div className="h-70 w-full">
+                <div
+                    className="h-70 w-full"
+                    role="img"
+                    aria-label={`${title}, showing ${data.length} live occupancy samples.`}
+                >
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -67,8 +84,10 @@ export default function TrendLine({
                             <YAxis allowDecimals={false} />
                             <Tooltip
                                 labelFormatter={(_, payload) => {
-                                    const item = payload?.[0]?.payload as TrendPoint | undefined;
-                                    return item
+                                    const item = payload?.[0]?.payload as
+                                        | { recorded_at?: string }
+                                        | undefined;
+                                    return item?.recorded_at
                                         ? new Date(item.recorded_at).toLocaleString()
                                         : "";
                                 }}

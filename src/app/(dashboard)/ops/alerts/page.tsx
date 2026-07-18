@@ -1,8 +1,9 @@
 // src/app/(dashboard)/ops/alerts/page.tsx
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import type { Database } from "@/types/database";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AlertRow = Database["public"]["Tables"]["alerts"]["Row"];
 
@@ -13,34 +14,43 @@ type AlertWithZone = AlertRow & {
 export default function AlertsPage() {
     const [alerts, setAlerts] = useState<AlertWithZone[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+    const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-    async function fetchAlerts() {
-        const res = await fetch("/api/alerts");
-        const json = await res.json();
-        setAlerts(json.alerts ?? []);
-        setLoading(false);
-    }
+    const fetchAlerts = useCallback(async () => {
+        try {
+            setLoadError(null);
+            const res = await fetch("/api/alerts", { cache: "no-store" });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error ?? "Failed to load alerts.");
+            setAlerts(json.alerts ?? []);
+        } catch (error) {
+            setLoadError(
+                error instanceof Error ? error.message : "Failed to load alerts."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        let cancelled = false;
+        const initialLoad = setTimeout(() => void fetchAlerts(), 0);
 
-        async function loadAlerts() {
-            const res = await fetch("/api/alerts");
-            const json = await res.json();
-
-            if (!cancelled) {
-                setAlerts(json.alerts ?? []);
-                setLoading(false);
-            }
-        }
-
-        void loadAlerts();
+        const channel = supabase
+            .channel("ops_alert_feed_changes")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "alerts" },
+                () => void fetchAlerts()
+            )
+            .subscribe();
 
         return () => {
-            cancelled = true;
+            clearTimeout(initialLoad);
+            void supabase.removeChannel(channel);
         };
-    }, []);
+    }, [fetchAlerts, supabase]);
 
     async function handleMarkHandled(id: string) {
         startTransition(async () => {
@@ -56,6 +66,22 @@ export default function AlertsPage() {
     }
 
     if (loading) return <p className="p-6 text-muted-foreground">Loading alerts…</p>;
+
+    if (loadError) {
+        return (
+            <div className="p-6 text-center text-status-critical">
+                <p className="font-medium">Could not load alerts</p>
+                <p className="mt-1 text-sm">{loadError}</p>
+                <button
+                    type="button"
+                    onClick={() => void fetchAlerts()}
+                    className="mt-4 rounded-md border px-3 py-1.5 text-sm"
+                >
+                    Try again
+                </button>
+            </div>
+        );
+    }
 
     if (alerts.length === 0) {
         return (

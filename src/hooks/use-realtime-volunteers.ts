@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 
@@ -16,16 +16,13 @@ function upsertById(prev: VolunteerRow[], next: VolunteerRow): VolunteerRow[] {
 
 export function useRealtimeVolunteers(initialData: VolunteerRow[]) {
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+    const subscriptionId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
     const [volunteers, setVolunteers] = useState<VolunteerRow[]>(initialData);
-
-    useEffect(() => {
-        setVolunteers(initialData);
-    }, [initialData]);
 
     useEffect(() => {
         // Realtime for public.volunteers must be enabled in Supabase replication settings.
         const channel = supabase
-            .channel("volunteers_changes")
+            .channel(`volunteers_changes_${subscriptionId}`)
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "volunteers" },
@@ -45,7 +42,7 @@ export function useRealtimeVolunteers(initialData: VolunteerRow[]) {
         return () => {
             void supabase.removeChannel(channel);
         };
-    }, [supabase]);
+    }, [subscriptionId, supabase]);
 
     return volunteers;
 }

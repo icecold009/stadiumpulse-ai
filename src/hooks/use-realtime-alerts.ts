@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 
@@ -16,16 +16,13 @@ function upsertById(prev: AlertRow[], next: AlertRow): AlertRow[] {
 
 export function useRealtimeAlerts(initialData: AlertRow[]) {
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+    const subscriptionId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
     const [alerts, setAlerts] = useState<AlertRow[]>(initialData);
-
-    useEffect(() => {
-        setAlerts(initialData);
-    }, [initialData]);
 
     useEffect(() => {
         // Realtime for public.alerts must be enabled in Supabase replication settings.
         const channel = supabase
-            .channel("alerts_changes")
+            .channel(`alerts_changes_${subscriptionId}`)
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "alerts" },
@@ -45,7 +42,7 @@ export function useRealtimeAlerts(initialData: AlertRow[]) {
         return () => {
             void supabase.removeChannel(channel);
         };
-    }, [supabase]);
+    }, [subscriptionId, supabase]);
 
     return alerts;
 }

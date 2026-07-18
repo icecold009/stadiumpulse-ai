@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import RealtimePageRefresh from "@/components/realtime-page-refresh";
 import type { Database } from "@/types/database";
 
 type VenueRow = Database["public"]["Tables"]["venues"]["Row"];
@@ -92,6 +93,9 @@ export default async function OverviewPage() {
 
     return (
         <section className="space-y-6">
+            <RealtimePageRefresh
+                tables={["zone_telemetry", "alerts", "sustainability_metrics"]}
+            />
             <h1 className="text-2xl font-semibold">Overview</h1>
 
             {venues.length === 0 ? (

@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-
-type Role = "admin" | "ops_manager" | "sustainability_lead" | "volunteer_coordinator";
-
-const roleRedirects: Record<Role, string> = {
-    admin: "/overview",
-    ops_manager: "/ops",
-    sustainability_lead: "/sustainability",
-    volunteer_coordinator: "/volunteers",
-};
+import { defaultRouteForRole, isRole } from "@/lib/auth/roles";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -43,14 +35,19 @@ export default function LoginPage() {
             return;
         }
 
-        const role = data.user?.user_metadata?.role as string | undefined;
-        let destination = "/overview";
-        if (role === "admin" || role === "ops_manager") destination = "/ops";
-        else if (role === "sustainability_lead") destination = "/sustainability";
-        else if (role === "volunteer_coordinator") destination = "/volunteers";
+        const { data: roleRow, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
+
+        if (roleError || !isRole(roleRow?.role)) {
+            router.replace("/unauthorized");
+            return;
+        }
 
         router.refresh();
-        router.replace(destination);
+        router.replace(defaultRouteForRole(roleRow.role));
     }
 
     return (

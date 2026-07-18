@@ -3,19 +3,7 @@ import RoleNav from "@/components/layout/role-nav";
 import { DashboardPoller } from "@/components/dashboard-poller";
 import CopilotPanel from "@/components/copilot/copilot-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-type Role =
-    | "admin"
-    | "ops_manager"
-    | "sustainability_lead"
-    | "volunteer_coordinator";
-
-const VALID_ROLES: Role[] = [
-    "admin",
-    "ops_manager",
-    "sustainability_lead",
-    "volunteer_coordinator",
-];
+import { isRole } from "@/lib/auth/roles";
 
 export default async function DashboardLayout({
     children,
@@ -27,10 +15,14 @@ export default async function DashboardLayout({
 
     if (!user) redirect("/login");
 
-    const rawRole = user.user_metadata?.role;
-    const role: Role = VALID_ROLES.includes(rawRole as Role)
-        ? (rawRole as Role)
-        : "volunteer_coordinator";
+    const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (!isRole(roleRow?.role)) redirect("/unauthorized");
+    const role = roleRow.role;
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(61,214,196,0.1),transparent_30%),linear-gradient(180deg,#0b0f14_0%,#091015_100%)] text-[#edeff2]">
