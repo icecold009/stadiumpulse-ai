@@ -134,7 +134,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-09 | ready | Create a deterministic demo setup | One documented command or protected action seeds/resets a coherent scenario that reaches the alert-to-action loop reliably |
 | P0-10 | ready | Finish core README setup | README documents prerequisites, safe environment-variable names, Supabase migration/seed steps, local commands, demo accounts strategy, simulation disclosure, and architecture |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
-| P0-13 | in_progress | Verify the external Supabase demo environment | Remote seed/reference counts and all four trusted roles are verified. Still verify migration history, Realtime delivery, and successful simulator inserts in the running app without exposing secrets |
+| P0-13 | in_progress | Verify the external Supabase demo environment | Remote seed/reference counts and all four trusted roles are verified. Role QA found and documented Sustainability RLS drift; apply `0005`, rerun `npm.cmd run verify:roles`, then verify Realtime delivery and simulator inserts in the running app |
 | P0-14 | ready | Add continuous integration | A GitHub Actions workflow runs lint and TypeScript checks on pushes to `main`; failures are visible and the documented commands match local verification |
 
 ### P1 — Judge-visible product value

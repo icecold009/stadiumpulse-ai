@@ -137,3 +137,5 @@ of truth and get committed to git (they're small text files, no bloat risk).
 - `0003_user_roles_and_realtime.sql`: trusted roles, role-based update
   policies, grants, and Realtime publication membership.
 - `0004_seed_volunteers.sql`: deterministic fictional volunteer assignments.
+- `0005_fix_sustainability_read_policy.sql`: restores authenticated
+  sustainability reads after detecting live-environment policy drift.
