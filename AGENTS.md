@@ -118,6 +118,9 @@ recommendation, evidence, and human-controlled outcome.
 ## Git and repository hygiene
 
 - Work on `main` unless the user explicitly changes the workflow.
+- Never commit merely because an implementation is finished. First verify the
+  affected code and workflow successfully, report the results, and wait for an
+  explicit user request to create the commit.
 - Do not commit, push, tag, deploy, or open a PR unless explicitly requested.
 - Never commit `.env*`, generated build output, logs, or secrets.
 - Keep the repository small; do not add datasets, model weights, recordings,
