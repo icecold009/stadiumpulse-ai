@@ -32,7 +32,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Create the real Supabase project | Verify externally | A local `.env.local` exists, but the existence and health of the remote project cannot be proven from git |
 | Apply `0001_init.sql` | Partial | Migration exists with all documented tables, indexes, RLS, and policies; remote application must be verified |
-| Seed venues, zones, and gates | Partial | `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates, but the migration is not committed yet |
+| Seed venues, zones, and gates | Complete | Committed `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates |
 | Configure Supabase URL and anon key | Verify externally | Variable values must not be inspected or committed; validate through a safe connection/setup check |
 | Configure service-role key | Verify externally | Required variable is documented, and the server client consumes it; deployment/local presence must be validated safely |
 | Add checked-in environment example | Complete | The checked-in environment template lists the required Supabase and AI variable names without secret values |
@@ -43,10 +43,10 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Real email/password login | Complete | Login calls `signInWithPassword` and routes after success |
-| Session and role route guard | Complete, hardening remains | Middleware and dashboard layout verify the session and redirect; trusted-role migration remains under P0-04 |
+| Session and role route guard | Complete in code, verification remains | Middleware and dashboard layout verify the session, query protected `user_roles`, and redirect by the documented matrix |
 | Pass real role to `RoleNav` | Complete | Dashboard layout derives the role from the authenticated user and passes it to role-filtered navigation |
 | Create four demo users | Verify externally | Supabase Auth users are external state and no safe verification record exists in the repo |
-| Configure demo-user roles | Verify externally, design change planned | Current code/RLS expects `user_metadata.role`; P0-04 moves authorization to trusted server-managed claims |
+| Configure demo-user roles | Verify externally | `0003_user_roles_and_realtime.sql` backfills existing valid demo roles once; verify all four live accounts have the intended protected row |
 
 ### Phase 2 — Data simulation
 
@@ -61,9 +61,9 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Replace four placeholder dashboards | Partial | Overview, Ops, and Sustainability read real data; Volunteer view is summary-only, while gate throughput and resource advisor remain placeholders |
-| Wire Realtime dashboard updates | Partial | Zone heatmap subscribes to telemetry; alert and volunteer hooks exist but are not integrated into their pages, and sustainability/trend metrics remain initial-load data |
-| Confirm role-appropriate dashboard UX | Partial | Navigation filters by role, but route access and documented role flows are inconsistent and require manual four-role verification |
+| Replace four placeholder dashboards | Complete for Phase 3 | Overview, Ops, Sustainability, and Volunteer views read real data; gate throughput is implemented and the unsupported advisor placeholder is removed until Phase 6 |
+| Wire Realtime dashboard updates | Complete in code, verification remains | Ops gauges/trends/heatmap/gates, sustainability, volunteers, overview, and alerts now respond to Realtime changes; hosted publication and tick behavior require P0-13 verification |
+| Confirm role-appropriate dashboard UX | Complete in code, verification remains | Navigation, login destinations, middleware guards, and trusted role lookup follow the documented matrix; four-role manual verification remains |
 
 ### Phase 4 — Alerts
 
@@ -71,7 +71,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Implement threshold and duplicate prevention | Complete, integration remains | `/api/check-alerts` implements warning/critical thresholds and skips zones with open alerts; it is unprotected and not invoked by the scheduled tick |
 | Generate one cached AI recommendation | Complete | Alert creation calls the model once and stores the result, with a deterministic fallback |
-| Build incident feed | Partial | A functional polling feed exists at `/ops/alerts`, but it is not linked from role navigation or embedded in Ops and does not use the Realtime alert hook |
+| Build incident feed | Complete in code, verification remains | `/ops/alerts` is linked for Admin/Ops, refreshes on Realtime changes, and includes loading, error, retry, empty, and handled states |
 | Mark alert handled through user session | Complete, external RLS verification remains | PATCH authenticates the user and updates through the session client; the database policy must still be tested with all roles |
 
 ### Phase 5 — AI copilot
@@ -88,7 +88,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Derive staffing suggestions from current/predicted occupancy | Not started | Ops contains explanatory placeholder text only; implement under P1-01 |
+| Derive staffing suggestions from current/predicted occupancy | Not started | The misleading placeholder was removed from Ops; implement the real advisor under P1-01 |
 | Constrain recommendations to structured JSON | Not started | No advisor schema, validation, or structured-output prompt exists |
 | Refresh advisor panel with live data | Not started | No advisor API/function or live panel is connected to simulation/telemetry updates |
 
@@ -105,7 +105,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Attempt cross-role access violations | Not started | Requires the four live demo users and manual/API authorization checks |
 | Add GitHub Actions lint/typecheck workflow | Not started | No `.github` workflow exists |
 | Protect privileged service-role routes | Not started | Simulation and alert-check endpoints remain callable without user or cron authorization |
-| Move authorization to trusted role claims | Not started | Middleware, layout, login routing, and RLS currently depend on user metadata |
+| Move authorization to trusted role source | Complete in code, verification remains | Protected `user_roles`, route guards, alert API, and update policies are implemented in migration/code; apply and test against hosted Supabase |
 
 ### Phase 8 — Polish and submission
 
@@ -126,14 +126,14 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-01 | ready | Restore a clean lint baseline | `npm.cmd run lint` exits successfully; warnings are either fixed or intentionally documented |
 | P0-02 | ready | Make the production build deterministic | `npm.cmd run build` succeeds without relying on a runtime Google Fonts download; TypeScript continues to pass |
 | P0-03 | ready | Protect privileged system routes | Simulation and alert-check routes require an authenticated server/cron secret; unauthorized requests return 401/403 and never create service-role writes or AI calls |
-| P0-04 | ready | Move roles to trusted claims | Route guards, server handlers, and RLS use server-managed `app_metadata` or an equivalent trusted claim; users cannot modify their own authorization role |
+| P0-04 | done | Move roles to a trusted source | `0003_user_roles_and_realtime.sql` creates protected `user_roles`; login, layout, middleware, alert API, and update policies no longer authorize from editable metadata |
 | P0-05 | ready | Complete the automatic alert loop | Each scheduled tick safely invokes alert detection or both run in one protected job; duplicate open alerts are prevented; the dashboard receives the new alert |
 | P0-06 | ready | Add API rate limiting | Copilot users are limited to the documented request rate and simulation calls are bounded appropriately for authenticated/manual use; excess requests return a friendly 429 without invoking paid or privileged work |
 | P0-07 | ready | Make recommendations auditable | Operational recommendation output includes action, urgency, evidence, limitations/confidence, and snapshot time; UI renders it without parsing arbitrary prose |
 | P0-08 | ready | Create prompt evaluation scenarios | Tests or a repeatable harness cover normal, warning, critical, stale/missing data, irrelevant request, and injection cases with behavior-based expectations |
 | P0-09 | ready | Create a deterministic demo setup | One documented command or protected action seeds/resets a coherent scenario that reaches the alert-to-action loop reliably |
 | P0-10 | ready | Finish core README setup | README documents prerequisites, safe environment-variable names, Supabase migration/seed steps, local commands, demo accounts strategy, simulation disclosure, and architecture |
-| P0-11 | in_progress | Add reproducible reference seeds | `0002_seed.sql` idempotently creates stable venues, zones, and gates with fixed UUID relationships; commit it, then verify live application under P0-13 |
+| P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
 | P0-13 | ready | Verify the external Supabase demo environment | Migration version, seed rows, Realtime publication, four demo accounts, trusted roles, and successful simulator inserts are checked without exposing secrets; results are recorded in setup/submission notes |
 | P0-14 | ready | Add continuous integration | A GitHub Actions workflow runs lint and TypeScript checks on pushes to `main`; failures are visible and the documented commands match local verification |
 
@@ -142,16 +142,16 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
 | P1-01 | ready | Resource Allocation Advisor | Current occupancy produces structured staffing recommendations with evidence; the panel handles unavailable AI or data honestly |
-| P1-02 | ready | Gate throughput chart | Ops dashboard plots timestamped gate scans over the intended time window with an accessible text summary |
+| P1-02 | done | Gate throughput chart | Ops aggregates timestamped scans into a live trend, identifies the busiest gate, and provides an accessible text equivalent |
 | P1-03 | ready | Volunteer reassignment | Authorized coordinators/admins can reassign a volunteer; RLS enforces the action and Realtime updates the view |
 | P1-04 | ready | Human feedback on AI recommendations | Operator can accept, reject, or mark handled; the recorded state clearly distinguishes recommendation from executed action |
-| P1-05 | ready | Role-flow consistency | Login redirects, navigation visibility, middleware/proxy rules, page authorization, API authorization, and documented role access agree |
+| P1-05 | in_progress | Role-flow consistency | Code follows the documented role matrix and trusted table; complete the four-account manual route/API matrix before marking done |
 | P1-06 | ready | Copilot data relevance | The server selects only role- and venue-relevant current data, detects stale snapshots, and exposes the exact evidence summary to the user |
 | P1-07 | ready | Copilot retention job | Query logs older than the documented retention window are removed by a protected scheduled job and the policy is documented |
 | P1-08 | ready | Error and empty states | Top-level error boundary and affected screens show safe, useful messages without stack traces or fabricated fallback data |
 | P1-09 | ready | Accessibility pass | Keyboard flow, visible focus, chart summaries, non-color status cues, contrast, and reduced-motion behavior meet the UI brief |
-| P1-10 | ready | Complete Phase 3 Realtime wiring | Ops metrics/alerts, sustainability metrics, and volunteer state update from Supabase changes without a page reload; unused duplicate hooks are removed or intentionally consolidated |
-| P1-11 | ready | Integrate the incident feed into the Ops workflow | Authorized users can discover the feed from navigation or Ops, new alerts appear live, handled alerts disappear/update live, and safe loading/error/empty states are present |
+| P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and publication migration cover Phase 3 dashboards; verify hosted writes and UI changes without refresh under P0-13 |
+| P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, and safe states are implemented; verify hosted insert/update behavior before marking done |
 | P1-12 | ready | Make copilot audit logging reliable | Logging failures are recorded server-side without breaking the completed user stream; successful persistence is verified and retention behavior matches the documented policy |
 
 ### P2 — Polish and scale narrative

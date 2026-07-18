@@ -31,8 +31,8 @@ deployable state.
 3. Apply base Supabase schema (`venues`, `zones`, `gates` — the static
    reference tables) via a migration file. Seed 1–2 venues, a handful of
    zones/gates manually (small enough to script, not to hand-import a file).
-4. Wire Supabase Auth: login screen, role stored in user metadata, route
-   guard component that redirects by role.
+4. Wire Supabase Auth: login screen, role stored in the protected `user_roles`
+   table, route guard component that redirects by role.
 
 ## Phase 2 — Data simulation (Day 1 afternoon)
 5. Build `/api/simulate-tick` Route Handler: writes plausible

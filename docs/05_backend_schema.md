@@ -94,14 +94,27 @@ schema and security are designed together, not bolted on after.
 > limits how long user-submitted text is retained, relevant to both the
 > repo-size constraint's spirit and general data-minimization practice.
 
-## User roles (via `auth.users.raw_user_meta_data`)
+### `user_roles` (trusted authorization source)
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid, pk, fk → auth.users.id | one role per account |
+| role | text | `admin` \| `ops_manager` \| `sustainability_lead` \| `volunteer_coordinator` |
+
+Authenticated users may select only their own row. Browser clients cannot
+insert, update, or delete roles. Demo roles are provisioned through a trusted
+admin/service-role workflow; authorization code and RLS policies read this
+table rather than editable user metadata.
+
+## User roles
 
 ```json
 { "role": "admin" | "ops_manager" | "sustainability_lead" | "volunteer_coordinator" }
 ```
 
-Role is set at account creation (admin-provisioned for the demo — no public
-self-signup, since this is an internal organizer tool).
+The migration to `user_roles` backfills valid roles from existing demo account
+metadata once. Afterward, the table is authoritative and roles are
+admin-provisioned; changing user metadata does not change authorization. There
+is no public self-signup because this is an internal organizer tool.
 
 ## Indexing notes
 
@@ -118,3 +131,9 @@ Kept as numbered SQL files in `/supabase/migrations/`, applied via the
 Supabase CLI (`supabase db push`). Never hand-edit schema directly in the
 dashboard for anything you want reproducible — migrations are the source
 of truth and get committed to git (they're small text files, no bloat risk).
+
+- `0001_init.sql`: core tables, indexes, and initial RLS policies.
+- `0002_seed.sql`: deterministic synthetic venues, zones, and gates.
+- `0003_user_roles_and_realtime.sql`: trusted roles, role-based update
+  policies, grants, and Realtime publication membership.
+- `0004_seed_volunteers.sql`: deterministic fictional volunteer assignments.

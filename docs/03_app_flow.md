@@ -6,7 +6,7 @@
 Login (Supabase Auth)
   │
   ▼
-Role resolved from user metadata
+Role resolved from trusted `user_roles` row
   │
   ├── Admin ─────────────► Global Overview
   ├── Operations Manager ─► Ops Dashboard (default view)
@@ -20,8 +20,9 @@ All roles ─────────────► AI Copilot Chat (persistent
 
 ### 1. Login
 - Email + password via Supabase Auth.
-- On success, role claim (`admin | ops_manager | sustainability_lead |
-  volunteer_coordinator`) read from user metadata, routes to the right
+- On success, role (`admin | ops_manager | sustainability_lead |
+  volunteer_coordinator`) read from the authenticated user's protected
+  `user_roles` row, routes to the right
   default screen.
 - Failed auth: clear inline error, no stack traces exposed (security tie-in).
 

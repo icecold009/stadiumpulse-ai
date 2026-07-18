@@ -27,9 +27,10 @@ decisions themselves are made now, so they're designed in, not patched on.
 - Supabase Auth, email/password. No public self-registration — accounts are
   provisioned by an admin for the demo, since this is an internal tool, not
   a consumer product.
-- Role stored in `auth.users.raw_user_meta_data.role`, read server-side in
-  every serverless function that needs to authorize an action — never
-  trust a role claim sent from the client body.
+- Role stored in `public.user_roles`, readable by each authenticated user only
+  for their own account and writable only through a trusted admin/service-role
+  workflow. Server routes and RLS query this table; they never trust a role
+  claim sent from the client body or editable user metadata.
 - Session tokens are short-lived JWTs (Supabase default), refreshed
   automatically by the Supabase client SDK.
 
@@ -44,7 +45,11 @@ create policy "read telemetry" on zone_telemetry
 -- alerts: only ops_manager/admin can mark handled
 create policy "handle alerts" on alerts
   for update using (
-    auth.jwt() -> 'user_metadata' ->> 'role' in ('ops_manager','admin')
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+        and role in ('ops_manager','admin')
+    )
   );
 
 -- copilot_queries: users can only see their own history
