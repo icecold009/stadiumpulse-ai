@@ -78,7 +78,7 @@ export default function TrendLine({
                     aria-label={`${title}, showing ${data.length} live occupancy samples.`}
                 >
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data}>
+                        <LineChart data={data} accessibilityLayer>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="xLabel" minTickGap={24} />
                             <YAxis allowDecimals={false} />

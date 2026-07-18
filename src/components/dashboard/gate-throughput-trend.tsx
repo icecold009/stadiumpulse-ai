@@ -91,7 +91,7 @@ export default function GateThroughputTrend({
                         aria-label={`Gate throughput over time. ${totalScans} scans across ${points.length} intervals. Busiest gate: ${busiestGate}.`}
                     >
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={points}>
+                            <LineChart data={points} accessibilityLayer>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="label" minTickGap={24} />
                                 <YAxis allowDecimals={false} />

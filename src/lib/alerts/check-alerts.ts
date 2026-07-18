@@ -25,13 +25,19 @@ type LatestTelemetry = {
 
 export async function checkAndCreateAlerts() {
     const db = createSupabaseServiceRoleClient();
-    const [zonesQuery, openAlertsQuery] = await Promise.all([
+    const [zonesQuery, openAlertsQuery, telemetryQuery] = await Promise.all([
         db.from("zones").select("id, venue_id, label, capacity"),
         db.from("alerts").select("zone_id").eq("status", "open"),
+        db
+            .from("zone_telemetry")
+            .select("zone_id, occupancy, recorded_at")
+            .order("recorded_at", { ascending: false })
+            .limit(500),
     ]);
 
     if (zonesQuery.error) throw new Error("Could not load zones for alert detection.");
     if (openAlertsQuery.error) throw new Error("Could not load open alerts.");
+    if (telemetryQuery.error) throw new Error("Could not load alert telemetry.");
 
     const zones = (zonesQuery.data ?? []) as ZoneRow[];
     const openAlertZoneIds = new Set(
@@ -41,21 +47,19 @@ export async function checkAndCreateAlerts() {
     );
 
     const created: string[] = [];
+    const latestByZone = new Map<string, LatestTelemetry>();
+    for (const row of telemetryQuery.data ?? []) {
+        if (!latestByZone.has(row.zone_id)) {
+            latestByZone.set(row.zone_id, row as LatestTelemetry);
+        }
+    }
 
     for (const zone of zones) {
         if (created.length >= MAX_ALERTS_PER_RUN) break;
         if (openAlertZoneIds.has(zone.id) || zone.capacity <= 0) continue;
 
-        const telemetryQuery = await db
-            .from("zone_telemetry")
-            .select("occupancy, recorded_at")
-            .eq("zone_id", zone.id)
-            .order("recorded_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (telemetryQuery.error || !telemetryQuery.data) continue;
-        const telemetry = telemetryQuery.data as LatestTelemetry;
+        const telemetry = latestByZone.get(zone.id);
+        if (!telemetry) continue;
         const occupancyRatio = telemetry.occupancy / zone.capacity;
         const severity: "warn" | "critical" | null =
             occupancyRatio >= OCCUPANCY_CRITICAL_PCT

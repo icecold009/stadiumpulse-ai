@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, MessageSquareText, SendHorizonal } from "lucide-react";
 import ChatBubble from "@/components/copilot/chat-bubble";
 
@@ -46,8 +46,48 @@ export default function CopilotPanel() {
     const [draft, setDraft] = useState("");
     const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const panelRef = useRef<HTMLElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const wasOpen = useRef(false);
 
     const trimmedDraft = useMemo(() => draft.slice(0, 500), [draft]);
+
+    useEffect(() => {
+        const previouslyOpen = wasOpen.current;
+        wasOpen.current = isOpen;
+        if (!isOpen) {
+            if (previouslyOpen) triggerRef.current?.focus();
+            return;
+        }
+
+        textareaRef.current?.focus();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                setIsOpen(false);
+                return;
+            }
+            if (event.key !== "Tab" || !panelRef.current) return;
+            const focusable = Array.from(
+                panelRef.current.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+                )
+            );
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable.at(-1)!;
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -207,21 +247,27 @@ export default function CopilotPanel() {
     return (
         <>
             <button
+                ref={triggerRef}
                 type="button"
                 onClick={() => setIsOpen((currentOpen) => !currentOpen)}
                 aria-expanded={isOpen}
                 aria-controls="copilot-panel"
                 className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full border border-ai-highlight/60 bg-surface-raised px-4 py-3 text-sm font-semibold text-foreground shadow-[0_20px_60px_rgba(0,0,0,0.45)] transition hover:border-ai-highlight hover:text-ai-highlight focus:outline-none focus:ring-2 focus:ring-ai-highlight focus:ring-offset-2 focus:ring-offset-background"
             >
-                <MessageSquareText className="h-4 w-4" />
+                <MessageSquareText aria-hidden="true" className="h-4 w-4" />
                 <span>{isOpen ? "Close copilot" : "Open copilot"}</span>
             </button>
 
             <aside
+                ref={panelRef}
                 id="copilot-panel"
                 className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-105 flex-col border-l border-border bg-surface-raised shadow-[0_24px_80px_rgba(0,0,0,0.55)] transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 aria-label="AI copilot panel"
+                role="dialog"
+                aria-modal={isOpen ? "true" : undefined}
+                aria-hidden={!isOpen}
+                inert={!isOpen}
             >
                 <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
                     <div>
@@ -239,11 +285,16 @@ export default function CopilotPanel() {
                         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-muted transition hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent"
                         aria-label="Close copilot panel"
                     >
-                        <ChevronLeft className="h-4 w-4" />
+                        <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                     </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto px-4 py-5">
+                <div
+                    className="flex-1 overflow-y-auto px-4 py-5"
+                    role="log"
+                    aria-live="polite"
+                    aria-relevant="additions text"
+                >
                     <div className="space-y-3">
                         {messages.map((message) => (
                             <ChatBubble
@@ -260,6 +311,7 @@ export default function CopilotPanel() {
                     <label className="block">
                         <span className="sr-only">Copilot question</span>
                         <textarea
+                            ref={textareaRef}
                             value={draft}
                             onChange={(event) => setDraft(event.target.value.slice(0, 500))}
                             rows={4}
@@ -277,7 +329,7 @@ export default function CopilotPanel() {
                             disabled={isSubmitting || !trimmedDraft.trim()}
                             className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface-raised"
                         >
-                            <SendHorizonal className="h-4 w-4" />
+                            <SendHorizonal aria-hidden="true" className="h-4 w-4" />
                             {isSubmitting ? "Sending..." : "Send"}
                         </button>
                     </div>

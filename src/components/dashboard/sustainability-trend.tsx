@@ -51,6 +51,10 @@ export default function SustainabilityTrend({
                 new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
         );
     }, [initialData]);
+    const latest = data.at(-1);
+    const summary = latest
+        ? `${title}. Latest values: energy ${latest.energy_kwh ?? "unavailable"} kilowatt-hours, water ${latest.water_l ?? "unavailable"} litres, waste diverted ${latest.waste_diverted_pct ?? "unavailable"} percent.`
+        : `${title}. No sustainability trend data is available.`;
 
     return (
         <section className="w-full rounded-lg border p-4">
@@ -61,9 +65,10 @@ export default function SustainabilityTrend({
                     No sustainability trend data available.
                 </div>
             ) : (
-                <div className="h-70 w-full">
+                <div className="h-70 w-full" role="img" aria-label={summary}>
+                    <p className="sr-only">{summary}</p>
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data}>
+                        <LineChart data={data} accessibilityLayer>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis
                                 dataKey="recorded_at"

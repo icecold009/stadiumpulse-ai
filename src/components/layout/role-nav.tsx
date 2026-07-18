@@ -88,10 +88,10 @@ export default function RoleNav({ role }: { role: Role }) {
 
             <div className="mt-auto rounded-xl border border-[#26303a] bg-[#141a21] p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-[#8b96a3]">
-                    Live shell
+                    Simulated operations
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[#edeff2]">
-                    Metrics, alerts, and AI guidance stay visible while you move between dashboard views.
+                    Fictional telemetry, alerts, and AI guidance stay visible while you move between role views.
                 </p>
             </div>
 

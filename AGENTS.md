@@ -146,8 +146,8 @@ recommendation, evidence, and human-controlled outcome.
   are complete through migration `0008`; the latest pushed CI run succeeded on
   2026-07-18 after two earlier failures.
 - The Next.js 16 proxy convention and Copilot role/venue scoping are
-  implemented locally. Migration `0009` and hosted four-role Copilot
-  verification remain unapplied/unverified.
+  implemented. Migration `0009` is applied and hosted venue-assignment/RLS
+  verification passes; hosted four-role Copilot behavior remains unverified.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.

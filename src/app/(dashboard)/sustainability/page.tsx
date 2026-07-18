@@ -1,4 +1,5 @@
 import LiveSustainabilityDashboard from "@/components/dashboard/live-sustainability-dashboard";
+import SustainabilityAdvisorPanel from "@/components/dashboard/sustainability-advisor-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -14,7 +15,7 @@ export default async function SustainabilityPage() {
             .from("sustainability_metrics")
             .select("*")
             .order("recorded_at", { ascending: false })
-            .limit(5000),
+            .limit(500),
     ]);
 
     if (venuesResult.error || metricsResult.error) {
@@ -32,6 +33,7 @@ export default async function SustainabilityPage() {
     return (
         <section className="space-y-6">
             <h1 className="text-2xl font-semibold">Sustainability</h1>
+            <SustainabilityAdvisorPanel />
             <LiveSustainabilityDashboard venues={venues} initialData={rows} />
         </section>
     );

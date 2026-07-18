@@ -18,7 +18,7 @@ export default async function OverviewPage() {
             .from("zone_telemetry")
             .select("zone_id, occupancy, recorded_at")
             .order("recorded_at", { ascending: false })
-            .limit(5000),
+            .limit(500),
         supabase
             .from("alerts")
             .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_by, decision_at, status, created_at, handled_by, handled_at"),
@@ -26,7 +26,7 @@ export default async function OverviewPage() {
             .from("sustainability_metrics")
             .select("*")
             .order("recorded_at", { ascending: false })
-            .limit(5000),
+            .limit(500),
     ]);
 
     if (venuesRes.error || zonesRes.error || telemetryRes.error || alertsRes.error || sustainabilityRes.error) {

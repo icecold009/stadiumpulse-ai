@@ -8,12 +8,14 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
+        "test": "node --experimental-strip-types --test tests/*.test.mjs",
         "eval:prompts": "node --experimental-strip-types scripts/evaluate-prompts.mjs",
         "demo:reset": "node --experimental-strip-types scripts/reset-demo-scenario.mjs",
         "seed:demo": "node scripts/seed-demo.mjs",
         "verify:roles": "node scripts/verify-role-access.mjs",
         "verify:p0-hosted": "node scripts/verify-hosted-p0.mjs",
-        "verify:alert-loop": "node scripts/verify-alert-loop.mjs"
+        "verify:alert-loop": "node scripts/verify-alert-loop.mjs",
+        "verify:public": "node scripts/verify-public-app.mjs"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.110.0",

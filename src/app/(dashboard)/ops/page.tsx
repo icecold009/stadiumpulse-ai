@@ -2,6 +2,7 @@ import ZoneHeatmap from "@/components/dashboard/zone-heatmap";
 import LiveMetricGaugeGrid from "@/components/dashboard/live-metric-gauge-grid";
 import TrendLine from "@/components/dashboard/trend-line";
 import GateThroughputTrend from "@/components/dashboard/gate-throughput-trend";
+import ResourceAdvisorPanel from "@/components/dashboard/resource-advisor-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -22,7 +23,7 @@ export default async function OpsPage() {
             .from("zone_telemetry")
             .select("id, zone_id, occupancy, recorded_at")
             .order("recorded_at", { ascending: false })
-            .limit(5000),
+            .limit(500),
         supabase
             .from("alerts")
             .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_by, decision_at, status, created_at, handled_by, handled_at")
@@ -61,6 +62,7 @@ export default async function OpsPage() {
                 initialTelemetry={telemetry}
                 initialAlerts={alerts}
             />
+            <ResourceAdvisorPanel />
             <ZoneHeatmap initialZones={zones} initialTelemetry={telemetry} />
             <TrendLine title="Occupancy Trend" initialData={telemetry} hoursBack={24} />
             <GateThroughputTrend initialData={gateScans} gateLabels={gateLabels} />

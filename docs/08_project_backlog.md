@@ -31,7 +31,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Create the real Supabase project | Complete | The configured remote project accepted authenticated service-role seed and verification requests on 2026-07-18 |
-| Apply `0001_init.sql` | Partial | Migration exists with all documented tables, indexes, RLS, and policies. Live role verification confirms the expected tables are present and readable, but exact remote migration history and the full policy matrix remain unverified |
+| Apply committed migrations | Complete through `0009` | Local and remote migration history match through `0009_user_venue_access.sql`; hosted role, RLS, venue-assignment, and Realtime verification passed after application on 2026-07-18 |
 | Seed venues, zones, and gates | Complete | Committed `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates |
 | Configure Supabase URL and anon key | Complete locally | The configured project is reachable; values remain unprinted and uncommitted. Verify deployment variables separately |
 | Configure service-role key | Complete locally | `npm.cmd run seed:demo` completed privileged writes and verification without exposing the key. Verify deployment variables separately |
@@ -78,7 +78,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Fetch context, call model, and stream | Complete in code, external verification remains | The route resolves the trusted role and explicit venue access before querying. Ops receives crowd/alert context, Sustainability receives metric context, Volunteer receives occupancy/assignment context, and Admin receives the combined authorized slice. DATA and QUESTION are separate content blocks. Apply migration `0009` and verify each role against hosted data |
+| Fetch context, call model, and stream | Complete in code, external verification remains | The route resolves the trusted role and applied explicit venue access before querying. Ops receives crowd/alert context, Sustainability receives metric context, Volunteer receives occupancy/assignment context, and Admin receives the combined authorized slice. DATA and QUESTION are separate content blocks; verify each role against the deployed Copilot route |
 | Apply prompt-injection defenses | Partial | Fixed system instructions, input cap, separate DATA/question content blocks, text-only rendering, and stale/missing rules are in place. The committed suite is a static contract harness; it has not sent an adversarial question to the live model |
 | Connect `CopilotPanel` to API | Complete | Panel posts questions and consumes the SSE stream |
 | Show grounding indicator | Complete | Metadata and final grounding summary are rendered on assistant messages |
@@ -88,9 +88,9 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Derive staffing suggestions from current/predicted occupancy | Not started | The misleading placeholder was removed from Ops; implement the real advisor under P1-01 |
-| Constrain recommendations to structured JSON | Not started | No advisor schema, validation, or structured-output prompt exists |
-| Refresh advisor panel with live data | Not started | No advisor API/function or live panel is connected to simulation/telemetry updates |
+| Derive staffing suggestions from current/predicted occupancy | Complete in code, verification remains | The protected advisor projects occupancy from two timestamped samples, includes available volunteer context, and produces bounded human-reviewed actions; verify the hosted model and fallback paths |
+| Constrain recommendations to structured JSON | Complete | Fireworks JSON-schema output, runtime parsing, authorized-zone validation, typed evidence/limitations, and deterministic fallback contracts are implemented and tested |
+| Refresh advisor panel with live data | Complete in code, verification remains | The Ops panel loads on entry, debounces each telemetry tick into one refresh, rate-limits generation, and supports manual retry; verify hosted Realtime behavior and model cost |
 
 ### Phase 7 — Security hardening
 
@@ -111,7 +111,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Accessibility pass | Partial | Components include several labels and focus styles, but no recorded keyboard, screen-reader, contrast, chart-summary, or reduced-motion audit exists |
+| Accessibility pass | Partial | Skip navigation, simulated-context semantics, chart summaries/accessibility layers, Copilot dialog focus trap/Escape restoration, live regions, visible focus, and reduced motion are implemented. A recorded keyboard, screen-reader, contrast, and zoom audit still remains |
 | Repository size check | Complete for current state | Prospective tracked files including the P0 work total about 583 KB and loose Git objects remain under 1 MB, comfortably below 10 MB; recheck immediately before submission |
 | Single-branch check | Complete for current state | Local and remote branch listing contains only `main` (plus `origin/HEAD` pointing to `origin/main`); recheck before submission |
 | Submission README | Complete | README documents prerequisites, safe variables, migrations, seeds, role provisioning, commands, architecture, recovery, deterministic demo steps, simulation disclosure, and LinkedIn submission scope |
@@ -134,26 +134,27 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-09 | done | Create a deterministic demo setup | `npm.cmd run demo:reset` successfully created a live 96% critical scenario with a genuine JSON-schema model recommendation and documented human handling step |
 | P0-10 | done | Finish core README setup | README now covers prerequisites, safe variables, migrations/seeds, role provisioning, local verification, architecture, simulation disclosure, recovery, demo flow, and LinkedIn submission scope |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
-| P0-13 | done | Verify the external Supabase demo environment | Migration history was reconciled and `0006`/`0007` applied. Live checks pass role reads, anonymous/cross-role denial, authorized writes, durable limits, fresh simulation inserts, threshold detection, and Realtime telemetry/alert delivery |
-| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs install, lint, TypeScript, and static prompt contracts on pushes to `main` and pull requests. The latest pushed commit passed on 2026-07-18 after two earlier failures |
+| P0-13 | done | Verify the external Supabase demo environment | Migration history matches through applied `0009`. Live checks pass role reads, venue-assignment isolation, anonymous/cross-role denial, authorized writes, durable limits, simulation data, and Realtime telemetry/alert delivery |
+| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs install, lint, TypeScript, Node contract tests, static prompt contracts, and the production build on pushes to `main` and pull requests. The expanded workflow requires a pushed-run confirmation |
 
 ### P1 — Judge-visible product value
 
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
-| P1-01 | ready | Resource Allocation Advisor | Current occupancy produces structured staffing recommendations with evidence; the panel handles unavailable AI or data honestly |
+| P1-01 | in_progress | Resource Allocation Advisor | Structured prediction, schema validation, AI/fallback labeling, evidence, limitations, Realtime refresh, and tests are implemented; verify the hosted role-scoped model flow before marking done |
 | P1-02 | done | Gate throughput chart | Ops aggregates timestamped scans into a live trend, identifies the busiest gate, and provides an accessible text equivalent |
-| P1-03 | ready | Volunteer reassignment | Authorized coordinators/admins can reassign a volunteer; RLS enforces the action and Realtime updates the view |
+| P1-03 | in_progress | Volunteer reassignment | Authenticated API validation and accessible UI are implemented through the session client and existing RLS policy; verify Admin/Coordinator success and cross-role denial in the hosted UI |
 | P1-04 | done | Human feedback on AI recommendations | Migration `0008`, the authenticated API, and UI record Accept/Reject separately from Mark handled; all three transitions passed the live Ops RLS policy and the test alert was restored |
 | P1-05 | in_progress | Role-flow consistency | Code follows the documented role matrix and trusted table; complete the four-account manual route/API matrix before marking done |
-| P1-06 | in_progress | Copilot data relevance | Role-specific queries and explicit venue scoping are implemented with migration `0009`; apply it and verify all four hosted roles, including fail-closed behavior for an unassigned non-admin, before marking done |
+| P1-06 | in_progress | Copilot data relevance | Role-specific queries and explicit venue scoping are implemented and migration `0009` is applied; verify all four deployed Copilot roles, including fail-closed behavior for an unassigned non-admin, before marking done |
 | P1-07 | ready | Copilot retention job | Query logs older than the documented retention window are removed by a protected scheduled job and the policy is documented |
 | P1-08 | done | Error and empty states | App/global error boundaries and affected dashboard/alert states provide safe retry, error, empty, and degraded messages without stack traces or fabricated data |
-| P1-09 | ready | Accessibility pass | Keyboard flow, visible focus, chart summaries, non-color status cues, contrast, and reduced-motion behavior meet the UI brief |
+| P1-09 | in_progress | Accessibility pass | Code-level skip link, focus management, dialog semantics, live regions, chart equivalents, non-color context, and reduced-motion support are implemented; manual keyboard, screen-reader, contrast, and zoom evidence remains |
 | P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and publication migration cover Phase 3 dashboards; verify hosted writes and UI changes without refresh under P0-13 |
 | P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, and safe states are implemented; verify hosted insert/update behavior before marking done |
 | P1-12 | in_progress | Make copilot audit logging reliable | Returned insert errors and thrown logging exceptions are recorded server-side without breaking the completed user stream. Verify successful hosted persistence; retention remains tracked by P1-07 |
 | P1-13 | ready | Run live-model adversarial Copilot evaluation | Submit an injection attempt and stale/missing-data questions to the configured live model, record that it follows the fixed contract without revealing instructions or inventing facts, and keep the static CI harness labeled accurately |
+| P1-14 | in_progress | Sustainability intervention advisor | Role-scoped structured AI/fallback interventions, evidence, limitations, target semantics, Realtime refresh, and manual retry are implemented; verify Admin/Sustainability Lead hosted behavior before marking done |
 
 ### P2 — Polish and scale narrative
 
@@ -168,9 +169,16 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 ## Current local verification
 
-On 2026-07-18, lint, TypeScript, the static prompt contract evaluation, and the
-production build all pass. The build uses local font packages, makes no Google
-Fonts request, and no longer reports the middleware convention deprecation.
+On 2026-07-18, lint, TypeScript, three resource-advisor contract tests, the
+static prompt contract evaluation, and the production build all pass. The
+non-mutating public smoke test also passes login-shell, protected-route, and
+protected-API checks against `stadiumpulse-ai-nine.vercel.app`. The build uses
+local font packages, makes no Google Fonts request, and no longer reports the
+middleware convention deprecation.
+Hosted verification after applying migration `0009` passes venue-assignment
+isolation, cross-role write denial, authorized writes, query isolation, durable
+rate limiting, and Realtime delivery; deployed route verification was skipped
+because `PULSEOPS_APP_URL` was not supplied to that privileged run.
 `npm.cmd audit --omit=dev` reports zero known
 vulnerabilities after a narrow PostCSS 8.5.10 override for the advisory in
 Next.js 16.2.10's transitive dependency.

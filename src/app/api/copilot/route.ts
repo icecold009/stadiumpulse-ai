@@ -73,23 +73,19 @@ function getCopilotErrorMessage(err: unknown): string {
     if (err && typeof err === "object") {
         const maybeError = err as {
             status?: number;
-            message?: string;
             type?: string | null;
             requestID?: string | null;
-            error?: { message?: string; type?: string };
         };
 
         const status = maybeError.status;
-        const detail = maybeError.message ?? maybeError.error?.message;
 
-        if (status === 401) return "AI service rejected the API key. Check your server AI key.";
-        if (status === 404) return "AI model or endpoint not found. Check the configured model.";
+        if (status === 401) return "AI service authentication failed. Check the server configuration.";
+        if (status === 404) return "AI model or endpoint was not found. Check the server configuration.";
         if (status === 429) return "AI service rate-limited the request. Try again shortly.";
-        if (status && detail) return `AI service error (${status}): ${detail}`;
-        if (detail) return detail;
+        if (status) return `AI service returned an error (${status}). Try again shortly.`;
     }
 
-    return err instanceof Error ? err.message : "Unknown AI service error.";
+    return "The AI service is temporarily unavailable. Try again shortly.";
 }
 
 export async function POST(request: Request) {

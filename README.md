@@ -18,6 +18,12 @@ and volunteers.
 5. An authenticated Admin or Operations Manager decides whether to mark it
    handled. The AI never executes the action itself.
 
+The Operations dashboard also projects occupancy 15 minutes ahead and renders
+structured, human-reviewed staffing advice. Sustainability Leads receive
+structured interventions grounded in the latest energy, water, and waste
+metrics. Volunteer Coordinators can reassign a volunteer through the user's
+session, with RLS enforcing the write.
+
 ## Why the data is simulated
 
 Hackathon teams do not have access to real FIFA 2026 stadium telemetry. This
@@ -98,6 +104,7 @@ npm.cmd install
 npm.cmd run dev
 npm.cmd run lint
 npx.cmd tsc --noEmit
+npm.cmd test
 npm.cmd run eval:prompts
 npm.cmd run verify:alert-loop
 npm.cmd run build
@@ -111,6 +118,35 @@ live prompt-injection behavior has been verified.
 `verify:alert-loop` requires `PULSEOPS_APP_URL` and `CRON_SECRET`; it creates
 isolated test telemetry, observes the structured alert over Realtime, and
 removes its test rows.
+
+`verify:public` requires only `PULSEOPS_APP_URL`. It checks the public login
+shell, protected dashboard redirects, local-font build, and unauthenticated API
+denial without changing application data.
+
+## Two-minute judge walkthrough
+
+Share demo credentials privately through the submission platform; never place
+passwords in this repository or a public post. Give the judge the public app
+URL and an Admin or Operations Manager account, then use this path:
+
+1. Sign in and point out the **Simulated live telemetry** disclosure and the
+   signal-to-human-decision loop at the top of the dashboard.
+2. Open **Operations**. Show current occupancy, the 15-minute Resource
+   Allocation Advisor, its evidence and limitations, and that it cannot apply
+   a staffing change itself.
+3. Open **Alerts**. Use the deterministic scenario below if no critical alert
+   is already open; show the measured trigger and cached structured AI advice.
+4. Accept or reject the recommendation, then mark it handled to demonstrate
+   the human-controlled outcome.
+5. Ask Copilot which zone needs attention. Confirm the answer names its
+   authorized venues, evidence, limitations, and snapshot time.
+6. If time remains, switch to the Sustainability Lead or Volunteer Coordinator
+   account to show grounded interventions or an RLS-enforced reassignment.
+
+Expected proof: the judge can see the input data, detected risk, generated
+recommendation, evidence boundary, and human action without reading source
+code. If a model call is unavailable, the UI labels the deterministic safety
+fallback instead of presenting it as AI output.
 
 ## Deterministic demo scenario
 
