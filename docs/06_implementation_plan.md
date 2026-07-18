@@ -75,7 +75,9 @@ deployable state.
     purge job).
 19a. Add a committed prompt-evaluation scenario set covering grounded answers,
     stale/missing context, irrelevant requests, and prompt injection. Record
-    expected behaviors rather than brittle exact prose.
+    expected contract properties rather than brittle exact prose. Treat this
+    static harness separately from a live-model adversarial evaluation; the
+    latter must actually submit the injection question to the configured model.
 
 ## Phase 6 — Resource Allocation Advisor (Day 2 evening)
 20. Build a function that takes current + short-term-predicted occupancy

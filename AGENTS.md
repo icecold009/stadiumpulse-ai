@@ -143,10 +143,11 @@ recommendation, evidence, and human-controlled outcome.
 - Resource allocation, volunteer reassignment, accessibility, and the LinkedIn
   submission post remain incomplete.
 - Operator accept/reject/handled feedback and top-level safe error boundaries
-  are complete through migration `0008`; the first hosted CI run remains
-  unverified until `main` is explicitly pushed.
-- `middleware.ts` works but Next.js 16 reports that the convention is
-  deprecated in favor of `proxy`.
+  are complete through migration `0008`; the latest pushed CI run succeeded on
+  2026-07-18 after two earlier failures.
+- The Next.js 16 proxy convention and Copilot role/venue scoping are
+  implemented locally. Migration `0009` and hosted four-role Copilot
+  verification remain unapplied/unverified.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.

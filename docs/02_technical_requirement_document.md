@@ -77,11 +77,14 @@ observable and testable. Prompt templates therefore include:
 5. **Output contract:** concise answer/action, evidence used, urgency, and
    confidence or limitation when the data is insufficient.
 
-Prompt quality is evaluated with a small adversarial scenario set committed
-to the repo. At minimum it covers normal conditions, a capacity warning, a
-critical crowd condition, missing/stale data, an irrelevant question, and a
-prompt-injection attempt. The demo should show one scenario where the model
-refuses to invent a number and states that the available data is insufficient.
+Prompt construction is statically evaluated with a small scenario set committed
+to the repo. It covers normal conditions, a capacity warning, a critical crowd
+condition, missing/stale data, irrelevant-question instructions, and separation
+of a prompt-injection attempt from the server DATA block. This harness does not
+call the model. A separate live-model check must submit the adversarial and
+insufficient-data questions and record the behavior before claiming behavioral
+resistance. The demo should show the model refusing to invent a number when the
+available data is insufficient.
 
 The repository does not claim Google Antigravity usage. The submission
 deliverable is a LinkedIn post; runtime-model and tooling claims must remain

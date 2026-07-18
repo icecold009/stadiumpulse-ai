@@ -71,7 +71,8 @@ npm.cmd run verify:p0-hosted
 ```
 
 `seed:demo` upserts deterministic fictional venues, zones, gates, volunteers,
-and trusted role rows. It never prints secret values. Migrations under
+trusted role rows, and explicit venue assignments for non-admin demo users. It
+never prints secret values. Migrations under
 `supabase/migrations` are the database source of truth; do not reproduce them
 with manual dashboard edits.
 
@@ -86,7 +87,9 @@ Create four Supabase Auth users through a trusted admin workflow, one for each
 role: `admin`, `ops_manager`, `sustainability_lead`, and
 `volunteer_coordinator`. Store the assignment in `public.user_roles`; runtime
 authorization does not trust editable user metadata. Do not commit demo
-passwords. Share credentials privately with judges if required.
+passwords. Non-admin accounts also need one or more rows in
+`public.user_venue_access`; Admin receives cross-venue Copilot scope from its
+trusted role. Share credentials privately with judges if required.
 
 ## Local development and verification
 
@@ -102,6 +105,9 @@ npm.cmd run build
 
 The application runs at `http://localhost:3000`. Local fonts are installed
 from npm packages, so production builds do not fetch Google Fonts.
+`eval:prompts` is a static prompt/data contract check; it does not call the live
+model, so run and record a separate adversarial model exercise before claiming
+live prompt-injection behavior has been verified.
 `verify:alert-loop` requires `PULSEOPS_APP_URL` and `CRON_SECRET`; it creates
 isolated test telemetry, observes the structured alert over Realtime, and
 removes its test rows.

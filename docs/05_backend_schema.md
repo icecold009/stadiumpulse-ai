@@ -114,6 +114,17 @@ insert, update, or delete roles. Demo roles are provisioned through a trusted
 admin/service-role workflow; authorization code and RLS policies read this
 table rather than editable user metadata.
 
+### `user_venue_access` (explicit non-admin Copilot scope)
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid, pk part, fk → auth.users.id | assigned operator |
+| venue_id | uuid, pk part, fk → venues.id | venue the operator may use as Copilot context |
+
+Authenticated users may select only their own assignments. Browser clients
+cannot mutate assignments. Admin receives cross-venue Copilot scope from its
+trusted role; every other role must have at least one assignment or Copilot
+fails closed before loading context or calling the model.
+
 ### `rate_limits` (server-only abuse control)
 | Column | Type | Notes |
 |---|---|---|
@@ -166,3 +177,5 @@ of truth and get committed to git (they're small text files, no bloat risk).
   Realtime publication after migration-history drift was discovered.
 - `0008_operator_recommendation_feedback.sql`: records explicit human
   acceptance/rejection separately from incident handling.
+- `0009_user_venue_access.sql`: adds protected user-to-venue assignments and
+  backfills current non-admin demo users to the seeded venues.
