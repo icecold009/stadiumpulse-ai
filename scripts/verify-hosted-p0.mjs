@@ -78,6 +78,27 @@ const { data: anonymousVenues, error: anonymousError } = await anon
     .limit(1);
 assert(Boolean(anonymousError) || (anonymousVenues ?? []).length === 0, "Anonymous venue read was not denied.");
 
+const { data: anonymousAccess, error: anonymousAccessError } = await anon
+    .from("user_venue_access")
+    .select("user_id")
+    .limit(1);
+assert(
+    Boolean(anonymousAccessError) || (anonymousAccess ?? []).length === 0,
+    "Anonymous venue-access read was not denied."
+);
+
+for (const role of ["ops_manager", "sustainability_lead", "volunteer_coordinator"]) {
+    const { data, error } = await clients
+        .get(role)
+        .client.from("user_venue_access")
+        .select("user_id, venue_id");
+    assert(!error && (data ?? []).length > 0, `${role} has no readable venue assignment.`);
+    assert(
+        data.every((row) => row.user_id === clients.get(role).userId),
+        `${role} could read another user's venue assignment.`
+    );
+}
+
 const { data: alert } = await service.from("alerts").select("id, status").limit(1).maybeSingle();
 const { data: volunteer } = await service.from("volunteers").select("id, status").limit(1).maybeSingle();
 assert(alert && volunteer, "Live alert and volunteer rows are required for write-policy verification.");
@@ -226,6 +247,7 @@ console.log(
     JSON.stringify({
         ok: true,
         anonymous_read_denied: true,
+        venue_access_isolation: true,
         cross_role_writes_denied: true,
         authorized_writes_allowed: true,
         copilot_query_isolation: true,

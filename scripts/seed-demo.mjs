@@ -141,6 +141,7 @@ if (roleRows.length > 0) {
         .from("user_roles")
         .upsert(roleRows, { onConflict: "user_id" });
     if (rolesError) throw new Error(`Role backfill failed: ${rolesError.message}`);
+
 }
 
 const { data: storedRoles, error: storedRolesError } = await supabase
@@ -150,13 +151,37 @@ if (storedRolesError) {
     throw new Error(`Role verification failed: ${storedRolesError.message}`);
 }
 
+const venueAccessRows = (storedRoles ?? [])
+    .filter((row) => row.role !== "admin")
+    .flatMap((row) =>
+        venues.map((venue) => ({
+            user_id: row.user_id,
+            venue_id: venue.id,
+        }))
+    );
+if (venueAccessRows.length > 0) {
+    const { error: venueAccessError } = await supabase
+        .from("user_venue_access")
+        .upsert(venueAccessRows, { onConflict: "user_id,venue_id" });
+    if (venueAccessError) {
+        throw new Error(`Venue access backfill failed: ${venueAccessError.message}`);
+    }
+}
+
 const assignedUserIds = new Set((storedRoles ?? []).map((row) => row.user_id));
 const unassignedUsers = usersPage.users
     .filter((user) => !assignedUserIds.has(user.id))
     .map((user) => ({ id: user.id.slice(0, 8), email: maskEmail(user.email) }));
 
 const counts = {};
-for (const table of ["venues", "zones", "gates", "volunteers", "user_roles"]) {
+for (const table of [
+    "venues",
+    "zones",
+    "gates",
+    "volunteers",
+    "user_roles",
+    "user_venue_access",
+]) {
     const { count, error } = await supabase
         .from(table)
         .select("*", { count: "exact", head: true });

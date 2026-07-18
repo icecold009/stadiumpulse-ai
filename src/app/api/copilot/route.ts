@@ -5,8 +5,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAnthropicClient, COPILOT_MODEL } from "@/lib/ai/client";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { isRole } from "@/lib/auth/roles";
 import {
     COPILOT_SYSTEM_PROMPT,
+    buildCopilotUserContent,
     buildDataBlock,
     parseGroundedResponse,
     type DataSlice,
@@ -24,11 +26,13 @@ type RawTelemetry = {
     zone_id: string;
     occupancy: number;
     recorded_at: string;
-    zones: {
-        label: string;
-        capacity: number;
-        venues: { name: string } | null;
-    } | null;
+};
+
+type RawZone = {
+    id: string;
+    label: string;
+    capacity: number;
+    venues: { name: string } | null;
 };
 
 type RawAlert = {
@@ -42,6 +46,26 @@ type RawAlert = {
         label: string;
         venues: { name: string } | null;
     } | null;
+    venues: { name: string } | null;
+};
+
+type RawSustainabilityMetric = {
+    metric_type: string;
+    value: number;
+    target: number;
+    recorded_at: string;
+    venues: { name: string } | null;
+};
+
+type RawVolunteer = {
+    name: string;
+    status: string;
+    venues: { name: string } | null;
+    zones: { label: string } | null;
+};
+
+type RawVenueAccess = {
+    venue_id: string;
     venues: { name: string } | null;
 };
 
@@ -110,6 +134,88 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    const { data: roleRow, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (roleError) {
+        console.error("[copilot] role query error:", {
+            userId: user.id,
+            message: roleError.message,
+        });
+        return NextResponse.json(
+            { error: "Failed to resolve Copilot access." },
+            { status: 500 }
+        );
+    }
+
+    if (!isRole(roleRow?.role)) {
+        return NextResponse.json(
+            { error: "A valid operator role is required." },
+            { status: 403 }
+        );
+    }
+
+    const role = roleRow.role;
+    let venueIds: string[] = [];
+    let venueNames: string[] = [];
+
+    if (role === "admin") {
+        const { data, error } = await supabase
+            .from("venues")
+            .select("id, name")
+            .order("name");
+
+        if (error) {
+            console.error("[copilot] admin venue query error:", {
+                userId: user.id,
+                message: error.message,
+            });
+            return NextResponse.json(
+                { error: "Failed to resolve Copilot access." },
+                { status: 500 }
+            );
+        }
+
+        venueIds = (data ?? []).map((venue) => venue.id);
+        venueNames = (data ?? []).map((venue) => venue.name);
+    } else {
+        const { data, error } = await supabase
+            .from("user_venue_access")
+            .select("venue_id, venues(name)")
+            .eq("user_id", user.id);
+
+        if (error) {
+            console.error("[copilot] venue access query error:", {
+                userId: user.id,
+                message: error.message,
+            });
+            return NextResponse.json(
+                { error: "Failed to resolve Copilot access." },
+                { status: 500 }
+            );
+        }
+
+        const accessRows = (data ?? []) as unknown as RawVenueAccess[];
+        venueIds = [...new Set(accessRows.map((row) => row.venue_id))];
+        venueNames = [
+            ...new Set(
+                accessRows
+                    .map((row) => row.venues?.name)
+                    .filter((name): name is string => Boolean(name))
+            ),
+        ];
+    }
+
+    if (venueIds.length === 0) {
+        return NextResponse.json(
+            { error: "No venue access is assigned to this account." },
+            { status: 403 }
+        );
+    }
+
     const allowed = await consumeRateLimit({
         subject: user.id,
         action: "copilot",
@@ -127,21 +233,78 @@ export async function POST(request: Request) {
         Date.now() - WINDOW_MINUTES * 60 * 1000
     ).toISOString();
 
-    const [telemetryResult, alertsResult] = await Promise.all([
-        supabase
-            .from("zone_telemetry")
-            .select("zone_id, occupancy, recorded_at, zones(label, capacity, venues(name))")
-            .gte("recorded_at", windowStart)
-            .order("recorded_at", { ascending: false })
-            .limit(50),
+    const { data: zoneData, error: zoneError } = await supabase
+        .from("zones")
+        .select("id, label, capacity, venues(name)")
+        .in("venue_id", venueIds);
 
-        supabase
-            .from("alerts")
-            .select("id, severity, message, ai_recommendation, status, created_at, zones(label, venues(name)), venues(name)")
-            .eq("status", "open")
-            .order("created_at", { ascending: false })
-            .limit(20),
-    ]);
+    if (zoneError) {
+        console.error("[copilot] zone scope query error:", {
+            userId: user.id,
+            role,
+            message: zoneError.message,
+        });
+        return NextResponse.json(
+            { error: "Failed to load authorized venue data." },
+            { status: 500 }
+        );
+    }
+
+    const zones = (zoneData ?? []) as unknown as RawZone[];
+    const zoneIds = zones.map((zone) => zone.id);
+    const zonesById = new Map(zones.map((zone) => [zone.id, zone]));
+    const includeTelemetry =
+        role === "admin" ||
+        role === "ops_manager" ||
+        role === "volunteer_coordinator";
+    const includeAlerts = role === "admin" || role === "ops_manager";
+    const includeSustainability =
+        role === "admin" || role === "sustainability_lead";
+    const includeVolunteers =
+        role === "admin" || role === "volunteer_coordinator";
+
+    const telemetryQuery = includeTelemetry && zoneIds.length > 0
+        ? supabase
+              .from("zone_telemetry")
+              .select("zone_id, occupancy, recorded_at")
+              .in("zone_id", zoneIds)
+              .gte("recorded_at", windowStart)
+              .order("recorded_at", { ascending: false })
+              .limit(50)
+        : Promise.resolve({ data: [], error: null });
+    const alertsQuery = includeAlerts
+        ? supabase
+              .from("alerts")
+              .select("id, severity, message, ai_recommendation, status, created_at, zones(label, venues(name)), venues(name)")
+              .in("venue_id", venueIds)
+              .eq("status", "open")
+              .order("created_at", { ascending: false })
+              .limit(20)
+        : Promise.resolve({ data: [], error: null });
+    const sustainabilityQuery = includeSustainability
+        ? supabase
+              .from("sustainability_metrics")
+              .select("metric_type, value, target, recorded_at, venues(name)")
+              .in("venue_id", venueIds)
+              .gte("recorded_at", windowStart)
+              .order("recorded_at", { ascending: false })
+              .limit(50)
+        : Promise.resolve({ data: [], error: null });
+    const volunteersQuery = includeVolunteers
+        ? supabase
+              .from("volunteers")
+              .select("name, status, venues(name), zones(label)")
+              .in("venue_id", venueIds)
+              .limit(50)
+        : Promise.resolve({ data: [], error: null });
+
+    const [telemetryResult, alertsResult, sustainabilityResult, volunteersResult] =
+        await Promise.all([
+            telemetryQuery,
+            alertsQuery,
+            sustainabilityQuery,
+            volunteersQuery,
+        ]);
 
     if (telemetryResult.error) {
         console.error("[copilot] telemetry query error:", telemetryResult.error);
@@ -159,12 +322,28 @@ export async function POST(request: Request) {
         );
     }
 
+    if (sustainabilityResult.error) {
+        console.error("[copilot] sustainability query error:", sustainabilityResult.error);
+        return NextResponse.json(
+            { error: "Failed to load sustainability data." },
+            { status: 500 }
+        );
+    }
+
+    if (volunteersResult.error) {
+        console.error("[copilot] volunteer query error:", volunteersResult.error);
+        return NextResponse.json(
+            { error: "Failed to load volunteer data." },
+            { status: 500 }
+        );
+    }
+
     const telemetry = ((telemetryResult.data ?? []) as unknown as RawTelemetry[]).map((row) => ({
         zone_id: row.zone_id,
-        zone_label: row.zones?.label ?? "Unknown zone",
-        venue_name: row.zones?.venues?.name ?? "Unknown venue",
+        zone_label: zonesById.get(row.zone_id)?.label ?? "Unknown zone",
+        venue_name: zonesById.get(row.zone_id)?.venues?.name ?? "Unknown venue",
         occupancy: row.occupancy,
-        zone_capacity: row.zones?.capacity ?? 0,
+        zone_capacity: zonesById.get(row.zone_id)?.capacity ?? 0,
         recorded_at: row.recorded_at,
     }));
 
@@ -178,19 +357,41 @@ export async function POST(request: Request) {
         created_at: row.created_at,
     }));
 
+    const sustainability = ((sustainabilityResult.data ?? []) as unknown as RawSustainabilityMetric[]).map((row) => ({
+        venue_name: row.venues?.name ?? "Unknown venue",
+        metric_type: row.metric_type,
+        value: row.value,
+        target: row.target,
+        recorded_at: row.recorded_at,
+    }));
+
+    const volunteers = ((volunteersResult.data ?? []) as unknown as RawVolunteer[]).map((row) => ({
+        venue_name: row.venues?.name ?? "Unknown venue",
+        zone_label: row.zones?.label ?? "Unassigned",
+        name: row.name,
+        status: row.status,
+    }));
+
     const slice: DataSlice = {
+        requesterRole: role,
+        venueNames,
         telemetry,
         alerts,
+        sustainability,
+        volunteers,
         windowMinutes: WINDOW_MINUTES,
         fetchedAt: new Date().toISOString(),
     };
 
     const dataBlock = buildDataBlock(slice);
     const groundedSummary = [
+        `${venueIds.length} authorized venues`,
         `${telemetry.length} telemetry rows`,
         `${alerts.length} open alerts`,
+        `${sustainability.length} sustainability rows`,
+        `${volunteers.length} volunteer rows`,
         `window ${WINDOW_MINUTES} min`,
-    ].join(" • ");
+    ].join(" | ");
 
     const ai = getAnthropicClient();
 
@@ -203,10 +404,7 @@ export async function POST(request: Request) {
             messages: [
                 {
                     role: "user",
-                    content: [
-                        { type: "text", text: dataBlock },
-                        { type: "text", text: `QUESTION:\n${question}` },
-                    ],
+                    content: buildCopilotUserContent(dataBlock, question),
                 },
             ],
             stream: true,
@@ -235,6 +433,8 @@ export async function POST(request: Request) {
                             type: "meta",
                             groundedSummary,
                             dataWindowMinutes: WINDOW_MINUTES,
+                            requesterRole: role,
+                            venuesIncluded: venueNames,
                             zonesIncluded: [...new Set(telemetry.map((t) => `${t.venue_name} / ${t.zone_label}`))],
                             alertCount: alerts.length,
                         })}\n\n`
@@ -265,12 +465,28 @@ export async function POST(request: Request) {
                 const finalGroundedSummary = parsedGroundedSummary || groundedSummary;
 
                 const serviceRole = createSupabaseServiceRoleClient();
-                await serviceRole.from("copilot_queries").insert({
-                    user_id: user.id,
-                    question,
-                    grounded_data_summary: finalGroundedSummary,
-                    answer: finalAnswer,
-                });
+                try {
+                    const { error: loggingError } = await serviceRole
+                        .from("copilot_queries")
+                        .insert({
+                            user_id: user.id,
+                            question,
+                            grounded_data_summary: finalGroundedSummary,
+                            answer: finalAnswer,
+                        });
+
+                    if (loggingError) {
+                        console.error("[copilot] query logging error:", {
+                            userId: user.id,
+                            message: loggingError.message,
+                        });
+                    }
+                } catch (loggingError) {
+                    console.error("[copilot] query logging exception:", {
+                        userId: user.id,
+                        message: getCopilotErrorMessage(loggingError),
+                    });
+                }
 
                 controller.enqueue(
                     encoder.encode(

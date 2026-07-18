@@ -1,4 +1,8 @@
+import type { Role } from "@/lib/auth/roles";
+
 export type DataSlice = {
+    requesterRole: Role;
+    venueNames: string[];
     telemetry: Array<{
         zone_id: string;
         zone_label: string;
@@ -15,6 +19,19 @@ export type DataSlice = {
         message: string;
         ai_recommendation: string;
         created_at: string;
+    }>;
+    sustainability: Array<{
+        venue_name: string;
+        metric_type: string;
+        value: number;
+        target: number;
+        recorded_at: string;
+    }>;
+    volunteers: Array<{
+        venue_name: string;
+        zone_label: string;
+        name: string;
+        status: string;
     }>;
     windowMinutes: number;
     fetchedAt: string;
@@ -52,6 +69,7 @@ export function getDataStatus(
     const timestamps = [
         ...slice.telemetry.map((row) => row.recorded_at),
         ...slice.alerts.map((row) => row.created_at),
+        ...slice.sustainability.map((row) => row.recorded_at),
     ];
     if (timestamps.length === 0) return "missing";
 
@@ -66,15 +84,26 @@ export function buildDataBlock(slice: DataSlice): string {
     return `DATA:
 ${JSON.stringify(
         {
+            requester_role: slice.requesterRole,
+            authorized_venues: slice.venueNames,
             window_minutes: slice.windowMinutes,
             fetched_at: slice.fetchedAt,
             data_status: getDataStatus(slice),
             telemetry: slice.telemetry,
             alerts: slice.alerts,
+            sustainability: slice.sustainability,
+            volunteers: slice.volunteers,
         },
         null,
         2
     )}`;
+}
+
+export function buildCopilotUserContent(dataBlock: string, question: string) {
+    return [
+        { type: "text" as const, text: dataBlock },
+        { type: "text" as const, text: `QUESTION:\n${question}` },
+    ];
 }
 
 export function parseGroundedResponse(raw: string): {

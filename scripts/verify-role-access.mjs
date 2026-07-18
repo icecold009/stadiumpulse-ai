@@ -27,10 +27,10 @@ if (usersError) throw new Error(`Could not load Auth users: ${usersError.message
 
 const usersById = new Map(usersPage.users.map((user) => [user.id, user]));
 const tablesByRole = {
-    admin: ["venues", "zones", "zone_telemetry", "sustainability_metrics", "volunteers", "alerts"],
-    ops_manager: ["venues", "zones", "zone_telemetry", "gates", "gate_scans", "alerts"],
-    sustainability_lead: ["venues", "sustainability_metrics"],
-    volunteer_coordinator: ["zones", "volunteers"],
+    admin: ["venues", "zones", "zone_telemetry", "sustainability_metrics", "volunteers", "alerts", "user_venue_access"],
+    ops_manager: ["venues", "zones", "zone_telemetry", "gates", "gate_scans", "alerts", "user_venue_access"],
+    sustainability_lead: ["venues", "sustainability_metrics", "user_venue_access"],
+    volunteer_coordinator: ["zones", "volunteers", "user_venue_access"],
 };
 
 const results = [];

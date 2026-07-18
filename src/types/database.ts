@@ -248,6 +248,29 @@ export type Database = {
         }
         Relationships: []
       }
+      user_venue_access: {
+        Row: {
+          user_id: string
+          venue_id: string
+        }
+        Insert: {
+          user_id: string
+          venue_id: string
+        }
+        Update: {
+          user_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_venue_access_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           capacity: number
