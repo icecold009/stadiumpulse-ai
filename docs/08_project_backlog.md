@@ -31,7 +31,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Create the real Supabase project | Complete | The configured remote project accepted authenticated service-role seed and verification requests on 2026-07-18 |
-| Apply `0001_init.sql` | Partial | Migration exists with all documented tables, indexes, RLS, and policies; remote application must be verified |
+| Apply `0001_init.sql` | Partial | Migration exists with all documented tables, indexes, RLS, and policies. Live role verification confirms the expected tables are present and readable, but exact remote migration history and the full policy matrix remain unverified |
 | Seed venues, zones, and gates | Complete | Committed `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates |
 | Configure Supabase URL and anon key | Complete locally | The configured project is reachable; values remain unprinted and uncommitted. Verify deployment variables separately |
 | Configure service-role key | Complete locally | `npm.cmd run seed:demo` completed privileged writes and verification without exposing the key. Verify deployment variables separately |
@@ -55,7 +55,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Implement `/api/simulate-tick` | Complete, security remains | Route generates and bulk-inserts all three telemetry categories through the service-role client; P0-03 must protect it |
 | Generate coherent match-phase values | Complete | Pre-kickoff, in-play, and post-match phases drive occupancy, scans, and sustainability load with bounded jitter |
 | Configure deployed/local trigger | Complete, security remains | `vercel.json` schedules a minute cron and `DashboardPoller` triggers local/demo ticks; both depend on P0-03 protection design |
-| Confirm rows land in Supabase | Verify externally | Requires a live tick plus safe database/table verification against the configured project |
+| Confirm rows land in Supabase | Complete | Live role verification on 2026-07-18 confirmed populated telemetry tables: 1,995 zone rows, 1,640 gate-scan rows, and 2,124 sustainability rows |
 
 ### Phase 3 — Core dashboards
 
@@ -99,9 +99,9 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Rate-limit copilot and simulation APIs | Not started | A 429 AI-provider error message exists, but there is no application-level limiter |
 | Top-level React error boundary | Not started | No `error.tsx` or `global-error.tsx` exists under `src/app` |
 | Adversarial prompt-injection test | Not started | Prompt defenses exist in code, but no committed test/harness or recorded verification exists |
-| Verify RLS on every live table | Partial | Migration enables RLS on all documented tables; live project state requires external verification |
-| Audit git history for secrets | Not verified | Must be performed without printing secret values and recorded in the final security audit |
-| Confirm `.env*` ignored throughout history | Partial | Current `.gitignore` ignores `.env*`; historical verification remains |
+| Verify RLS on every live table | Partial | `npm.cmd run verify:roles` passed the expected authenticated read matrix for all four live demo roles on 2026-07-18. Denied reads, cross-role writes, own-query isolation, and anonymous access still require verification |
+| Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
+| Confirm `.env*` ignored throughout history | Partial | No `.env*` file appears in tracked history, but the root commit did not yet contain the `.env*` ignore rule, so the stricter doc-07 wording "gitignored from the first commit" is not satisfied |
 | Attempt cross-role access violations | Not started | Requires the four live demo users and manual/API authorization checks |
 | Add GitHub Actions lint/typecheck workflow | Not started | No `.github` workflow exists |
 | Protect privileged service-role routes | Not started | Simulation and alert-check endpoints remain callable without user or cron authorization |
@@ -134,7 +134,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-09 | ready | Create a deterministic demo setup | One documented command or protected action seeds/resets a coherent scenario that reaches the alert-to-action loop reliably |
 | P0-10 | ready | Finish core README setup | README documents prerequisites, safe environment-variable names, Supabase migration/seed steps, local commands, demo accounts strategy, simulation disclosure, and architecture |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
-| P0-13 | in_progress | Verify the external Supabase demo environment | Remote seed/reference counts and all four trusted roles are verified. Role QA found and documented Sustainability RLS drift; apply `0005`, rerun `npm.cmd run verify:roles`, then verify Realtime delivery and simulator inserts in the running app |
+| P0-13 | in_progress | Verify the external Supabase demo environment | `0005` is effective and `npm.cmd run verify:roles` passes the expected live read matrix for all four trusted roles. Populated telemetry is confirmed; verify Realtime delivery, a fresh simulator insert, denied access, and authorized/unauthorized writes in the running app |
 | P0-14 | ready | Add continuous integration | A GitHub Actions workflow runs lint and TypeScript checks on pushes to `main`; failures are visible and the documented commands match local verification |
 
 ### P1 — Judge-visible product value
@@ -167,16 +167,16 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 ## Known lint cleanup detail for P0-01
 
-The latest repository check found the following areas. Re-run lint before work
-because line numbers and errors may change:
+The 2026-07-18 repository check found two errors and one warning. Re-run lint
+before work because line numbers and results may change:
 
 - Untyped AI stream event in `src/app/api/copilot/route.ts`
-- Render-time `Date.now()` in `src/components/dashboard/trend-line.tsx`
-- Synchronous state mirroring inside effects in the three Realtime hooks
-- `let` that can be `const` in `src/middleware.ts`
 - `src/types/database.ts` detected as binary by ESLint, likely an encoding issue
-- Unused alert loader and login role redirect map
 - Missing effect dependencies in `src/hooks/useSupabaseRealtime.js`
+
+TypeScript passes. The production build still fails in an offline/restricted
+environment because `next/font` downloads Inter and JetBrains Mono from Google;
+this keeps P0-02 open.
 
 ## Prompt Wars submission work
 
