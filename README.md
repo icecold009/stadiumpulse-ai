@@ -59,6 +59,10 @@ Copy `.env.example` to `.env.local` and set these server/deployment values:
 - `FIREWORKS_RECOMMENDATION_MODEL` — optional structured-output model override;
   defaults to `accounts/fireworks/models/deepseek-v4-pro`
 - `CRON_SECRET` — a strong random value shared with Vercel Cron
+- `DEMO_ACCESS_ENABLED` — optional; set to `true` only during public judging
+- `DEMO_ADMIN_EMAIL`, `DEMO_OPS_MANAGER_EMAIL`,
+  `DEMO_SUSTAINABILITY_LEAD_EMAIL`, `DEMO_VOLUNTEER_COORDINATOR_EMAIL` —
+  existing dedicated accounts used by the passwordless role chooser
 
 Never expose the service-role, AI, or cron secret through a `NEXT_PUBLIC_`
 variable. Environment values are intentionally absent from this repository.
@@ -96,6 +100,13 @@ authorization does not trust editable user metadata. Do not commit demo
 passwords. Non-admin accounts also need one or more rows in
 `public.user_venue_access`; Admin receives cross-venue Copilot scope from its
 trusted role. Share credentials privately with judges if required.
+
+For automated judging, enable the optional role chooser instead of publishing
+passwords. Set the five `DEMO_*` variables in Vercel and redeploy. The public
+route can sign in only those fixed emails, verifies that each trusted database
+role matches the selected role, rate-limits requests by a hashed network
+identifier, and creates a normal Supabase session. RLS and route guards remain
+active. Set `DEMO_ACCESS_ENABLED=false` and redeploy after judging.
 
 ## Local development and verification
 

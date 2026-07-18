@@ -140,11 +140,13 @@ recommendation, evidence, and human-controlled outcome.
 - No PulseOps Vercel project currently exists in the authenticated account;
   deployment and production `CRON_SECRET` configuration remain publication
   work and require explicit user authorization.
-- Resource allocation, volunteer reassignment, accessibility, and the LinkedIn
-  submission post remain incomplete.
+- Resource allocation, sustainability advice, volunteer reassignment, and
+  code-level accessibility improvements are implemented locally; hosted role
+  flows and manual accessibility checks remain. The LinkedIn post is incomplete.
 - Operator accept/reject/handled feedback and top-level safe error boundaries
-  are complete through migration `0008`; the latest pushed CI run succeeded on
-  2026-07-18 after two earlier failures.
+  are complete through migration `0008`. The latest pushed CI run failed only
+  at build because public Supabase variables were absent; the local workflow
+  fix with safe CI placeholders passes and needs pushed-run confirmation.
 - The Next.js 16 proxy convention and Copilot role/venue scoping are
   implemented. Migration `0009` is applied and hosted venue-assignment/RLS
   verification passes; hosted four-role Copilot behavior remains unverified.

@@ -103,7 +103,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
 | Confirm `.env*` ignored throughout history | Partial | No `.env*` file appears in tracked history, but the root commit did not yet contain the `.env*` ignore rule, so the stricter doc-07 wording "gitignored from the first commit" is not satisfied |
 | Attempt cross-role access violations | Complete for database policies | `verify:p0-hosted` confirmed unauthorized alert/volunteer writes return no rows while Admin/Ops/Coordinator permitted writes succeed; route-navigation UX remains under P1-05 |
-| Add GitHub Actions lint/typecheck workflow | Complete | `.github/workflows/ci.yml` runs on pushes to `main` and pull requests. The latest pushed commit passed on 2026-07-18 after two earlier failed runs |
+| Add GitHub Actions verification workflow | Complete in code, rerun required | The latest pushed build failed only because CI lacked public Supabase build variables; safe non-secret placeholders now cover the build while lint, TypeScript, tests, and prompt checks already pass |
 | Protect privileged service-role routes | Complete | Local route integration against hosted services returned 401 without credentials, 200 with the cron bearer secret, and 429 after exhaustion; authorization precedes service-role writes and AI calls |
 | Move authorization to trusted role source | Complete in code, verification remains | Protected `user_roles`, route guards, alert API, and update policies are implemented in migration/code; apply and test against hosted Supabase |
 
@@ -155,6 +155,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P1-12 | in_progress | Make copilot audit logging reliable | Returned insert errors and thrown logging exceptions are recorded server-side without breaking the completed user stream. Verify successful hosted persistence; retention remains tracked by P1-07 |
 | P1-13 | ready | Run live-model adversarial Copilot evaluation | Submit an injection attempt and stale/missing-data questions to the configured live model, record that it follows the fixed contract without revealing instructions or inventing facts, and keep the static CI harness labeled accurately |
 | P1-14 | in_progress | Sustainability intervention advisor | Role-scoped structured AI/fallback interventions, evidence, limitations, target semantics, Realtime refresh, and manual retry are implemented; verify Admin/Sustainability Lead hosted behavior before marking done |
+| P1-15 | in_progress | Passwordless judge role chooser | A disabled-by-default, rate-limited server route creates normal Supabase sessions for four fixed demo emails after verifying trusted roles; configure Vercel variables and verify all buttons before marking done |
 
 ### P2 — Polish and scale narrative
 
