@@ -30,11 +30,11 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Create the real Supabase project | Verify externally | A local `.env.local` exists, but the existence and health of the remote project cannot be proven from git |
+| Create the real Supabase project | Complete | The configured remote project accepted authenticated service-role seed and verification requests on 2026-07-18 |
 | Apply `0001_init.sql` | Partial | Migration exists with all documented tables, indexes, RLS, and policies; remote application must be verified |
 | Seed venues, zones, and gates | Complete | Committed `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates |
-| Configure Supabase URL and anon key | Verify externally | Variable values must not be inspected or committed; validate through a safe connection/setup check |
-| Configure service-role key | Verify externally | Required variable is documented, and the server client consumes it; deployment/local presence must be validated safely |
+| Configure Supabase URL and anon key | Complete locally | The configured project is reachable; values remain unprinted and uncommitted. Verify deployment variables separately |
+| Configure service-role key | Complete locally | `npm.cmd run seed:demo` completed privileged writes and verification without exposing the key. Verify deployment variables separately |
 | Add checked-in environment example | Complete | The checked-in environment template lists the required Supabase and AI variable names without secret values |
 | Build privileged Supabase client | Complete | `src/lib/supabase/service-role.ts` creates a non-persistent server-only service-role client |
 
@@ -45,8 +45,8 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Real email/password login | Complete | Login calls `signInWithPassword` and routes after success |
 | Session and role route guard | Complete in code, verification remains | Middleware and dashboard layout verify the session, query protected `user_roles`, and redirect by the documented matrix |
 | Pass real role to `RoleNav` | Complete | Dashboard layout derives the role from the authenticated user and passes it to role-filtered navigation |
-| Create four demo users | Verify externally | Supabase Auth users are external state and no safe verification record exists in the repo |
-| Configure demo-user roles | Verify externally | `0003_user_roles_and_realtime.sql` backfills existing valid demo roles once; verify all four live accounts have the intended protected row |
+| Create four demo users | Complete | Remote Auth audit found four users on 2026-07-18 |
+| Configure demo-user roles | Complete | All four Auth users have protected `user_roles` rows; no remote users were left unassigned |
 
 ### Phase 2 — Data simulation
 
@@ -134,7 +134,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-09 | ready | Create a deterministic demo setup | One documented command or protected action seeds/resets a coherent scenario that reaches the alert-to-action loop reliably |
 | P0-10 | ready | Finish core README setup | README documents prerequisites, safe environment-variable names, Supabase migration/seed steps, local commands, demo accounts strategy, simulation disclosure, and architecture |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
-| P0-13 | ready | Verify the external Supabase demo environment | Migration version, seed rows, Realtime publication, four demo accounts, trusted roles, and successful simulator inserts are checked without exposing secrets; results are recorded in setup/submission notes |
+| P0-13 | in_progress | Verify the external Supabase demo environment | Remote seed/reference counts and all four trusted roles are verified. Still verify migration history, Realtime delivery, and successful simulator inserts in the running app without exposing secrets |
 | P0-14 | ready | Add continuous integration | A GitHub Actions workflow runs lint and TypeScript checks on pushes to `main`; failures are visible and the documented commands match local verification |
 
 ### P1 — Judge-visible product value

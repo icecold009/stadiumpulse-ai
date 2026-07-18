@@ -33,6 +33,22 @@ decision layer.
 - Anthropic-compatible streaming inference through a server-only API route
 - Vercel deployment and scheduled simulation ticks
 
+## Restore or seed demo data
+
+After applying the database migrations, the reference and volunteer demo rows
+can be safely restored from the terminal with the configured server
+credentials:
+
+```powershell
+npm.cmd run seed:demo
+```
+
+The command upserts deterministic venues, zones, gates, and fictional
+volunteers in foreign-key order. It also backfills trusted `user_roles` rows
+for existing Auth users whose metadata contains one of the four valid demo
+roles, then prints table counts and a masked list of any users still missing a
+role. It never prints environment-variable values.
+
 ## Documentation
 
 The product requirements, architecture, user flows, design system, database,
