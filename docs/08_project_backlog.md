@@ -15,7 +15,7 @@ status, dependencies, and acceptance criteria.
 
 ## Current milestone
 
-Deliver one reliable Prompt Wars demo loop:
+Achieved and live-verified on 2026-07-18:
 
 `simulation -> capacity alert -> grounded recommendation -> operator handles alert`
 
@@ -52,9 +52,9 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Implement `/api/simulate-tick` | Complete, security remains | Route generates and bulk-inserts all three telemetry categories through the service-role client; P0-03 must protect it |
+| Implement `/api/simulate-tick` | Complete | Route generates and bulk-inserts all telemetry categories, authenticates cron/Admin/Ops callers, consumes a durable limit, and invokes alert detection directly |
 | Generate coherent match-phase values | Complete | Pre-kickoff, in-play, and post-match phases drive occupancy, scans, and sustainability load with bounded jitter |
-| Configure deployed/local trigger | Complete, security remains | `vercel.json` schedules a minute cron and `DashboardPoller` triggers local/demo ticks; both depend on P0-03 protection design |
+| Configure deployed/local trigger | Complete in code | `vercel.json` schedules a minute cron and Admin/Ops `DashboardPoller` triggers bounded manual ticks. Configure `CRON_SECRET` when creating the eventual Vercel deployment |
 | Confirm rows land in Supabase | Complete | Live role verification on 2026-07-18 confirmed populated telemetry tables: 1,995 zone rows, 1,640 gate-scan rows, and 2,124 sustainability rows |
 
 ### Phase 3 — Core dashboards
@@ -69,8 +69,8 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Implement threshold and duplicate prevention | Complete, integration remains | `/api/check-alerts` implements warning/critical thresholds and skips zones with open alerts; it is unprotected and not invoked by the scheduled tick |
-| Generate one cached AI recommendation | Complete | Alert creation calls the model once and stores the result, with a deterministic fallback |
+| Implement threshold and duplicate prevention | Complete | Shared detection applies warning/critical thresholds, skips open-alert zones, bounds creation to three alerts/run, and is invoked directly by each successful tick |
+| Generate one cached AI recommendation | Complete | Alert creation uses Fireworks JSON-schema output and stores typed audit fields once; invalid/unavailable AI is explicitly labeled as a deterministic safety fallback |
 | Build incident feed | Complete in code, verification remains | `/ops/alerts` is linked for Admin/Ops, refreshes on Realtime changes, and includes loading, error, retry, empty, and handled states |
 | Mark alert handled through user session | Complete, external RLS verification remains | PATCH authenticates the user and updates through the session client; the database policy must still be tested with all roles |
 
@@ -79,7 +79,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Fetch context, call model, and stream | Partial | Authenticated streaming works over a 15-minute data slice, but the slice is not venue/role scoped and DATA plus QUESTION share one user-message string |
-| Apply prompt-injection defenses | Partial | Fixed system instructions, input length cap, JSON data labeling, and text rendering exist; adversarial evaluation and clearer message/content separation remain |
+| Apply prompt-injection defenses | Complete | Fixed system instructions, input cap, separate DATA/question content blocks, text-only rendering, stale/missing rules, and committed adversarial contract evaluation are in place |
 | Connect `CopilotPanel` to API | Complete | Panel posts questions and consumes the SSE stream |
 | Show grounding indicator | Complete | Metadata and final grounding summary are rendered on assistant messages |
 | Log copilot exchanges | Complete, reliability verification remains | Service-role insert exists after streaming; insert errors are not surfaced or logged, and live persistence is not verified |
@@ -96,15 +96,15 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Rate-limit copilot and simulation APIs | Not started | A 429 AI-provider error message exists, but there is no application-level limiter |
+| Rate-limit copilot and simulation APIs | Complete | Migration `0006` is applied; atomic exhaustion and route-level 429 behavior are verified, and all limits are consumed before paid or privileged work |
 | Top-level React error boundary | Not started | No `error.tsx` or `global-error.tsx` exists under `src/app` |
-| Adversarial prompt-injection test | Not started | Prompt defenses exist in code, but no committed test/harness or recorded verification exists |
-| Verify RLS on every live table | Partial | `npm.cmd run verify:roles` passed the expected authenticated read matrix for all four live demo roles on 2026-07-18. Denied reads, cross-role writes, own-query isolation, and anonymous access still require verification |
+| Adversarial prompt-injection test | Complete | `npm.cmd run eval:prompts` passes normal, warning, critical, missing, stale, irrelevant, injection, parsing, and structured-fallback expectations |
+| Verify RLS on every live table | Complete for current schema | Applied migrations enable RLS on every documented table; live role reads, anonymous denial, cross-role write denial, authorized writes, and server-only limiter access were verified on 2026-07-18 |
 | Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
 | Confirm `.env*` ignored throughout history | Partial | No `.env*` file appears in tracked history, but the root commit did not yet contain the `.env*` ignore rule, so the stricter doc-07 wording "gitignored from the first commit" is not satisfied |
-| Attempt cross-role access violations | Not started | Requires the four live demo users and manual/API authorization checks |
-| Add GitHub Actions lint/typecheck workflow | Not started | No `.github` workflow exists |
-| Protect privileged service-role routes | Not started | Simulation and alert-check endpoints remain callable without user or cron authorization |
+| Attempt cross-role access violations | Complete for database policies | `verify:p0-hosted` confirmed unauthorized alert/volunteer writes return no rows while Admin/Ops/Coordinator permitted writes succeed; route-navigation UX remains under P1-05 |
+| Add GitHub Actions lint/typecheck workflow | Complete in code | `.github/workflows/ci.yml` runs install, lint, TypeScript, and prompt evaluations on pushes and pull requests; first hosted run remains to be observed |
+| Protect privileged service-role routes | Complete | Local route integration against hosted services returned 401 without credentials, 200 with the cron bearer secret, and 429 after exhaustion; authorization precedes service-role writes and AI calls |
 | Move authorization to trusted role source | Complete in code, verification remains | Protected `user_roles`, route guards, alert API, and update policies are implemented in migration/code; apply and test against hosted Supabase |
 
 ### Phase 8 — Polish and submission
@@ -112,30 +112,30 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Accessibility pass | Partial | Components include several labels and focus styles, but no recorded keyboard, screen-reader, contrast, chart-summary, or reduced-motion audit exists |
-| Repository size check | Complete for current state | Tracked files total about 485 KB and loose git objects about 230 KB, comfortably below 10 MB; recheck immediately before submission |
+| Repository size check | Complete for current state | Prospective tracked files including the P0 work total about 583 KB and loose Git objects remain under 1 MB, comfortably below 10 MB; recheck immediately before submission |
 | Single-branch check | Complete for current state | Local and remote branch listing contains only `main` (plus `origin/HEAD` pointing to `origin/main`); recheck before submission |
-| Submission README | Partial | Challenge pitch, stack, synthetic-data rationale, and docs links exist; setup, environment, migration/seed, demo-user, run, and demo instructions remain under P0-10 |
+| Submission README | Complete | README documents prerequisites, safe variables, migrations, seeds, role provisioning, commands, architecture, recovery, deterministic demo steps, simulation disclosure, and LinkedIn submission scope |
 | State synthetic-data assumption | Complete | README explicitly explains unavailable FIFA telemetry, realistic simulation, and feed-swappable architecture |
-| Record demo walkthrough | Not started | Tracked by SUB-03 |
+| Prepare LinkedIn submission post | Not started | Tracked by SUB-01; a separately recorded video is not treated as required |
 | Final push and submission tag | Not started | Perform only after all audits pass and the user explicitly requests publication actions |
 
 ### P0 — Submission blockers
 
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
-| P0-01 | ready | Restore a clean lint baseline | `npm.cmd run lint` exits successfully; warnings are either fixed or intentionally documented |
-| P0-02 | ready | Make the production build deterministic | `npm.cmd run build` succeeds without relying on a runtime Google Fonts download; TypeScript continues to pass |
-| P0-03 | ready | Protect privileged system routes | Simulation and alert-check routes require an authenticated server/cron secret; unauthorized requests return 401/403 and never create service-role writes or AI calls |
+| P0-01 | done | Restore a clean lint baseline | `npm.cmd run lint` exits successfully with no errors or warnings after typing the AI stream, converting database types to UTF-8, and removing an unused legacy hook |
+| P0-02 | done | Make the production build deterministic | Inter and JetBrains Mono are bundled from local npm packages; `npm.cmd run build` and TypeScript pass without a Google Fonts request |
+| P0-03 | done | Protect privileged system routes | Cron-secret and trusted-role checks run before privileged work; integration returned 401 without credentials and 200 with the trusted cron secret against hosted services |
 | P0-04 | done | Move roles to a trusted source | `0003_user_roles_and_realtime.sql` creates protected `user_roles`; login, layout, middleware, alert API, and update policies no longer authorize from editable metadata |
-| P0-05 | ready | Complete the automatic alert loop | Each scheduled tick safely invokes alert detection or both run in one protected job; duplicate open alerts are prevented; the dashboard receives the new alert |
-| P0-06 | ready | Add API rate limiting | Copilot users are limited to the documented request rate and simulation calls are bounded appropriately for authenticated/manual use; excess requests return a friendly 429 without invoking paid or privileged work |
-| P0-07 | ready | Make recommendations auditable | Operational recommendation output includes action, urgency, evidence, limitations/confidence, and snapshot time; UI renders it without parsing arbitrary prose |
-| P0-08 | ready | Create prompt evaluation scenarios | Tests or a repeatable harness cover normal, warning, critical, stale/missing data, irrelevant request, and injection cases with behavior-based expectations |
-| P0-09 | ready | Create a deterministic demo setup | One documented command or protected action seeds/resets a coherent scenario that reaches the alert-to-action loop reliably |
-| P0-10 | ready | Finish core README setup | README documents prerequisites, safe environment-variable names, Supabase migration/seed steps, local commands, demo accounts strategy, simulation disclosure, and architecture |
+| P0-05 | done | Complete the automatic alert loop | Isolated live verification passed threshold detection, JSON-schema AI generation, alert insert, and Realtime delivery; each successful tick invokes the same detector directly and open zones are skipped |
+| P0-06 | done | Add API rate limiting | Applied durable limiter enforces documented limits; atomic exhaustion and route 429 behavior pass without invoking further privileged work |
+| P0-07 | done | Make recommendations auditable | Applied typed columns and UI render action, urgency, evidence, limitations, confidence, source, and snapshot time; live structured AI creation passed |
+| P0-08 | done | Create prompt evaluation scenarios | `npm.cmd run eval:prompts` passes seven behavior-oriented scenarios covering normal, warning, critical, stale/missing data, irrelevant scope, injection defenses, and structured parsing |
+| P0-09 | done | Create a deterministic demo setup | `npm.cmd run demo:reset` successfully created a live 96% critical scenario with a genuine JSON-schema model recommendation and documented human handling step |
+| P0-10 | done | Finish core README setup | README now covers prerequisites, safe variables, migrations/seeds, role provisioning, local verification, architecture, simulation disclosure, recovery, demo flow, and LinkedIn submission scope |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
-| P0-13 | in_progress | Verify the external Supabase demo environment | `0005` is effective and `npm.cmd run verify:roles` passes the expected live read matrix for all four trusted roles. Populated telemetry is confirmed; verify Realtime delivery, a fresh simulator insert, denied access, and authorized/unauthorized writes in the running app |
-| P0-14 | ready | Add continuous integration | A GitHub Actions workflow runs lint and TypeScript checks on pushes to `main`; failures are visible and the documented commands match local verification |
+| P0-13 | done | Verify the external Supabase demo environment | Migration history was reconciled and `0006`/`0007` applied. Live checks pass role reads, anonymous/cross-role denial, authorized writes, durable limits, fresh simulation inserts, threshold detection, and Realtime telemetry/alert delivery |
+| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs npm install, lint, TypeScript, and prompt contract evaluation; local versions of all commands pass |
 
 ### P1 — Judge-visible product value
 
@@ -165,29 +165,23 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P2-05 | ready | Observability upgrade | Structured logs include safe request context; production monitoring recommendations are documented without exposing secrets or user questions |
 | P2-06 | ready | Migrate middleware convention | Replace deprecated `middleware.ts` with the Next.js 16-supported proxy convention and verify all redirects and cookies |
 
-## Known lint cleanup detail for P0-01
+## Current local verification
 
-The 2026-07-18 repository check found two errors and one warning. Re-run lint
-before work because line numbers and results may change:
-
-- Untyped AI stream event in `src/app/api/copilot/route.ts`
-- `src/types/database.ts` detected as binary by ESLint, likely an encoding issue
-- Missing effect dependencies in `src/hooks/useSupabaseRealtime.js`
-
-TypeScript passes. The production build still fails in an offline/restricted
-environment because `next/font` downloads Inter and JetBrains Mono from Google;
-this keeps P0-02 open.
+On 2026-07-18, lint, TypeScript, the prompt contract evaluation, and the
+production build all pass. The build uses local font packages and makes no
+Google Fonts request. Next.js still reports the separately tracked middleware
+deprecation warning (P2-06). `npm.cmd audit --omit=dev` reports zero known
+vulnerabilities after a narrow PostCSS 8.5.10 override for the advisory in
+Next.js 16.2.10's transitive dependency.
 
 ## Prompt Wars submission work
 
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
-| SUB-01 | ready | Build-process evidence | Genuine Google Antigravity usage evidence is collected according to current organizer requirements; the repo does not fabricate or imply evidence |
-| SUB-02 | ready | Narrative submission | Narrative explains the user problem, prompt iterations, grounding, safeguards, demonstrated impact, limitations, and scale path |
-| SUB-03 | ready | Three-minute demo | Recorded/rehearsed flow follows the sequence in doc 06 and completes the alert-to-action loop without manual database repair |
-| SUB-04 | ready | Final security audit | Every checkbox in doc 07 is verified and results are recorded |
-| SUB-05 | ready | Repository audit | Public repository, branch, size, secrets, setup instructions, licensing/assets, and reproducible migrations are checked before submission |
-| SUB-06 | ready | Final publish and tag | After explicit user authorization, the verified final state is committed, pushed to `main`, and tagged with the agreed submission tag |
+| SUB-01 | ready | LinkedIn submission post | Post explains the problem, simulated-data assumption, grounded decision loop, safeguards, impact, and includes the project/demo link |
+| SUB-02 | ready | Final security audit | Every applicable checkbox in doc 07 is verified and results are recorded |
+| SUB-03 | ready | Repository audit | Public repository, branch, size, secrets, setup instructions, licensing/assets, and reproducible migrations are checked before submission |
+| SUB-04 | ready | Final publish and tag | After explicit user authorization, the verified final state is committed, pushed to `main`, and tagged with the agreed submission tag |
 
 ## Completed planning work
 

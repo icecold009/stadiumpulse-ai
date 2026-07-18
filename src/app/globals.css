@@ -11,6 +11,8 @@
     --status-critical: #e5484d;
     --ai-highlight: #8b5cf6;
     --border: #26303a;
+    --font-inter: "Inter Variable";
+    --font-jetbrains-mono: "JetBrains Mono Variable";
 }
 
 @theme inline {

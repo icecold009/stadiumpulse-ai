@@ -83,10 +83,9 @@ critical crowd condition, missing/stale data, an irrelevant question, and a
 prompt-injection attempt. The demo should show one scenario where the model
 refuses to invent a number and states that the available data is insufficient.
 
-The hackathon build workflow must use Google Antigravity as required by the
-Prompt Wars rules, while the deployed app's inference provider remains an
-implementation choice. Build-tool evidence and runtime-model claims must be
-documented separately so the submission does not imply they are the same.
+The repository does not claim Google Antigravity usage. The submission
+deliverable is a LinkedIn post; runtime-model and tooling claims must remain
+limited to tools actually used by the project.
 
 ## Environments
 

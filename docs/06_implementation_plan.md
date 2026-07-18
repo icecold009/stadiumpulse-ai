@@ -15,7 +15,7 @@ and human-controlled outcome.
 3. GenAI produces a short operational recommendation grounded in visible
    numbers and names the evidence used.
 4. The operator accepts, rejects, or marks the recommendation handled.
-5. The UI and submission narrative explain the operational impact.
+5. The UI and LinkedIn submission post explain the operational impact.
 
 If time is constrained, complete this loop for the Operations Manager before
 adding more roles, venues, charts, or secondary challenge tracks.
@@ -100,7 +100,8 @@ deployable state.
     per the challenge's submission requirements).
 27. Final repo size check: `du -sh .git` and `du -sh .` — confirm under
     10MB, confirm single branch (`git branch -a` should show only `main`).
-28. Record demo walkthrough per the submission doc's requirements.
+28. Draft and publish the required LinkedIn submission post with the project
+    and demo links.
 29. Final push, tag the submission commit.
 
 ## Prompt Wars submission package
@@ -118,12 +119,12 @@ The final package must tell the same story as the working demo:
 - **Responsible AI proof:** demonstrate insufficient-data behavior and an
   injection attempt; explain that the model advises but cannot directly
   execute operational or database actions.
-- **Build narrative:** document the key build prompts, what each iteration
-  changed, why the final prompt contract was selected, and the required
-  Google Antigravity workflow evidence.
-- **Demo sequence (3 minutes):** problem and user (20s), live dashboard
-  (35s), alert-to-action loop (70s), copilot question with grounding (35s),
-  security/responsible AI (15s), impact and scale path (5s).
+- **LinkedIn post:** explain the problem, grounded decision loop,
+  simulated-data disclosure, responsible-AI safeguards, operational impact,
+  and include the project/demo link. Do not claim tools that were not used.
+- **Demo walkthrough:** keep the deterministic alert-to-action and grounded
+  Copilot flow ready for linked or live demonstration; a separately recorded
+  video is not treated as a required submission artifact.
 
 Do not lead the pitch with framework names. Lead with the stadium decision
 that becomes faster, safer, or more sustainable because of GenAI.

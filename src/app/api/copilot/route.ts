@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAnthropicClient, COPILOT_MODEL } from "@/lib/ai/client";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 import {
     COPILOT_SYSTEM_PROMPT,
     buildDataBlock,
@@ -109,6 +110,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    const allowed = await consumeRateLimit({
+        subject: user.id,
+        action: "copilot",
+        limit: 10,
+        windowSeconds: 60,
+    });
+    if (!allowed) {
+        return NextResponse.json(
+            { error: "Copilot is limited to 10 questions per minute. Try again shortly." },
+            { status: 429 }
+        );
+    }
+
     const windowStart = new Date(
         Date.now() - WINDOW_MINUTES * 60 * 1000
     ).toISOString();
@@ -178,11 +192,6 @@ export async function POST(request: Request) {
         `window ${WINDOW_MINUTES} min`,
     ].join(" • ");
 
-    const userMessage = `${dataBlock}
-
-QUESTION:
-${question}`;
-
     const ai = getAnthropicClient();
 
     let stream;
@@ -194,7 +203,10 @@ ${question}`;
             messages: [
                 {
                     role: "user",
-                    content: userMessage,
+                    content: [
+                        { type: "text", text: dataBlock },
+                        { type: "text", text: `QUESTION:\n${question}` },
+                    ],
                 },
             ],
             stream: true,
@@ -229,7 +241,7 @@ ${question}`;
                     )
                 );
 
-                for await (const event of stream as AsyncIterable<any>) {
+                for await (const event of stream) {
                     if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
                         const chunk = event.delta.text ?? "";
                         if (!chunk) continue;
@@ -244,19 +256,6 @@ ${question}`;
                         );
                     }
 
-                    if (event.type === "message_delta" && typeof event.delta?.text === "string") {
-                        const chunk = event.delta.text;
-                        if (!chunk) continue;
-                        rawAnswer += chunk;
-                        controller.enqueue(
-                            encoder.encode(
-                                `data: ${JSON.stringify({
-                                    type: "delta",
-                                    text: chunk,
-                                })}\n\n`
-                            )
-                        );
-                    }
                 }
 
                 const { answer, groundedSummary: parsedGroundedSummary } =

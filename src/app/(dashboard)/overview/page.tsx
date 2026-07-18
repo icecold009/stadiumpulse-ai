@@ -21,7 +21,7 @@ export default async function OverviewPage() {
             .limit(5000),
         supabase
             .from("alerts")
-            .select("id, venue_id, zone_id, severity, message, ai_recommendation, status, created_at, handled_by, handled_at"),
+            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, status, created_at, handled_by, handled_at"),
         supabase
             .from("sustainability_metrics")
             .select("*")

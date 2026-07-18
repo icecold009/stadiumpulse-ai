@@ -130,11 +130,35 @@ export default function AlertsPage() {
                     </div>
 
                     {alert.ai_recommendation && (
-                        <div className="rounded-md bg-white/60 dark:bg-neutral-900/60 border px-3 py-2 text-sm">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                AI Recommendation
-                            </span>
-                            <p className="mt-0.5 text-sm">{alert.ai_recommendation}</p>
+                        <div className="rounded-md border border-ai-highlight/40 bg-ai-highlight/5 px-3 py-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-ai-highlight">
+                                    {alert.recommendation_source === "ai"
+                                        ? "AI recommendation"
+                                        : "Safety fallback (AI unavailable)"}
+                                </span>
+                                <span className="rounded-full border border-border px-2 py-0.5 text-xs">
+                                    {alert.ai_urgency} urgency
+                                </span>
+                                <span className="rounded-full border border-border px-2 py-0.5 text-xs">
+                                    {alert.ai_confidence} confidence
+                                </span>
+                            </div>
+                            <p className="mt-2 font-medium">{alert.ai_recommendation}</p>
+                            <dl className="mt-3 grid gap-2 text-xs text-text-muted">
+                                <div>
+                                    <dt className="font-semibold text-foreground">Evidence</dt>
+                                    <dd>{alert.ai_evidence || "No evidence was recorded."}</dd>
+                                </div>
+                                <div>
+                                    <dt className="font-semibold text-foreground">Limitations</dt>
+                                    <dd>{alert.ai_limitations}</dd>
+                                </div>
+                                <div>
+                                    <dt className="font-semibold text-foreground">Snapshot</dt>
+                                    <dd>{new Date(alert.snapshot_at).toLocaleString()}</dd>
+                                </div>
+                            </dl>
                         </div>
                     )}
 

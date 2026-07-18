@@ -8,6 +8,7 @@
 !.yarn/versions
 /coverage
 /.next/
+/supabase/.temp/
 /out/
 /build
 .DS_Store
@@ -17,6 +18,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .env*
+!.env.example
 .vercel
 *.tsbuildinfo
 next-env.d.ts

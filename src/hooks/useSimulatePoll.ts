@@ -7,6 +7,8 @@ export function useSimulatePoll(intervalMs = 30_000) {
     const router = useRouter();
 
     useEffect(() => {
+        if (intervalMs <= 0) return;
+
         let mounted = true;
 
         const tick = () =>

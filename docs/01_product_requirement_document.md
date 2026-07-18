@@ -98,12 +98,12 @@ requiring live FIFA integrations that don't exist for us to connect to.
 - A judge can trigger or observe at least one complete decision loop: a zone
   approaches capacity, an alert appears, GenAI recommends a response using
   cited live values, and an operator marks the response handled.
-- The demo and narrative explicitly map each showcased screen to one of the
+- The demo and LinkedIn submission post explicitly map each showcased screen to one of the
   selected challenge tracks; features outside those tracks are not presented
   as core scope.
-- The submission includes evidence of the required Prompt Wars build process
-  and a short narrative explaining the prompt strategy, iterations, grounding
-  approach, and responsible-AI safeguards.
+- The submission includes a LinkedIn post explaining the operational problem,
+  grounding approach, responsible-AI safeguards, simulated-data assumption,
+  and project/demo link.
 
 ## Key assumption to state explicitly in the README
 

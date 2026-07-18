@@ -64,7 +64,13 @@ schema and security are designed together, not bolted on after.
 | zone_id | uuid, fk → zones.id, nullable | |
 | severity | text | `warn` \| `critical` |
 | message | text | human-readable description |
-| ai_recommendation | text | AI-drafted action, generated at alert creation |
+| ai_recommendation | text | validated AI-drafted action, generated once at alert creation |
+| ai_urgency | text | `monitor` \| `prompt` \| `immediate` |
+| ai_evidence | text | snapshot facts used by the recommendation |
+| ai_limitations | text | missing context and bounded uncertainty |
+| ai_confidence | text | `low` \| `medium` \| `high` |
+| recommendation_source | text | `ai` \| `fallback`; prevents fallback text being mislabeled as AI |
+| snapshot_at | timestamptz | source telemetry time used for the recommendation |
 | status | text | `open` \| `handled` |
 | created_at | timestamptz | |
 | handled_by | uuid, fk → auth.users.id, nullable | |
@@ -105,6 +111,18 @@ insert, update, or delete roles. Demo roles are provisioned through a trusted
 admin/service-role workflow; authorization code and RLS policies read this
 table rather than editable user metadata.
 
+### `rate_limits` (server-only abuse control)
+| Column | Type | Notes |
+|---|---|---|
+| subject | text, pk part | authenticated user id or trusted `cron` subject |
+| action | text, pk part | bounded route/work category |
+| window_start | timestamptz, pk part | fixed request window |
+| request_count | int | atomically incremented by `consume_rate_limit` |
+
+RLS is enabled with no browser policies. Only the service role can execute the
+atomic limiter function; routes consume a limit after authentication and
+before privileged database writes or model calls.
+
 ## User roles
 
 ```json
@@ -139,3 +157,7 @@ of truth and get committed to git (they're small text files, no bloat risk).
 - `0004_seed_volunteers.sql`: deterministic fictional volunteer assignments.
 - `0005_fix_sustainability_read_policy.sql`: restores authenticated
   sustainability reads after detecting live-environment policy drift.
+- `0006_p0_security_and_auditability.sql`: adds typed alert recommendation
+  evidence fields and durable server-only rate limiting.
+- `0007_ensure_realtime_publication.sql`: idempotently reconciles the hosted
+  Realtime publication after migration-history drift was discovered.

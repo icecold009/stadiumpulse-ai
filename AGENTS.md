@@ -131,9 +131,17 @@ recommendation, evidence, and human-controlled outcome.
 ## Known current state
 
 - TypeScript currently passes.
-- Full ESLint currently has known failures tracked in the backlog.
-- Gate throughput, resource allocation, volunteer reassignment, rate limiting,
-  prompt evaluation, and full submission evidence remain incomplete.
+- Full ESLint, TypeScript, prompt contract evaluation, and the production build
+  currently pass locally; the production npm audit reports zero known
+  vulnerabilities.
+- Gate throughput, API rate limiting, structured alert recommendations, local
+  fonts, deterministic demo reset, CI, migrations `0006`/`0007`, and hosted
+  RLS/rate-limit/Realtime/alert-loop verification are complete.
+- No PulseOps Vercel project currently exists in the authenticated account;
+  deployment and production `CRON_SECRET` configuration remain publication
+  work and require explicit user authorization.
+- Resource allocation, volunteer reassignment, accessibility, and the LinkedIn
+  submission post remain incomplete.
 - `middleware.ts` works but Next.js 16 reports that the convention is
   deprecated in favor of `proxy`.
 

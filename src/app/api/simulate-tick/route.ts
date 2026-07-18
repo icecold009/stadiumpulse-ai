@@ -1,6 +1,9 @@
 // src/app/api/simulate-tick/route.ts
 import { NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { checkAndCreateAlerts } from "@/lib/alerts/check-alerts";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { authorizeSystemRoute } from "@/lib/security/system-route-auth";
 import type { Database } from "@/types/database";
 
 type ZoneTelemetryInsert =
@@ -142,6 +145,8 @@ async function runTick() {
         return { ok: false, error: "insert_failed", details: errors };
     }
 
+    const alertDetection = await checkAndCreateAlerts();
+
     return {
         ok: true,
         phase: phaseName,
@@ -152,6 +157,7 @@ async function runTick() {
             sustainability_metrics: sustainabilityRows.length,
         },
         recorded_at: now,
+        alert_detection: alertDetection,
     };
 }
 
@@ -164,7 +170,28 @@ function jsonResult(result: Awaited<ReturnType<typeof runTick>>) {
     return NextResponse.json(result);
 }
 
-async function handleTick() {
+async function handleTick(request: Request) {
+    const authorization = await authorizeSystemRoute(request);
+    if (!authorization.ok) {
+        return NextResponse.json(
+            { error: authorization.error },
+            { status: authorization.status }
+        );
+    }
+
+    const allowed = await consumeRateLimit({
+        subject: authorization.caller.subject,
+        action: "simulate-tick",
+        limit: authorization.caller.kind === "cron" ? 2 : 4,
+        windowSeconds: 60,
+    });
+    if (!allowed) {
+        return NextResponse.json(
+            { error: "Simulation is temporarily limited. Try again shortly." },
+            { status: 429 }
+        );
+    }
+
     try {
         const result = await runTick();
         return jsonResult(result);
@@ -182,11 +209,11 @@ async function handleTick() {
 }
 
 // POST — for manual dashboard trigger / local dev
-export async function POST() {
-    return handleTick();
+export async function POST(request: Request) {
+    return handleTick(request);
 }
 
 // GET — for Vercel Cron (cron jobs call GET by default)
-export async function GET() {
-    return handleTick();
+export async function GET(request: Request) {
+    return handleTick(request);
 }

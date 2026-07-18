@@ -2,16 +2,23 @@
     "name": "pulseops",
     "version": "0.1.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
+        "eval:prompts": "node --experimental-strip-types scripts/evaluate-prompts.mjs",
+        "demo:reset": "node --experimental-strip-types scripts/reset-demo-scenario.mjs",
         "seed:demo": "node scripts/seed-demo.mjs",
-        "verify:roles": "node scripts/verify-role-access.mjs"
+        "verify:roles": "node scripts/verify-role-access.mjs",
+        "verify:p0-hosted": "node scripts/verify-hosted-p0.mjs",
+        "verify:alert-loop": "node scripts/verify-alert-loop.mjs"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.110.0",
+        "@fontsource-variable/inter": "^5.2.8",
+        "@fontsource-variable/jetbrains-mono": "^5.2.8",
         "@supabase/ssr": "^0.12.0",
         "@supabase/supabase-js": "^2.110.2",
         "class-variance-authority": "^0.7.1",
@@ -32,5 +39,10 @@
         "eslint-config-next": "16.2.10",
         "tailwindcss": "^4",
         "typescript": "^5"
+    },
+    "overrides": {
+        "next": {
+            "postcss": "8.5.10"
+        }
     }
 }
