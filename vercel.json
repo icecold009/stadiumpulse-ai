@@ -2,7 +2,7 @@
     "crons": [
         {
             "path": "/api/simulate-tick",
-            "schedule": "* * * * *"
+            "schedule": "0 12 * * *"
         }
     ]
 }

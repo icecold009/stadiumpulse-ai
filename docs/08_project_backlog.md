@@ -54,7 +54,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Implement `/api/simulate-tick` | Complete | Route generates and bulk-inserts all telemetry categories, authenticates cron/Admin/Ops callers, consumes a durable limit, and invokes alert detection directly |
 | Generate coherent match-phase values | Complete | Pre-kickoff, in-play, and post-match phases drive occupancy, scans, and sustainability load with bounded jitter |
-| Configure deployed/local trigger | Complete in code | `vercel.json` schedules a minute cron and Admin/Ops `DashboardPoller` triggers bounded manual ticks. Configure `CRON_SECRET` when creating the eventual Vercel deployment |
+| Configure deployed/local trigger | Complete in code | `vercel.json` schedules a Hobby-compatible daily health tick while the Admin/Ops `DashboardPoller` supplies bounded active-demo ticks. Configure `CRON_SECRET` in Vercel before production verification |
 | Confirm rows land in Supabase | Complete | Live role verification on 2026-07-18 confirmed populated telemetry tables: 1,995 zone rows, 1,640 gate-scan rows, and 2,124 sustainability rows |
 
 ### Phase 3 — Core dashboards
@@ -135,7 +135,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-10 | done | Finish core README setup | README now covers prerequisites, safe variables, migrations/seeds, role provisioning, local verification, architecture, simulation disclosure, recovery, demo flow, and LinkedIn submission scope |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
 | P0-13 | done | Verify the external Supabase demo environment | Migration history was reconciled and `0006`/`0007` applied. Live checks pass role reads, anonymous/cross-role denial, authorized writes, durable limits, fresh simulation inserts, threshold detection, and Realtime telemetry/alert delivery |
-| P0-14 | in_progress | Add continuous integration | `.github/workflows/ci.yml` and all local commands pass; push `7da250e` to `main` and observe the first hosted GitHub Actions run before marking done |
+| P0-14 | in_progress | Add continuous integration | `.github/workflows/ci.yml` is implemented. The first hosted runs exposed an npm 10 lockfile mismatch; the lockfile fix must pass after its next push before this item is marked done |
 
 ### P1 — Judge-visible product value
 
