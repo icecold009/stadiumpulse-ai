@@ -1,5 +1,25 @@
 # 06 · Implementation Plan (build sequence)
 
+## Prompt Wars delivery principle
+
+Prioritize the smallest working experience that proves the challenge prompt:
+live stadium context is converted by GenAI into a grounded, useful decision
+for organizers, venue staff, or volunteers. A feature is demo-ready only when
+the judge can see its input data, AI reasoning boundary, recommended action,
+and human-controlled outcome.
+
+### Hackathon-critical path
+
+1. Live or simulated stadium signal is visible and clearly timestamped.
+2. A crowd-management or sustainability risk is detected automatically.
+3. GenAI produces a short operational recommendation grounded in visible
+   numbers and names the evidence used.
+4. The operator accepts, rejects, or marks the recommendation handled.
+5. The UI and submission narrative explain the operational impact.
+
+If time is constrained, complete this loop for the Operations Manager before
+adding more roles, venues, charts, or secondary challenge tracks.
+
 Work top to bottom. Commit after each numbered step (small, working
 commits to `main` — no branches). Each step should leave the app in a
 deployable state.
@@ -53,6 +73,9 @@ deployable state.
     footer showing which data was used.
 19. Log each exchange to `copilot_queries` (for auditability + the nightly
     purge job).
+19a. Add a committed prompt-evaluation scenario set covering grounded answers,
+    stale/missing context, irrelevant requests, and prompt injection. Record
+    expected behaviors rather than brittle exact prose.
 
 ## Phase 6 — Resource Allocation Advisor (Day 2 evening)
 20. Build a function that takes current + short-term-predicted occupancy
@@ -79,6 +102,31 @@ deployable state.
     10MB, confirm single branch (`git branch -a` should show only `main`).
 28. Record demo walkthrough per the submission doc's requirements.
 29. Final push, tag the submission commit.
+
+## Prompt Wars submission package
+
+The final package must tell the same story as the working demo:
+
+- **One-line pitch:** PulseOps turns live stadium signals into grounded,
+  human-approved operational decisions in seconds.
+- **Primary users:** operations managers, venue staff, and volunteer
+  coordinators.
+- **Primary tracks:** crowd management, sustainability, operational
+  intelligence, and real-time decision support.
+- **GenAI proof:** show the exact current data available to the model, the
+  generated recommendation, its evidence footer, and the operator action.
+- **Responsible AI proof:** demonstrate insufficient-data behavior and an
+  injection attempt; explain that the model advises but cannot directly
+  execute operational or database actions.
+- **Build narrative:** document the key build prompts, what each iteration
+  changed, why the final prompt contract was selected, and the required
+  Google Antigravity workflow evidence.
+- **Demo sequence (3 minutes):** problem and user (20s), live dashboard
+  (35s), alert-to-action loop (70s), copilot question with grounding (35s),
+  security/responsible AI (15s), impact and scale path (5s).
+
+Do not lead the pitch with framework names. Lead with the stadium decision
+that becomes faster, safer, or more sustainable because of GenAI.
 
 ## Time-box discipline
 If a phase is running long, cut scope inside that phase (e.g., skip Global

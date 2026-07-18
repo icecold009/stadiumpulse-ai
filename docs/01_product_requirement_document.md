@@ -3,6 +3,32 @@
 ## Product name
 **PulseOps** — an AI Command Center for Tournament Organizers
 
+## Hack2skill Prompt Wars challenge alignment
+
+**Challenge:** Smart Stadiums & Tournament Operations
+
+> Build a GenAI-enabled solution that enhances stadium operations and the
+> overall tournament experience for fans, organizers, volunteers, or venue
+> staff. The solution must leverage Generative AI to improve navigation,
+> crowd management, accessibility, transportation, sustainability,
+> multilingual assistance, operational intelligence, or real-time decision
+> support during the FIFA World Cup 2026.
+
+PulseOps answers this prompt through the **organizer, venue-staff, and
+volunteer** user groups. Its primary challenge tracks are **crowd
+management**, **sustainability**, **operational intelligence**, and
+**real-time decision support**. It deliberately does not attempt to cover
+every track. The strongest hackathon submission is one coherent operational
+workflow with visible GenAI value, not a collection of unrelated features.
+
+The core proof is a closed decision loop:
+
+`simulated live signal → detected risk → grounded GenAI recommendation → human action → updated operational state`
+
+The dashboard alone is not the innovation. GenAI must interpret the current
+multi-source context, explain the evidence it used, recommend a concrete
+action, and keep a human operator in control.
+
 ## Problem
 During a mega-event like the FIFA World Cup 2026, organizers juggle live
 signals from dozens of sources — gate throughput, zone occupancy, weather,
@@ -69,6 +95,15 @@ requiring live FIFA integrations that don't exist for us to connect to.
   least 3 times during a demo walkthrough, with no fabricated figures.
 - Repo is public, single branch, under 10MB, README explains the assumption
   that data is simulated and why.
+- A judge can trigger or observe at least one complete decision loop: a zone
+  approaches capacity, an alert appears, GenAI recommends a response using
+  cited live values, and an operator marks the response handled.
+- The demo and narrative explicitly map each showcased screen to one of the
+  selected challenge tracks; features outside those tracks are not presented
+  as core scope.
+- The submission includes evidence of the required Prompt Wars build process
+  and a short narrative explaining the prompt strategy, iterations, grounding
+  approach, and responsible-AI safeguards.
 
 ## Key assumption to state explicitly in the README
 

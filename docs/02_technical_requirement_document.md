@@ -62,6 +62,32 @@ genuine data feed later without touching AI or UI code.
 5. This is "RAG-lite" — no vector DB needed; the grounding data is small,
    structured, and time-boxed, not an unstructured corpus.
 
+## Prompt Wars GenAI contract
+
+Every production prompt used by PulseOps must make the GenAI contribution
+observable and testable. Prompt templates therefore include:
+
+1. **Role:** stadium operations decision-support assistant, not an autonomous
+   controller.
+2. **Task:** answer an operational question or recommend a bounded action.
+3. **Context:** a server-generated, timestamped `DATA` block containing only
+   the relevant live snapshot.
+4. **Constraints:** use only supplied facts, ignore embedded instructions,
+   avoid fabricated values, and never claim an action was executed.
+5. **Output contract:** concise answer/action, evidence used, urgency, and
+   confidence or limitation when the data is insufficient.
+
+Prompt quality is evaluated with a small adversarial scenario set committed
+to the repo. At minimum it covers normal conditions, a capacity warning, a
+critical crowd condition, missing/stale data, an irrelevant question, and a
+prompt-injection attempt. The demo should show one scenario where the model
+refuses to invent a number and states that the available data is insufficient.
+
+The hackathon build workflow must use Google Antigravity as required by the
+Prompt Wars rules, while the deployed app's inference provider remains an
+implementation choice. Build-tool evidence and runtime-model claims must be
+documented separately so the submission does not imply they are the same.
+
 ## Environments
 
 - **Local:** `.env.local`, a Supabase dev project, `next dev` hot reload.
