@@ -22,10 +22,13 @@ export type Database = {
           ai_recommendation: string
           ai_urgency: string
           created_at: string
+          decision_at: string | null
+          decision_by: string | null
           handled_at: string | null
           handled_by: string | null
           id: string
           message: string
+          operator_decision: string | null
           recommendation_source: string
           severity: string
           snapshot_at: string
@@ -40,10 +43,13 @@ export type Database = {
           ai_recommendation: string
           ai_urgency?: string
           created_at?: string
+          decision_at?: string | null
+          decision_by?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
           message: string
+          operator_decision?: string | null
           recommendation_source?: string
           severity: string
           snapshot_at?: string
@@ -58,10 +64,13 @@ export type Database = {
           ai_recommendation?: string
           ai_urgency?: string
           created_at?: string
+          decision_at?: string | null
+          decision_by?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
           message?: string
+          operator_decision?: string | null
           recommendation_source?: string
           severity?: string
           snapshot_at?: string

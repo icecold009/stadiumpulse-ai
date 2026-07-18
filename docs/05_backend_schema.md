@@ -71,6 +71,9 @@ schema and security are designed together, not bolted on after.
 | ai_confidence | text | `low` \| `medium` \| `high` |
 | recommendation_source | text | `ai` \| `fallback`; prevents fallback text being mislabeled as AI |
 | snapshot_at | timestamptz | source telemetry time used for the recommendation |
+| operator_decision | text, nullable | `accepted` \| `rejected`; human response to the recommendation |
+| decision_by | uuid, nullable | authenticated operator who accepted/rejected |
+| decision_at | timestamptz, nullable | recommendation feedback time |
 | status | text | `open` \| `handled` |
 | created_at | timestamptz | |
 | handled_by | uuid, fk → auth.users.id, nullable | |
@@ -161,3 +164,5 @@ of truth and get committed to git (they're small text files, no bloat risk).
   evidence fields and durable server-only rate limiting.
 - `0007_ensure_realtime_publication.sql`: idempotently reconciles the hosted
   Realtime publication after migration-history drift was discovered.
+- `0008_operator_recommendation_feedback.sql`: records explicit human
+  acceptance/rejection separately from incident handling.

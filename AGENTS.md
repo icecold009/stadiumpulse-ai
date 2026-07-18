@@ -142,6 +142,9 @@ recommendation, evidence, and human-controlled outcome.
   work and require explicit user authorization.
 - Resource allocation, volunteer reassignment, accessibility, and the LinkedIn
   submission post remain incomplete.
+- Operator accept/reject/handled feedback and top-level safe error boundaries
+  are complete through migration `0008`; the first hosted CI run remains
+  unverified until `main` is explicitly pushed.
 - `middleware.ts` works but Next.js 16 reports that the convention is
   deprecated in favor of `proxy`.
 

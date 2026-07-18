@@ -36,7 +36,9 @@ All roles ─────────────► AI Copilot Chat (persistent
 - Zone occupancy heatmap (SVG grid, color-coded).
 - Gate throughput line chart (last 60 min).
 - Live incident/alert list, each with an AI-suggested action and a
-  "Mark handled" button.
+  human-controlled Accept, Reject, and Mark handled actions. Accept/reject
+  records feedback on the recommendation without claiming the incident was
+  resolved; Mark handled closes the incident separately.
 - "Resource Allocation Advisor" panel: AI-generated staffing suggestions,
   refreshed every simulated tick.
 

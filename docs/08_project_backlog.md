@@ -97,7 +97,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Rate-limit copilot and simulation APIs | Complete | Migration `0006` is applied; atomic exhaustion and route-level 429 behavior are verified, and all limits are consumed before paid or privileged work |
-| Top-level React error boundary | Not started | No `error.tsx` or `global-error.tsx` exists under `src/app` |
+| Top-level React error boundary | Complete | App-level and global boundaries provide safe retry states, state that no operational action occurred, and keep stack details out of the browser |
 | Adversarial prompt-injection test | Complete | `npm.cmd run eval:prompts` passes normal, warning, critical, missing, stale, irrelevant, injection, parsing, and structured-fallback expectations |
 | Verify RLS on every live table | Complete for current schema | Applied migrations enable RLS on every documented table; live role reads, anonymous denial, cross-role write denial, authorized writes, and server-only limiter access were verified on 2026-07-18 |
 | Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
@@ -135,7 +135,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-10 | done | Finish core README setup | README now covers prerequisites, safe variables, migrations/seeds, role provisioning, local verification, architecture, simulation disclosure, recovery, demo flow, and LinkedIn submission scope |
 | P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
 | P0-13 | done | Verify the external Supabase demo environment | Migration history was reconciled and `0006`/`0007` applied. Live checks pass role reads, anonymous/cross-role denial, authorized writes, durable limits, fresh simulation inserts, threshold detection, and Realtime telemetry/alert delivery |
-| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs npm install, lint, TypeScript, and prompt contract evaluation; local versions of all commands pass |
+| P0-14 | in_progress | Add continuous integration | `.github/workflows/ci.yml` and all local commands pass; push `7da250e` to `main` and observe the first hosted GitHub Actions run before marking done |
 
 ### P1 — Judge-visible product value
 
@@ -144,11 +144,11 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P1-01 | ready | Resource Allocation Advisor | Current occupancy produces structured staffing recommendations with evidence; the panel handles unavailable AI or data honestly |
 | P1-02 | done | Gate throughput chart | Ops aggregates timestamped scans into a live trend, identifies the busiest gate, and provides an accessible text equivalent |
 | P1-03 | ready | Volunteer reassignment | Authorized coordinators/admins can reassign a volunteer; RLS enforces the action and Realtime updates the view |
-| P1-04 | ready | Human feedback on AI recommendations | Operator can accept, reject, or mark handled; the recorded state clearly distinguishes recommendation from executed action |
+| P1-04 | done | Human feedback on AI recommendations | Migration `0008`, the authenticated API, and UI record Accept/Reject separately from Mark handled; all three transitions passed the live Ops RLS policy and the test alert was restored |
 | P1-05 | in_progress | Role-flow consistency | Code follows the documented role matrix and trusted table; complete the four-account manual route/API matrix before marking done |
 | P1-06 | ready | Copilot data relevance | The server selects only role- and venue-relevant current data, detects stale snapshots, and exposes the exact evidence summary to the user |
 | P1-07 | ready | Copilot retention job | Query logs older than the documented retention window are removed by a protected scheduled job and the policy is documented |
-| P1-08 | ready | Error and empty states | Top-level error boundary and affected screens show safe, useful messages without stack traces or fabricated fallback data |
+| P1-08 | done | Error and empty states | App/global error boundaries and affected dashboard/alert states provide safe retry, error, empty, and degraded messages without stack traces or fabricated data |
 | P1-09 | ready | Accessibility pass | Keyboard flow, visible focus, chart summaries, non-color status cues, contrast, and reduced-motion behavior meet the UI brief |
 | P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and publication migration cover Phase 3 dashboards; verify hosted writes and UI changes without refresh under P0-13 |
 | P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, and safe states are implemented; verify hosted insert/update behavior before marking done |

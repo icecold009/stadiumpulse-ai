@@ -25,7 +25,7 @@ export default async function OpsPage() {
             .limit(5000),
         supabase
             .from("alerts")
-            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, status, created_at, handled_by, handled_at")
+            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_by, decision_at, status, created_at, handled_by, handled_at")
             .eq("status", "open"),
         supabase.from("gates").select("id, venue_id, label"),
         supabase

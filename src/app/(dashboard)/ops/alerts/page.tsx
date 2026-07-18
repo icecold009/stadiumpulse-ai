@@ -52,12 +52,25 @@ export default function AlertsPage() {
         };
     }, [fetchAlerts, supabase]);
 
-    async function handleMarkHandled(id: string) {
+    async function handleFeedback(
+        id: string,
+        action: "accept" | "reject" | "handled"
+    ) {
         startTransition(async () => {
-            const res = await fetch(`/api/alerts/${id}/handle`, { method: "PATCH" });
+            const res = await fetch(`/api/alerts/${id}/handle`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action }),
+            });
             if (res.ok) {
-                // Optimistically remove from feed
-                setAlerts((prev) => prev.filter((a) => a.id !== id));
+                const json = await res.json();
+                setAlerts((current) =>
+                    action === "handled"
+                        ? current.filter((alert) => alert.id !== id)
+                        : current.map((alert) =>
+                              alert.id === id ? { ...alert, ...json.alert } : alert
+                          )
+                );
             } else {
                 const json = await res.json();
                 alert(`Error: ${json.error}`);
@@ -120,13 +133,6 @@ export default function AlertsPage() {
                                 </p>
                             )}
                         </div>
-                        <button
-                            onClick={() => handleMarkHandled(alert.id)}
-                            disabled={isPending}
-                            className="shrink-0 text-sm px-3 py-1.5 rounded-md border bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors"
-                        >
-                            Mark handled
-                        </button>
                     </div>
 
                     {alert.ai_recommendation && (
@@ -145,6 +151,11 @@ export default function AlertsPage() {
                                 </span>
                             </div>
                             <p className="mt-2 font-medium">{alert.ai_recommendation}</p>
+                            {alert.operator_decision ? (
+                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-accent">
+                                    Operator {alert.operator_decision} this recommendation
+                                </p>
+                            ) : null}
                             <dl className="mt-3 grid gap-2 text-xs text-text-muted">
                                 <div>
                                     <dt className="font-semibold text-foreground">Evidence</dt>
@@ -161,6 +172,33 @@ export default function AlertsPage() {
                             </dl>
                         </div>
                     )}
+
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleFeedback(alert.id, "accept")}
+                            disabled={isPending || alert.operator_decision === "accepted"}
+                            className="rounded-md border border-status-ok/60 px-3 py-1.5 text-sm text-status-ok transition hover:bg-status-ok/10 disabled:opacity-50"
+                        >
+                            Accept recommendation
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleFeedback(alert.id, "reject")}
+                            disabled={isPending || alert.operator_decision === "rejected"}
+                            className="rounded-md border border-status-warn/60 px-3 py-1.5 text-sm text-status-warn transition hover:bg-status-warn/10 disabled:opacity-50"
+                        >
+                            Reject recommendation
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleFeedback(alert.id, "handled")}
+                            disabled={isPending}
+                            className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm transition hover:border-accent hover:text-accent disabled:opacity-50"
+                        >
+                            Mark incident handled
+                        </button>
+                    </div>
 
                     <p className="text-xs text-muted-foreground">
                         {new Date(alert.created_at).toLocaleString()}
