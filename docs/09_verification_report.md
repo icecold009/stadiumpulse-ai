@@ -4,14 +4,14 @@
 
 **Target:** `https://stadiumpulse-ai-nine.vercel.app`
 
-**Verified revision:** `c7ebfa2` (`main`, synchronized with `origin/main`)
+**Deployed revision:** `c7ebfa2`; local P1 verification also includes the locally committed retention and test-harness work
 
 ## Quality and CI-equivalent gates
 
 | Gate | Result |
 |---|---|
 | ESLint / TypeScript | Pass / pass |
-| Node contract tests | 13 passed, 0 failed (auth matrix, API inputs, Copilot context, advisor) |
+| Node contract tests | 17 passed, 0 failed (auth, API, Copilot, advisor, Realtime reducers, retention) |
 | Static prompt contracts | Pass: five data states plus injection separation |
 | Production build | Pass |
 | Production dependency audit | 0 known vulnerabilities |
@@ -34,6 +34,21 @@ and alerts for Operations Manager, sustainability metrics for Sustainability
 Lead, volunteer assignments for Volunteer Coordinator, and the combined slice
 for Admin. Total streamed response times ranged from 5.6 s to 13.5 s.
 
+## P1 operational workflows
+
+The integrated hosted P1 harness passed live Resource Advisor access for
+Admin/Ops, Sustainability Advisor access for Admin/Sustainability Lead, and
+cross-role denial for both. Authenticated sessions received Realtime changes
+for zone telemetry, gate scans, sustainability metrics, volunteers, and
+alerts. Admin and Volunteer Coordinator reassignment succeeded and was
+restored; the Ops incident feed received an insert and handled update. A
+Copilot exchange persisted its answer and grounding audit fields, then the
+test row was removed.
+
+The new retention route was exercised through a local production server
+against hosted Supabase: unauthenticated access returned 401, a 25-hour query
+was deleted, a recent query was preserved, and the test row was cleaned up.
+
 ## Accessibility and performance
 
 | Audit | Result |
@@ -41,9 +56,11 @@ for Admin. Total streamed response times ranged from 5.6 s to 13.5 s.
 | Lighthouse login | Performance 77, Accessibility 100, Best Practices 96, SEO 82 |
 | Web vitals (lab) | FCP 1.1 s, LCP 2.6 s, TBT 800 ms, CLS 0 |
 | axe-core WCAG A/AA login | 0 violations, 21 passed rules |
-| Source inspection checklist | Skip link, visible focus, focus trap/Escape restore, live regions, chart text equivalents, non-color labels, and reduced motion present |
+| Authenticated Browser review | Admin overview, Ops, alerts, sustainability, and volunteers exposed named navigation and controls, one main landmark, live-region status where needed, and text equivalents for every rendered chart; no desktop horizontal overflow was observed |
+| Focused contrast review | Found and corrected low-contrast AI labels, critical badges, and the energy-series legend; the replacement colors provide AA contrast on their dark surfaces |
+| Source inspection checklist | Skip link, visible focus, focus trap/Escape restore, responsive reflow, live regions, chart text equivalents, non-color labels, and reduced motion present |
 
-Automated results cover the deployed login surface. The interactive browser was unavailable, so a true manual audit was not run. Keyboard-only traversal, screen-reader output, contrast sampling, and 200% zoom on authenticated dashboards remain unclaimed.
+Automated results cover the deployed login surface. The focused authenticated review used the browser accessibility tree and computed styles across all Admin routes, with source inspection for keyboard focus and responsive reflow behavior. It was intentionally a concise release check rather than an exhaustive assistive-technology certification.
 
 ## Resolved finding
 

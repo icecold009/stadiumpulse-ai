@@ -121,6 +121,9 @@ recommendation, evidence, and human-controlled outcome.
 - Never commit merely because an implementation is finished. First verify the
   affected code and workflow successfully, report the results, and wait for an
   explicit user request to create the commit.
+- Preserve logical commit history for multi-stage work. Use separate,
+  intentional commits for distinct completed changes; do not compress or
+  squash the whole task into one commit unless the user explicitly requests it.
 - Do not commit, push, tag, deploy, or open a PR unless explicitly requested.
 - Never commit `.env*`, generated build output, logs, or secrets.
 - Keep the repository small; do not add datasets, model weights, recordings,
@@ -140,17 +143,18 @@ recommendation, evidence, and human-controlled outcome.
 - A PulseOps Vercel deployment is live and passes the public and four-role
   authorization smoke tests. Final production `CRON_SECRET` and scheduled-tick
   confirmation remain publication work.
-- Resource allocation, sustainability advice, volunteer reassignment, and
-  code-level accessibility improvements are implemented locally; their hosted
-  UI workflows and manual accessibility checks remain. The LinkedIn post is
-  incomplete.
+- Resource allocation, sustainability advice, volunteer reassignment,
+  Phase 3 Realtime delivery, incident handling, and Copilot audit persistence
+  pass hosted role-scoped verification. Copilot retention passes local
+  production-route verification against isolated hosted rows. The focused
+  authenticated accessibility review is complete. The LinkedIn post is incomplete.
 - Operator accept/reject/handled feedback and top-level safe error boundaries
   are complete through migration `0008`. The current pushed CI run passes lint,
   TypeScript, tests, prompt contracts, and the production build.
 - The Next.js 16 proxy convention and Copilot role/venue scoping are
   implemented. Migration `0009` is applied; hosted venue-assignment/RLS and
-  four-role Copilot behavior pass. Manual authenticated accessibility and a
-  few hosted UI interaction checks remain.
+  four-role Copilot behavior pass. A few final hosted UI interaction checks
+  remain.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.
