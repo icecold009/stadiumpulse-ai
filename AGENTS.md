@@ -141,8 +141,9 @@ recommendation, evidence, and human-controlled outcome.
   fonts, deterministic demo reset, CI, migrations `0006`/`0007`, and hosted
   RLS/rate-limit/Realtime/alert-loop verification are complete.
 - A PulseOps Vercel deployment is live and passes the public and four-role
-  authorization smoke tests. Final production `CRON_SECRET` and scheduled-tick
-  confirmation remain publication work.
+  authorization smoke tests. Vercel lists both production cron jobs, confirms
+  the sensitive `CRON_SECRET` target, and returned 2xx for a manually triggered
+  production simulation cron on 2026-07-19.
 - Resource allocation, sustainability advice, volunteer reassignment,
   Phase 3 Realtime delivery, incident handling, and Copilot audit persistence
   pass hosted role-scoped verification. Copilot retention passes local
@@ -153,8 +154,9 @@ recommendation, evidence, and human-controlled outcome.
   TypeScript, tests, prompt contracts, and the production build.
 - The Next.js 16 proxy convention and Copilot role/venue scoping are
   implemented. Migration `0009` is applied; hosted venue-assignment/RLS and
-  four-role Copilot behavior pass. A few final hosted UI interaction checks
-  remain.
+  four-role Copilot behavior pass. The final public and authenticated hosted
+  interaction harnesses passed on 2026-07-19, including all route matrices,
+  API permissions, grounded streams, and prompt-injection resistance.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.

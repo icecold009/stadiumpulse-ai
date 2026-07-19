@@ -208,6 +208,13 @@ responsible-AI safeguards, and the project/demo link. This project does not
 claim Google Antigravity usage, a separate narrative submission, or a required
 demo video.
 
+## Licensing and assets
+
+No project license is currently granted. Third-party packages retain their
+respective licenses. The application includes no separately sourced media
+assets; interface icons, charts, and fonts come from the declared npm
+dependencies.
+
 ## Documentation
 
 The product requirements, architecture, user flows, design system, database,

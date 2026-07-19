@@ -17,6 +17,23 @@
 | Production dependency audit | 0 known vulnerabilities |
 | Pushed GitHub Actions | Pass on current revision `c7ebfa2` (run `29675185549`) |
 
+## Repository audit
+
+Public access returned HTTP 200 on 2026-07-19. The repository has only the
+`main` branch, about 735 KiB of tracked files, no tracked file over 1 MiB, no
+tracked generated output or secret environment file, and nine sequential
+migrations. Git integrity passed; harmless unreachable tree objects remain.
+No project license is granted, and no separately sourced media assets are
+included.
+
+## Production cron
+
+Vercel listed both committed jobs (`/api/simulate-tick` at `0 12 * * *` and
+`/api/maintenance/copilot-retention` at `5 12 * * *`). The sensitive
+`CRON_SECRET` target exists for Production. A manual production invocation of
+the simulation cron at 2026-07-19T09:35:01Z was present in the filtered 2xx
+request logs.
+
 ## Live authorization and security
 
 | Role | Allowed pages | Forbidden-page behavior | Alerts API |
@@ -65,3 +82,13 @@ Automated results cover the deployed login surface. The focused authenticated re
 ## Resolved finding
 
 The earlier deployment returned `meta` and `done` events without text. The published fix disables model reasoning for this short operational response, raises the answer budget to 768 tokens, and converts empty output into an explicit safe error. The deployed four-role Copilot and Admin prompt-injection probe passed on 2026-07-19.
+
+## Final hosted interaction check
+
+The public smoke test and authenticated four-role submission harness passed at
+2026-07-19T10:59:36Z. All allowed routes returned 200, forbidden routes safely
+redirected, alert API permissions matched the role matrix, every Copilot stream
+returned a non-empty role-scoped answer, and the prompt-injection probe passed.
+After refreshing the deterministic 96% scenario, Admin and Operations Manager
+grounding included two current telemetry rows; the other roles preserved honest
+missing-data behavior where no fresh category-specific metric existed.

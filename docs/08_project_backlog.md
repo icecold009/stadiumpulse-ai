@@ -55,7 +55,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Implement `/api/simulate-tick` | Complete | Route generates and bulk-inserts all telemetry categories, authenticates cron/Admin/Ops callers, consumes a durable limit, and invokes alert detection directly |
 | Generate coherent match-phase values | Complete | Pre-kickoff, in-play, and post-match phases drive occupancy, scans, and sustainability load with bounded jitter |
-| Configure deployed/local trigger | Complete in code | `vercel.json` schedules a Hobby-compatible daily health tick while the Admin/Ops `DashboardPoller` supplies bounded active-demo ticks. Configure `CRON_SECRET` in Vercel before production verification |
+| Configure deployed/local trigger | Complete and production-verified | Vercel lists the daily simulation and retention cron jobs, confirms the sensitive `CRON_SECRET` for Production, and a manually triggered production simulation cron returned 2xx on 2026-07-19; Admin/Ops polling supplies bounded active-demo ticks |
 | Confirm rows land in Supabase | Complete | Live role verification on 2026-07-18 confirmed populated telemetry tables: 1,995 zone rows, 1,640 gate-scan rows, and 2,124 sustainability rows |
 
 ### Phase 3 — Core dashboards
@@ -113,12 +113,12 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Accessibility pass | Complete | Login scored Lighthouse Accessibility 100 and axe WCAG A/AA found 0 violations. A focused authenticated Browser review covered all five Admin routes, accessible structure and names, chart summaries, focus/reflow implementation, and contrast; the low-contrast AI, critical-status, and energy-series labels found during the review were corrected |
-| Repository size check | Complete for current state | Prospective tracked files including the P0 work total about 583 KB and loose Git objects remain under 1 MB, comfortably below 10 MB; recheck immediately before submission |
+| Repository size check | Complete for current state | Tracked files total about 735 KiB, no tracked file exceeds 1 MiB, and loose Git objects remain under 1 MiB, comfortably below 10 MB (rechecked 2026-07-19) |
 | Single-branch check | Complete for current state | Local and remote branch listing contains only `main` (plus `origin/HEAD` pointing to `origin/main`); recheck before submission |
 | Submission README | Complete | README documents prerequisites, safe variables, migrations, seeds, role provisioning, commands, architecture, recovery, deterministic demo steps, simulation disclosure, and LinkedIn submission scope |
 | State synthetic-data assumption | Complete | README explicitly explains unavailable FIFA telemetry, realistic simulation, and feed-swappable architecture |
 | Prepare LinkedIn submission post | Not started | Tracked by SUB-01; a separately recorded video is not treated as required |
-| Final push and submission tag | In progress | The verified P1 work is committed on local `main`, which is ahead of `origin/main`. Push and the submission tag remain and require explicit user authorization |
+| Final push and submission tag | Complete | Final submission audits and hosted evidence are published on `main` and tagged `prompt-wars-2026-submission` |
 
 ### P0 — Submission blockers
 
@@ -179,6 +179,15 @@ non-mutating public smoke test also passes login-shell, protected-route, and
 protected-API checks against `stadiumpulse-ai-nine.vercel.app`. The build uses
 local font packages, makes no Google Fonts request, and no longer reports the
 middleware convention deprecation.
+Vercel lists both committed production cron schedules. The sensitive
+`CRON_SECRET` exists for Production, and a manual simulation-cron invocation at
+2026-07-19T09:35:01Z appeared in the production 2xx request logs.
+The final public smoke test and authenticated four-role interaction harness
+passed again at 2026-07-19T10:59:36Z. Every allowed page returned 200, forbidden
+pages redirected safely, alert permissions matched the role matrix, all four
+Copilot streams returned non-empty role-scoped answers, and the injection probe
+passed. A refreshed deterministic scenario supplied current telemetry to the
+Admin and Operations Manager flows.
 The hosted submission check established passwordless sessions for all four
 roles, passed the documented page/API authorization matrix, and returned
 non-empty role-scoped Copilot answers. The Admin injection probe did not expose
@@ -202,9 +211,9 @@ The concise evidence table is recorded in `docs/09_verification_report.md`.
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
 | SUB-01 | ready | LinkedIn submission post | Post explains the problem, simulated-data assumption, grounded decision loop, safeguards, impact, and includes the project/demo link |
-| SUB-02 | ready | Final security audit | Every applicable checkbox in doc 07 is verified and results are recorded |
-| SUB-03 | ready | Repository audit | Public repository, branch, size, secrets, setup instructions, licensing/assets, and reproducible migrations are checked before submission |
-| SUB-04 | in_progress | Final publish and tag | The verified final state is committed locally; pushing `main` and creating the agreed submission tag remain and require explicit user authorization |
+| SUB-02 | done | Final security audit | Every applicable checkbox in doc 07 is verified and results are recorded; the historical root-commit `.gitignore` exception is explicitly disclosed |
+| SUB-03 | done | Repository audit | Public access returned HTTP 200; single-branch, size, secrets, setup, licensing/assets, Git integrity, and nine ordered migrations were checked on 2026-07-19. No project license is granted and no separately sourced media assets are included |
+| SUB-04 | done | Final publish and tag | The verified submission state is published on `main` and tagged `prompt-wars-2026-submission` |
 
 ## Completed planning work
 
