@@ -147,8 +147,10 @@ recommendation, evidence, and human-controlled outcome.
 - Resource allocation, sustainability advice, volunteer reassignment,
   Phase 3 Realtime delivery, incident handling, and Copilot audit persistence
   pass hosted role-scoped verification. Copilot retention passes local
-  production-route verification against isolated hosted rows. The focused
-  authenticated accessibility review is complete. The LinkedIn post is incomplete.
+  production-route verification against isolated hosted rows. Authenticated
+  accessibility-tree, contrast, and source reviews are complete; manual
+  keyboard-only, actual screen-reader, and 200% zoom checks remain. The
+  LinkedIn post is incomplete.
 - Operator accept/reject/handled feedback and top-level safe error boundaries
   are complete through migration `0008`. The current pushed CI run passes lint,
   TypeScript, tests, prompt contracts, and the production build.

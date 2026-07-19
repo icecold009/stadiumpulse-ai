@@ -78,6 +78,9 @@ was deleted, a recent query was preserved, and the test row was cleaned up.
 | Source inspection checklist | Skip link, visible focus, focus trap/Escape restore, responsive reflow, live regions, chart text equivalents, non-color labels, and reduced motion present |
 
 Automated results cover the deployed login surface. The focused authenticated review used the browser accessibility tree and computed styles across all Admin routes, with source inspection for keyboard focus and responsive reflow behavior. It was intentionally a concise release check rather than an exhaustive assistive-technology certification.
+It did not complete a manual keyboard-only traversal, a test with an actual
+screen reader, or a 200% zoom walkthrough across every authenticated dashboard
+state; those checks remain open.
 
 ## Resolved finding
 

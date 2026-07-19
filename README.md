@@ -200,6 +200,22 @@ synthetic and regenerable: redeploy from `main`, apply migrations, run
 `seed:demo`, and resume the protected simulator. Vercel logs are the current
 operational log surface; structured external monitoring is a post-MVP item.
 
+## Known limitations
+
+- All stadium telemetry is simulated; no official FIFA or venue feed is
+  connected.
+- Hobby-compatible cron runs only daily. During a demo, fresh telemetry relies
+  on bounded polling from an authenticated Admin or Operations session.
+- Monitoring is limited to Vercel logs; external alerting and telemetry
+  retention/rollups remain post-MVP work.
+- Automated accessibility testing covers the login page. Authenticated routes
+  received accessibility-tree, contrast, and source reviews, but a complete
+  manual keyboard-only walkthrough, assistive-technology screen-reader test,
+  and 200% zoom check across every dashboard state remain unverified.
+
+The 24-hour `copilot_queries` purge is not a known limitation: its protected
+daily route is implemented, tested, and scheduled in production.
+
 ## Submission
 
 The required social deliverable is a LinkedIn post presenting the operational
