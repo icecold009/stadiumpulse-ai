@@ -32,7 +32,7 @@ const statusConfig: Record<
     critical: {
         icon: CircleAlert,
         text: "Critical",
-        className: "border-status-critical/30 bg-status-critical/12 text-status-critical",
+        className: "border-status-critical/30 bg-status-critical/12 text-[#ff9a9d]",
         ariaLabel: "Status critical",
     },
 };

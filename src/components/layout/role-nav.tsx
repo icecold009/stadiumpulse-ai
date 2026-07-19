@@ -87,9 +87,9 @@ export default function RoleNav({ role }: { role: Role }) {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent">
                         StadiumPulse AI
                     </p>
-                    <h1 className="text-lg font-semibold tracking-tight text-[#edeff2]">
+                    <p className="text-lg font-semibold tracking-tight text-[#edeff2]">
                         PulseOps
-                    </h1>
+                    </p>
                 </div>
             </div>
 

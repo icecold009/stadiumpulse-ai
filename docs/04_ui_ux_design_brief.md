@@ -22,7 +22,7 @@
 | `--status-ok` | `#2FBF71` | Normal occupancy / on-target sustainability |
 | `--status-warn` | `#F5A524` | Approaching threshold |
 | `--status-critical` | `#E5484D` | Breach / active incident |
-| `--ai-highlight` | `#8B5CF6` | Any AI-generated content border/badge (distinct from data color language) |
+| `--ai-highlight` | `#A78BFA` | Any AI-generated content border/badge (distinct from data color language, AA on dark surfaces) |
 
 Heatmap gradient uses a **color-blind-safe** scale (blue → yellow → red,
 not red/green) — direct tie to the Accessibility evaluation criterion.

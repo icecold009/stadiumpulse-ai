@@ -91,7 +91,7 @@ export default function SustainabilityTrend({
                                 type="monotone"
                                 dataKey="energy_kwh"
                                 name="Energy (kWh)"
-                                stroke="#2563eb"
+                                stroke="#60a5fa"
                                 dot={false}
                                 strokeWidth={2}
                             />
