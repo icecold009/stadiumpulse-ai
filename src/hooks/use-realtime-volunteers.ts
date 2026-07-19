@@ -2,17 +2,10 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { upsertRealtimeRow } from "@/lib/realtime/reducers";
 import type { Database } from "@/types/database";
 
 type VolunteerRow = Database["public"]["Tables"]["volunteers"]["Row"];
-
-function upsertById(prev: VolunteerRow[], next: VolunteerRow): VolunteerRow[] {
-    const idx = prev.findIndex((r) => r.id === next.id);
-    if (idx === -1) return [next, ...prev];
-    const copy = [...prev];
-    copy[idx] = { ...copy[idx], ...next };
-    return copy;
-}
 
 export function useRealtimeVolunteers(initialData: VolunteerRow[]) {
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -27,14 +20,14 @@ export function useRealtimeVolunteers(initialData: VolunteerRow[]) {
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "volunteers" },
                 (payload) => {
-                    setVolunteers((prev) => upsertById(prev, payload.new as VolunteerRow));
+                    setVolunteers((prev) => upsertRealtimeRow(prev, payload.new as VolunteerRow));
                 }
             )
             .on(
                 "postgres_changes",
                 { event: "UPDATE", schema: "public", table: "volunteers" },
                 (payload) => {
-                    setVolunteers((prev) => upsertById(prev, payload.new as VolunteerRow));
+                    setVolunteers((prev) => upsertRealtimeRow(prev, payload.new as VolunteerRow));
                 }
             )
             .subscribe();

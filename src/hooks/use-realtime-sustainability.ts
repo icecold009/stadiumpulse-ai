@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { mergeNewestById } from "@/lib/realtime/reducers";
 import type { Database } from "@/types/database";
 
 type SustainabilityRow =
@@ -10,15 +11,6 @@ type SustainabilityRow =
 function toMs(value: string): number {
     const ms = new Date(value).getTime();
     return Number.isNaN(ms) ? 0 : ms;
-}
-
-function mergeRows(
-    previous: SustainabilityRow[],
-    next: SustainabilityRow
-): SustainabilityRow[] {
-    return [next, ...previous.filter((row) => row.id !== next.id)]
-        .sort((a, b) => toMs(b.recorded_at) - toMs(a.recorded_at))
-        .slice(0, 1000);
 }
 
 export function useRealtimeSustainability(initialData: SustainabilityRow[]) {
@@ -42,7 +34,11 @@ export function useRealtimeSustainability(initialData: SustainabilityRow[]) {
                 },
                 (payload) => {
                     setRows((previous) =>
-                        mergeRows(previous, payload.new as SustainabilityRow)
+                        mergeNewestById(
+                            previous,
+                            payload.new as SustainabilityRow,
+                            1000
+                        )
                     );
                 }
             )

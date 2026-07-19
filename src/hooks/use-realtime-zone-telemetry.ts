@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { mergeNewestById } from "@/lib/realtime/reducers";
 import type { Database } from "@/types/database";
 
 type ZoneTelemetryRow = Database["public"]["Tables"]["zone_telemetry"]["Row"];
@@ -14,14 +15,6 @@ function toMs(value: string | null): number {
 
 function sortNewestFirst(rows: ZoneTelemetryRow[]): ZoneTelemetryRow[] {
     return [...rows].sort((a, b) => toMs(b.recorded_at) - toMs(a.recorded_at));
-}
-
-function mergeTelemetry(
-    prev: ZoneTelemetryRow[],
-    next: ZoneTelemetryRow
-): ZoneTelemetryRow[] {
-    const withoutDup = prev.filter((r) => r.id !== next.id);
-    return sortNewestFirst([next, ...withoutDup]).slice(0, 200);
 }
 
 export function useRealtimeZoneTelemetry(initialData: ZoneTelemetryRow[]) {
@@ -40,7 +33,7 @@ export function useRealtimeZoneTelemetry(initialData: ZoneTelemetryRow[]) {
                 { event: "INSERT", schema: "public", table: "zone_telemetry" },
                 (payload) => {
                     const inserted = payload.new as ZoneTelemetryRow;
-                    setRows((prev) => mergeTelemetry(prev, inserted));
+                    setRows((prev) => mergeNewestById(prev, inserted, 200));
                 }
             )
             .subscribe();
