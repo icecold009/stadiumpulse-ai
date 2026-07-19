@@ -3,6 +3,10 @@
         {
             "path": "/api/simulate-tick",
             "schedule": "0 12 * * *"
+        },
+        {
+            "path": "/api/maintenance/copilot-retention",
+            "schedule": "5 12 * * *"
         }
     ]
 }

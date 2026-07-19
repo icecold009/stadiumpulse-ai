@@ -118,6 +118,8 @@ npx.cmd tsc --noEmit
 npm.cmd test
 npm.cmd run eval:prompts
 npm.cmd run verify:alert-loop
+npm.cmd run verify:p1-hosted
+npm.cmd run verify:copilot-retention
 npm.cmd run build
 ```
 
@@ -133,6 +135,12 @@ removes its test rows.
 `verify:public` requires only `PULSEOPS_APP_URL`. It checks the public login
 shell, protected dashboard redirects, local-font build, and unauthenticated API
 denial without changing application data.
+
+`verify:p1-hosted` exercises the role-scoped advisors, judge access, Realtime
+tables, volunteer reassignment, incident handling, and Copilot persistence,
+restoring or removing temporary records. `verify:copilot-retention` requires a
+running current app plus `PULSEOPS_APP_URL` and verifies the protected 24-hour
+purge with isolated rows.
 
 ## Two-minute judge walkthrough
 
@@ -181,7 +189,9 @@ Then:
 For normal live simulation, authenticated Admin/Ops sessions may call the
 manual tick endpoint at a bounded rate. Vercel Cron calls the same route with
 `Authorization: Bearer <CRON_SECRET>`. Each successful tick runs alert
-detection automatically.
+detection automatically. A second protected daily cron calls
+`/api/maintenance/copilot-retention` and deletes Copilot audit rows older than
+24 hours while preserving newer rows.
 
 ## Failure and recovery
 

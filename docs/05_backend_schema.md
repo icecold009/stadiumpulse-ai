@@ -98,8 +98,9 @@ schema and security are designed together, not bolted on after.
 | answer | text | |
 | created_at | timestamptz | |
 
-> **Retention note:** `copilot_queries` is purged on a schedule (e.g.
-> nightly job deletes rows older than 24h) — this keeps the DB small and
+> **Retention note:** `copilot_queries` is purged daily by the protected
+> `/api/maintenance/copilot-retention` cron route, which deletes rows older
+> than 24h. This keeps the DB small and
 > limits how long user-submitted text is retained, relevant to both the
 > repo-size constraint's spirit and general data-minimization practice.
 

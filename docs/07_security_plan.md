@@ -21,7 +21,8 @@ decisions themselves are made now, so they're designed in, not patched on.
   storage needed for this build (no Supabase Storage bucket required —
   smaller attack surface).
 - Foreign keys enforced at the DB level, not just app level.
-- `copilot_queries` purged nightly (data minimization — see schema doc).
+- `copilot_queries` is purged daily by a cron-secret-protected route that
+  deletes rows older than 24 hours (data minimization — see schema doc).
 
 ## Auth & Permissions
 - Supabase Auth, email/password. No public self-registration — accounts are

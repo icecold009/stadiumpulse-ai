@@ -14,6 +14,8 @@
         "seed:demo": "node scripts/seed-demo.mjs",
         "verify:roles": "node scripts/verify-role-access.mjs",
         "verify:p0-hosted": "node scripts/verify-hosted-p0.mjs",
+        "verify:p1-hosted": "node scripts/verify-hosted-p1.mjs",
+        "verify:copilot-retention": "node scripts/verify-copilot-retention.mjs",
         "verify:alert-loop": "node scripts/verify-alert-loop.mjs",
         "verify:public": "node scripts/verify-public-app.mjs",
         "verify:submission-live": "node scripts/verify-live-submission.mjs",
