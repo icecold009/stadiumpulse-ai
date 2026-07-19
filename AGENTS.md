@@ -137,19 +137,20 @@ recommendation, evidence, and human-controlled outcome.
 - Gate throughput, API rate limiting, structured alert recommendations, local
   fonts, deterministic demo reset, CI, migrations `0006`/`0007`, and hosted
   RLS/rate-limit/Realtime/alert-loop verification are complete.
-- No PulseOps Vercel project currently exists in the authenticated account;
-  deployment and production `CRON_SECRET` configuration remain publication
-  work and require explicit user authorization.
+- A PulseOps Vercel deployment is live and passes the public and four-role
+  authorization smoke tests. Final production `CRON_SECRET` and scheduled-tick
+  confirmation remain publication work.
 - Resource allocation, sustainability advice, volunteer reassignment, and
-  code-level accessibility improvements are implemented locally; hosted role
-  flows and manual accessibility checks remain. The LinkedIn post is incomplete.
+  code-level accessibility improvements are implemented locally; their hosted
+  UI workflows and manual accessibility checks remain. The LinkedIn post is
+  incomplete.
 - Operator accept/reject/handled feedback and top-level safe error boundaries
-  are complete through migration `0008`. The latest pushed CI run failed only
-  at build because public Supabase variables were absent; the local workflow
-  fix with safe CI placeholders passes and needs pushed-run confirmation.
+  are complete through migration `0008`. The current pushed CI run passes lint,
+  TypeScript, tests, prompt contracts, and the production build.
 - The Next.js 16 proxy convention and Copilot role/venue scoping are
-  implemented. Migration `0009` is applied and hosted venue-assignment/RLS
-  verification passes; hosted four-role Copilot behavior remains unverified.
+  implemented. Migration `0009` is applied; hosted venue-assignment/RLS and
+  four-role Copilot behavior pass. Manual authenticated accessibility and a
+  few hosted UI interaction checks remain.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.

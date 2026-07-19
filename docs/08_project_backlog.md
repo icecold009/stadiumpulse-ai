@@ -22,7 +22,8 @@ Achieved and live-verified on 2026-07-18:
 ## Phase 0–5 implementation audit
 
 Audited against the consolidated implementation checklist and repository state
-on 2026-07-18. `Complete` means the implementation exists in the repository;
+on 2026-07-18 and reconciled with current hosted evidence on 2026-07-19.
+`Complete` means the implementation exists in the repository;
 it does not claim that an external Supabase or Vercel environment was manually
 verified. External-only facts are explicitly marked `Verify externally`.
 
@@ -33,8 +34,8 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Create the real Supabase project | Complete | The configured remote project accepted authenticated service-role seed and verification requests on 2026-07-18 |
 | Apply committed migrations | Complete through `0009` | Local and remote migration history match through `0009_user_venue_access.sql`; hosted role, RLS, venue-assignment, and Realtime verification passed after application on 2026-07-18 |
 | Seed venues, zones, and gates | Complete | Committed `0002_seed.sql` provides deterministic, repeatable reference rows for two synthetic venues, twelve zones, and eleven gates |
-| Configure Supabase URL and anon key | Complete locally | The configured project is reachable; values remain unprinted and uncommitted. Verify deployment variables separately |
-| Configure service-role key | Complete locally | `npm.cmd run seed:demo` completed privileged writes and verification without exposing the key. Verify deployment variables separately |
+| Configure Supabase URL and anon key | Complete | The local and deployed applications reach the configured project; values remain unprinted and uncommitted |
+| Configure service-role key | Complete | `npm.cmd run seed:demo` and hosted privileged-route verification completed without exposing the key; the deployment performs protected server-side operations successfully |
 | Add checked-in environment example | Complete | The checked-in environment template lists the required Supabase and AI variable names without secret values |
 | Build privileged Supabase client | Complete | `src/lib/supabase/service-role.ts` creates a non-persistent server-only service-role client |
 
@@ -62,7 +63,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
 | Replace four placeholder dashboards | Complete for Phase 3 | Overview, Ops, Sustainability, and Volunteer views read real data; gate throughput is implemented and the unsupported advisor placeholder is removed until Phase 6 |
-| Wire Realtime dashboard updates | Complete in code, verification remains | Ops gauges/trends/heatmap/gates, sustainability, volunteers, overview, and alerts now respond to Realtime changes; hosted publication and tick behavior require P0-13 verification |
+| Wire Realtime dashboard updates | Complete in code, UI verification remains | Ops gauges/trends/heatmap/gates, sustainability, volunteers, overview, and alerts subscribe to Realtime changes. Hosted publication and event delivery passed on 2026-07-18; visible no-refresh dashboard updates remain under P1-10 |
 | Confirm role-appropriate dashboard UX | Complete | Passwordless sessions for all four deployed roles reached only their documented pages; cross-role pages redirected to the trusted default |
 
 ### Phase 4 — Alerts
@@ -71,14 +72,14 @@ verified. External-only facts are explicitly marked `Verify externally`.
 |---|---|---|
 | Implement threshold and duplicate prevention | Complete | Shared detection applies warning/critical thresholds, skips open-alert zones, bounds creation to three alerts/run, and is invoked directly by each successful tick |
 | Generate one cached AI recommendation | Complete | Alert creation uses Fireworks JSON-schema output and stores typed audit fields once; invalid/unavailable AI is explicitly labeled as a deterministic safety fallback |
-| Build incident feed | Complete in code, verification remains | `/ops/alerts` is linked for Admin/Ops, refreshes on Realtime changes, and includes loading, error, retry, empty, and handled states |
-| Mark alert handled through user session | Complete, external RLS verification remains | PATCH authenticates the user and updates through the session client; the database policy must still be tested with all roles |
+| Build incident feed | Complete in code, UI verification remains | `/ops/alerts` is linked for Admin/Ops, refreshes on Realtime changes, and includes loading, error, retry, empty, and handled states. Hosted alert insert/update and RLS behavior pass; visible Realtime workflow verification remains under P1-11 |
+| Mark alert handled through user session | Complete | PATCH authenticates the user and updates through the session client; live Ops handling plus cross-role RLS denial passed on 2026-07-18 |
 
 ### Phase 5 — AI copilot
 
 | Step | Status | Evidence or remaining condition |
 |---|---|---|
-| Fetch context, call model, and stream | Complete in code, external verification remains | The route resolves the trusted role and applied explicit venue access before querying. Ops receives crowd/alert context, Sustainability receives metric context, Volunteer receives occupancy/assignment context, and Admin receives the combined authorized slice. DATA and QUESTION are separate content blocks; verify each role against the deployed Copilot route |
+| Fetch context, call model, and stream | Complete | The deployed route returned non-empty grounded streams for all four roles on 2026-07-19. Ops received crowd/alert context, Sustainability received metric context, Volunteer received assignment context, and Admin received the combined authorized slice, all limited to authorized venues |
 | Apply prompt-injection defenses | Complete | Fixed instructions, input cap, DATA/question separation, and text-only rendering are covered statically; the configured live model blocked prompt extraction and handled missing/stale data on 2026-07-18 |
 | Connect `CopilotPanel` to API | Complete | Panel posts questions and consumes the SSE stream |
 | Show grounding indicator | Complete | Metadata and final grounding summary are rendered on assistant messages |
@@ -102,10 +103,10 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Verify RLS on every live table | Complete for current schema | Applied migrations enable RLS on every documented table; live role reads, anonymous denial, cross-role write denial, authorized writes, and server-only limiter access were verified on 2026-07-18 |
 | Audit git history for secrets | Complete for current history | Every revision was scanned without printing content for common Anthropic, OpenAI, Supabase, and JWT secret signatures; no matches were found. Re-run immediately before submission |
 | Confirm `.env*` ignored throughout history | Partial | No `.env*` file appears in tracked history, but the root commit did not yet contain the `.env*` ignore rule, so the stricter doc-07 wording "gitignored from the first commit" is not satisfied |
-| Attempt cross-role access violations | Complete for database policies | `verify:p0-hosted` confirmed unauthorized alert/volunteer writes return no rows while Admin/Ops/Coordinator permitted writes succeed; route-navigation UX remains under P1-05 |
-| Add GitHub Actions verification workflow | Complete in code, rerun required | The latest pushed build failed only because CI lacked public Supabase build variables; safe non-secret placeholders now cover the build while lint, TypeScript, tests, and prompt checks already pass |
+| Attempt cross-role access violations | Complete | `verify:p0-hosted` confirmed unauthorized alert/volunteer writes return no rows while permitted writes succeed; deployed four-role navigation and API checks also pass |
+| Add GitHub Actions verification workflow | Complete | The current `main` revision `c7ebfa2` passed the pushed CI workflow on 2026-07-19, including lint, TypeScript, tests, prompt contracts, and the production build |
 | Protect privileged service-role routes | Complete | Local route integration against hosted services returned 401 without credentials, 200 with the cron bearer secret, and 429 after exhaustion; authorization precedes service-role writes and AI calls |
-| Move authorization to trusted role source | Complete in code, verification remains | Protected `user_roles`, route guards, alert API, and update policies are implemented in migration/code; apply and test against hosted Supabase |
+| Move authorization to trusted role source | Complete | Protected `user_roles`, route guards, alert API, and update policies are applied; hosted role, venue-isolation, route, API, and write-policy checks pass |
 
 ### Phase 8 — Polish and submission
 
@@ -117,7 +118,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | Submission README | Complete | README documents prerequisites, safe variables, migrations, seeds, role provisioning, commands, architecture, recovery, deterministic demo steps, simulation disclosure, and LinkedIn submission scope |
 | State synthetic-data assumption | Complete | README explicitly explains unavailable FIFA telemetry, realistic simulation, and feed-swappable architecture |
 | Prepare LinkedIn submission post | Not started | Tracked by SUB-01; a separately recorded video is not treated as required |
-| Final push and submission tag | Not started | Before the current work, local HEAD and `origin/main` were identical, so the latest committed code had been pushed. The intentional submission-finalization commit/push/tag remains and requires explicit user authorization |
+| Final push and submission tag | Not started | Current revision `c7ebfa2` is synchronized with `origin/main`. The intentional submission-finalization commit/push/tag remains and requires explicit user authorization |
 
 ### P0 — Submission blockers
 
@@ -133,9 +134,9 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P0-08 | done | Create static prompt contract scenarios | `npm.cmd run eval:prompts` verifies five data-status scenarios plus irrelevant-question instructions, DATA/QUESTION injection separation, grounded parsing, and structured fallback behavior without calling the live model |
 | P0-09 | done | Create a deterministic demo setup | `npm.cmd run demo:reset` successfully created a live 96% critical scenario with a genuine JSON-schema model recommendation and documented human handling step |
 | P0-10 | done | Finish core README setup | README now covers prerequisites, safe variables, migrations/seeds, role provisioning, local verification, architecture, simulation disclosure, recovery, demo flow, and LinkedIn submission scope |
-| P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application remains under P0-13 |
+| P0-11 | done | Add reproducible demo seeds | `0002_seed.sql` creates stable venue/zone/gate references and `0004_seed_volunteers.sql` creates fictional volunteer assignments; live application was verified under P0-13 |
 | P0-13 | done | Verify the external Supabase demo environment | Migration history matches through applied `0009`. Live checks pass role reads, venue-assignment isolation, anonymous/cross-role denial, authorized writes, durable limits, simulation data, and Realtime telemetry/alert delivery |
-| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs install, lint, TypeScript, Node contract tests, static prompt contracts, and the production build on pushes to `main` and pull requests. The expanded workflow requires a pushed-run confirmation |
+| P0-14 | done | Add continuous integration | `.github/workflows/ci.yml` runs install, lint, TypeScript, Node contract tests, static prompt contracts, and the production build on pushes to `main` and pull requests; the current `c7ebfa2` run completed successfully on 2026-07-19 |
 
 ### P1 — Judge-visible product value
 
@@ -146,16 +147,16 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P1-03 | in_progress | Volunteer reassignment | Authenticated API validation and accessible UI are implemented through the session client and existing RLS policy; verify Admin/Coordinator success and cross-role denial in the hosted UI |
 | P1-04 | done | Human feedback on AI recommendations | Migration `0008`, the authenticated API, and UI record Accept/Reject separately from Mark handled; all three transitions passed the live Ops RLS policy and the test alert was restored |
 | P1-05 | done | Role-flow consistency | Deployed passwordless sessions verified all four page matrices and alert API permissions on 2026-07-18; unauthorized pages redirected to the trusted role default |
-| P1-06 | in_progress | Copilot data relevance | Route and data-category policies are tested, venue scoping is applied, and the four-role page/API matrix passes. Deployed Copilot emitted no text; a local reasoning-disabled fix passed direct live-model checks and needs publish/retest |
+| P1-06 | done | Copilot data relevance | The deployed reasoning-disabled configuration returned non-empty grounded answers for all four roles on 2026-07-19; metadata confirmed authorized venue scope and role-specific crowd, sustainability, and volunteer data categories |
 | P1-07 | ready | Copilot retention job | Query logs older than the documented retention window are removed by a protected scheduled job and the policy is documented |
 | P1-08 | done | Error and empty states | App/global error boundaries and affected dashboard/alert states provide safe retry, error, empty, and degraded messages without stack traces or fabricated data |
 | P1-09 | in_progress | Accessibility pass | Lighthouse Accessibility 100 and axe WCAG A/AA 0 violations are recorded for login; manual keyboard, screen-reader, contrast, and zoom evidence on authenticated dashboards remains |
-| P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and publication migration cover Phase 3 dashboards; verify hosted writes and UI changes without refresh under P0-13 |
-| P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, and safe states are implemented; verify hosted insert/update behavior before marking done |
+| P1-10 | in_progress | Complete Phase 3 Realtime wiring | Client subscriptions and the hosted publication/event-delivery checks pass; verify visible dashboard changes without refresh before marking done |
+| P1-11 | in_progress | Integrate the incident feed into the Ops workflow | Navigation, Realtime refresh, handling, safe states, hosted insert/update, and RLS behavior are implemented and verified; visibly exercise the no-refresh feed workflow before marking done |
 | P1-12 | in_progress | Make copilot audit logging reliable | Returned insert errors and thrown logging exceptions are recorded server-side without breaking the completed user stream. Verify successful hosted persistence; retention remains tracked by P1-07 |
 | P1-13 | done | Run live-model adversarial Copilot evaluation | `verify:prompt-injection-live` passed injection, missing-data, and stale-data scenarios against Kimi K2.6 on 2026-07-18 without revealing protected prompt text or inventing current facts |
 | P1-14 | in_progress | Sustainability intervention advisor | Role-scoped structured AI/fallback interventions, evidence, limitations, target semantics, Realtime refresh, and manual retry are implemented; verify Admin/Sustainability Lead hosted behavior before marking done |
-| P1-15 | in_progress | Passwordless judge role chooser | A disabled-by-default, rate-limited server route creates normal Supabase sessions for four fixed demo emails after verifying trusted roles; configure Vercel variables and verify all buttons before marking done |
+| P1-15 | in_progress | Passwordless judge role chooser | Production variables are configured and hosted verification established correct sessions, redirects, page access, and API permissions for all four fixed roles on 2026-07-19; manually click each login-page role button before marking done |
 
 ### P2 — Polish and scale narrative
 
@@ -168,18 +169,24 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P2-05 | ready | Observability upgrade | Structured logs include safe request context; production monitoring recommendations are documented without exposing secrets or user questions |
 | P2-06 | done | Migrate middleware convention | `src/proxy.ts` exports `proxy` with the existing matcher, Supabase cookie refresh, authentication redirects, and role guards; TypeScript, lint, and the production build pass without the deprecation warning |
 
-## Current local verification
+## Current verification
 
-On 2026-07-18, lint, TypeScript, thirteen auth/API/Copilot/advisor contract tests,
+On 2026-07-19, the pushed GitHub Actions workflow for current revision `c7ebfa2`
+passed. Lint, TypeScript, thirteen auth/API/Copilot/advisor contract tests,
 the static prompt contract evaluation, and the production build all pass. The
 non-mutating public smoke test also passes login-shell, protected-route, and
 protected-API checks against `stadiumpulse-ai-nine.vercel.app`. The build uses
 local font packages, makes no Google Fonts request, and no longer reports the
 middleware convention deprecation.
+The hosted submission check established passwordless sessions for all four
+roles, passed the documented page/API authorization matrix, and returned
+non-empty role-scoped Copilot answers. The Admin injection probe did not expose
+protected prompt text.
 Hosted verification after applying migration `0009` passes venue-assignment
 isolation, cross-role write denial, authorized writes, query isolation, durable
-rate limiting, and Realtime delivery; deployed route verification was skipped
-because `PULSEOPS_APP_URL` was not supplied to that privileged run.
+rate limiting, and Realtime delivery. Deployed route verification passes the
+public shell, authentication boundary, four-role page matrix, and alert API
+permissions.
 `npm.cmd audit --omit=dev` reports zero known
 vulnerabilities after a narrow PostCSS 8.5.10 override for the advisory in
 Next.js 16.2.10's transitive dependency.
