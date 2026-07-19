@@ -64,8 +64,14 @@ export default function TrendLine({
     }, [liveData, zoneId, hoursBack]);
 
     return (
-        <section className="w-full rounded-lg border p-4">
-            <h3 className="mb-3 text-base font-semibold">{title}</h3>
+        <section className="w-full overflow-hidden rounded-2xl border border-border bg-surface-raised/70 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Live telemetry</p>
+                    <h3 className="mt-1 text-base font-semibold">{title}</h3>
+                </div>
+                <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-[10px] font-medium text-text-muted">{hoursBack}h window</span>
+            </div>
 
             {data.length === 0 ? (
                 <div className="flex h-70 items-center justify-center text-sm text-muted-foreground">
@@ -73,15 +79,15 @@ export default function TrendLine({
                 </div>
             ) : (
                 <div
-                    className="h-70 w-full"
+                    className="mt-5 h-70 w-full"
                     role="img"
                     aria-label={`${title}, showing ${data.length} live occupancy samples.`}
                 >
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data} accessibilityLayer>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="xLabel" minTickGap={24} />
-                            <YAxis allowDecimals={false} />
+                            <CartesianGrid stroke="#26303a" strokeDasharray="3 6" vertical={false} />
+                            <XAxis dataKey="xLabel" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
+                            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
                             <Tooltip
                                 labelFormatter={(_, payload) => {
                                     const item = payload?.[0]?.payload as
@@ -95,9 +101,10 @@ export default function TrendLine({
                             <Line
                                 type="monotone"
                                 dataKey="occupancy"
-                                stroke="currentColor"
-                                strokeWidth={2}
+                                stroke="#3DD6C4"
+                                strokeWidth={2.5}
                                 dot={false}
+                                activeDot={{ r: 4, fill: "#3DD6C4", stroke: "#0b0f14", strokeWidth: 2 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>

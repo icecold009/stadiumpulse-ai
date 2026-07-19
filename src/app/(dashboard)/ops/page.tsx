@@ -54,7 +54,16 @@ export default async function OpsPage() {
 
     return (
         <section className="space-y-6">
-            <h1 className="text-2xl font-semibold">Operations</h1>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent">Venue command</p>
+                    <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-[28px]">Operations overview</h1>
+                    <p className="mt-1 text-sm text-text-muted">Live venue conditions, emerging risks, and human-reviewed recommendations.</p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-status-ok/25 bg-status-ok/8 px-3 py-1.5 text-xs font-medium text-status-ok">
+                    <i aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-status-ok" /> Systems live
+                </span>
+            </div>
 
             <LiveMetricGaugeGrid
                 mode="ops"
@@ -62,8 +71,10 @@ export default async function OpsPage() {
                 initialTelemetry={telemetry}
                 initialAlerts={alerts}
             />
-            <ResourceAdvisorPanel />
-            <ZoneHeatmap initialZones={zones} initialTelemetry={telemetry} />
+            <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.8fr)]">
+                <ResourceAdvisorPanel />
+                <ZoneHeatmap initialZones={zones} initialTelemetry={telemetry} />
+            </div>
             <TrendLine title="Occupancy Trend" initialData={telemetry} hoursBack={24} />
             <GateThroughputTrend initialData={gateScans} gateLabels={gateLabels} />
         </section>

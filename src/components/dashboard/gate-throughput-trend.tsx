@@ -71,8 +71,14 @@ export default function GateThroughputTrend({
     }, [gateLabels, liveScans]);
 
     return (
-        <section className="w-full rounded-lg border p-4">
-            <h2 className="text-lg font-semibold">Gate Throughput Trend</h2>
+        <section className="w-full overflow-hidden rounded-2xl border border-border bg-surface-raised/70 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Entry flow</p>
+                    <h2 className="mt-1 text-lg font-semibold">Gate throughput</h2>
+                </div>
+                <span className="rounded-full border border-border bg-surface px-2.5 py-1 font-mono text-xs text-text-muted">{totalScans.toLocaleString()} scans</span>
+            </div>
             <p className="sr-only">
                 {points.length === 0
                     ? "No gate throughput data is available."
@@ -92,9 +98,9 @@ export default function GateThroughputTrend({
                     >
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={points} accessibilityLayer>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" minTickGap={24} />
-                                <YAxis allowDecimals={false} />
+                                <CartesianGrid stroke="#26303a" strokeDasharray="3 6" vertical={false} />
+                                <XAxis dataKey="label" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
+                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
                                 <Tooltip
                                     labelFormatter={(_, payload) => {
                                         const point = payload?.[0]?.payload as
@@ -112,12 +118,13 @@ export default function GateThroughputTrend({
                                     stroke="#3DD6C4"
                                     strokeWidth={2}
                                     dot={false}
+                                    activeDot={{ r: 4, fill: "#3DD6C4", stroke: "#0b0f14", strokeWidth: 2 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                        Busiest gate in the displayed window: {busiestGate}
+                    <p className="mt-3 rounded-xl border border-border/70 bg-surface px-3 py-2.5 text-sm text-text-muted">
+                        <span className="font-medium text-foreground">Peak activity:</span> {busiestGate}
                     </p>
                 </>
             )}
