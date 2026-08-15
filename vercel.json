@@ -7,6 +7,10 @@
         {
             "path": "/api/maintenance/copilot-retention",
             "schedule": "5 12 * * *"
+        },
+        {
+            "path": "/api/maintenance/telemetry-rollup",
+            "schedule": "10 12 * * *"
         }
     ]
 }

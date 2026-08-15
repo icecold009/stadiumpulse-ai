@@ -6,6 +6,16 @@
 
 **Deployed revision:** `c7ebfa2`; local P1 verification also includes the locally committed retention and test-harness work
 
+## Post-hackathon revamp status
+
+The current local implementation is on `codex/pulseops-revamp`. TypeScript,
+ESLint, 24 contract tests, static prompt contracts, `git diff --check`, and the
+production build pass
+locally. Migrations `0010` and `0011`, venue-scoped dashboard reads, the
+Operations snapshot API, comparison, export, and contextual Copilot changes
+are source-side only in this branch. They have not been applied to or verified
+against the hosted Supabase/Vercel environment yet.
+
 ## Quality and CI-equivalent gates
 
 | Gate | Result |

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
     parseAlertAction,
     parseCopilotQuestion,
+    parseCopilotContext,
     parseVolunteerZoneId,
     UUID_PATTERN,
 } from "../src/lib/api/contracts.ts";
@@ -24,6 +25,19 @@ test("normalizes bounded Copilot questions", () => {
     for (const body of [{}, null, { question: 42 }, { question: "   " }, { question: "x".repeat(501) }]) {
         assert.equal(parseCopilotQuestion(body).ok, false);
     }
+});
+
+test("validates optional Copilot venue and zone context", () => {
+    assert.deepEqual(parseCopilotContext({ question: "What changed?", venueId: uuid, zoneId: uuid }), {
+        ok: true,
+        value: { question: "What changed?", venueId: uuid, zoneId: uuid },
+    });
+    assert.equal(parseCopilotContext({ question: "What changed?", venueId: "not-a-uuid" }).ok, false);
+    assert.deepEqual(parseCopilotContext({ question: "What is happening at this gate?", gateId: uuid, alertId: uuid, metricType: "energy_kwh" }), {
+        ok: true,
+        value: { question: "What is happening at this gate?", gateId: uuid, alertId: uuid, metricType: "energy_kwh" },
+    });
+    assert.equal(parseCopilotContext({ question: "What changed?", metricType: "unsupported" }).ok, false);
 });
 
 test("accepts only documented alert actions", () => {

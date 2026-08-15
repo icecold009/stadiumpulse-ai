@@ -20,9 +20,10 @@ and human-controlled outcome.
 If time is constrained, complete this loop for the Operations Manager before
 adding more roles, venues, charts, or secondary challenge tracks.
 
-Work top to bottom. Commit after each numbered step (small, working
-commits to `main` — no branches). Each step should leave the app in a
-deployable state.
+Work top to bottom on a `codex/*` feature branch. Keep each numbered step
+reviewable and locally verifiable; do not commit, push, deploy, or merge to
+`main` without explicit approval. Each completed slice should leave the app
+in a deployable state.
 
 ## Phase 1 — Foundations (Day 1 morning)
 1. Complete `00-initial-setup-guide.md` end to end.

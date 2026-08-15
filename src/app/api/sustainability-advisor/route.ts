@@ -1,6 +1,6 @@
 import "server-only";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAnthropicClient, RECOMMENDATION_MODEL } from "@/lib/ai/client";
 import {
     buildSustainabilityAdvisorPrompt,
@@ -12,6 +12,7 @@ import {
 import { isRole } from "@/lib/auth/roles";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveVenueScope } from "@/lib/auth/venue-scope";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,7 @@ type MetricRow = {
     recorded_at: string;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const {
         data: { user },
@@ -45,6 +46,11 @@ export async function GET() {
         );
     }
 
+    const scopeResult = await resolveVenueScope(request.nextUrl.searchParams.get("venueId"));
+    if (!scopeResult.ok) {
+        return NextResponse.json({ error: scopeResult.error }, { status: scopeResult.status });
+    }
+
     const allowed = await consumeRateLimit({
         subject: user.id,
         action: "sustainability_advisor",
@@ -58,31 +64,8 @@ export async function GET() {
         );
     }
 
-    const { data: venuesData, error: venuesError } = await supabase
-        .from("venues")
-        .select("id, name");
-    if (venuesError) {
-        return NextResponse.json({ error: "Could not load venues." }, { status: 500 });
-    }
-    const venueNames = new Map((venuesData ?? []).map((venue) => [venue.id, venue.name]));
-    let venueIds = [...venueNames.keys()];
-
-    if (roleRow.role !== "admin") {
-        const { data, error } = await supabase
-            .from("user_venue_access")
-            .select("venue_id")
-            .eq("user_id", user.id);
-        if (error) {
-            return NextResponse.json(
-                { error: "Could not resolve sustainability venue access." },
-                { status: 500 }
-            );
-        }
-        venueIds = (data ?? []).map((row) => row.venue_id);
-    }
-    if (venueIds.length === 0) {
-        return NextResponse.json({ error: "No venue access is assigned." }, { status: 403 });
-    }
+    const venueIds = scopeResult.scope.queryVenueIds;
+    const venueNames = new Map(scopeResult.scope.venues.map((venue) => [venue.id, venue.name]));
 
     const { data, error } = await supabase
         .from("sustainability_metrics")

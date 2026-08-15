@@ -3,6 +3,7 @@ type MetricGaugeProps = {
     value: number;
     target: number;
     unit: string;
+    lowerIsBetter?: boolean;
     className?: string;
 };
 
@@ -11,12 +12,14 @@ export default function MetricGauge({
     value,
     target,
     unit,
+    lowerIsBetter = true,
     className = "",
 }: MetricGaugeProps) {
     const progress = target === 0 ? 0 : Math.min((value / target) * 100, 100);
-    const isOnTarget = value <= target;
+    const isOnTarget = lowerIsBetter ? value <= target : value >= target;
     const statusClassName = isOnTarget ? "bg-status-ok" : "bg-status-warn";
-    const statusText = isOnTarget ? "Within target" : "Above target";
+    const variance = target === 0 ? 0 : ((value - target) / Math.abs(target)) * 100;
+    const statusText = isOnTarget ? "Within target" : lowerIsBetter ? "Above target" : "Below target";
 
     return (
         <section
@@ -52,7 +55,7 @@ export default function MetricGauge({
                     <i aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${statusClassName}`} />
                     {statusText}
                 </span>
-                <span className="font-mono">{Math.round(progress)}%</span>
+                <span className="font-mono">{variance >= 0 ? "+" : ""}{variance.toFixed(1)}% variance</span>
             </div>
         </section>
     );

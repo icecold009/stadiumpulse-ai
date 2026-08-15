@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { BrainCircuit, Clock3, RefreshCw, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 import type { ResourceAdvisorResult } from "@/lib/ai/resource-advisor";
+import GroundedRecommendationCard from "@/components/dashboard/grounded-recommendation-card";
 
 export default function ResourceAdvisorPanel() {
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -12,12 +14,15 @@ export default function ResourceAdvisorPanel() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
     const mounted = useRef(true);
+    const searchParams = useSearchParams();
+    const venueId = searchParams.get("venueId");
 
     const loadAdvice = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
-            const response = await fetch("/api/resource-advisor", {
+            const query = venueId ? `?venueId=${encodeURIComponent(venueId)}` : "";
+            const response = await fetch(`/api/resource-advisor${query}`, {
                 method: "GET",
                 headers: { Accept: "application/json" },
                 cache: "no-store",
@@ -44,7 +49,7 @@ export default function ResourceAdvisorPanel() {
         } finally {
             if (mounted.current) setLoading(false);
         }
-    }, []);
+    }, [venueId]);
 
     useEffect(() => {
         mounted.current = true;
@@ -125,38 +130,25 @@ export default function ResourceAdvisorPanel() {
                         </div>
                         <div className="grid gap-4 xl:grid-cols-3">
                             {result.recommendations.map((recommendation) => (
-                                <article
+                                <GroundedRecommendationCard
                                     key={recommendation.zoneId}
-                                    className="rounded-2xl border border-border bg-surface/80 p-4 transition hover:border-ai-highlight/30 hover:bg-surface"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <h3 className="font-semibold">{recommendation.zoneLabel}</h3>
-                                            <p className="text-xs text-text-muted">{recommendation.venueName}</p>
-                                        </div>
-                                        <span className="rounded-full border border-ai-highlight/40 bg-ai-highlight/8 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-ai-highlight">
-                                            {recommendation.urgency}
-                                        </span>
-                                    </div>
-                                    <p className="mt-3 text-sm font-medium leading-6 text-foreground">{recommendation.action}</p>
-                                    <dl className="mt-4 space-y-3 border-t border-border/70 pt-4 text-xs leading-5">
-                                        <div>
-                                            <dt className="font-semibold text-text-muted">Evidence</dt>
-                                            <dd>{recommendation.evidence}</dd>
-                                        </div>
-                                        <div>
-                                            <dt className="font-semibold text-text-muted">Rationale</dt>
-                                            <dd>{recommendation.rationale}</dd>
-                                        </div>
-                                        <div>
-                                            <dt className="font-semibold text-text-muted">Limitations</dt>
-                                            <dd>{recommendation.limitations}</dd>
-                                        </div>
-                                    </dl>
-                                    <p className="mt-3 text-xs text-text-muted">
-                                        Confidence: {recommendation.confidence}
-                                    </p>
-                                </article>
+                                    recommendation={{
+                                        source: "resource-advisor",
+                                        title: `${recommendation.zoneLabel} · ${recommendation.venueName}`,
+                                        action: recommendation.action,
+                                        rationale: recommendation.rationale,
+                                        evidence: recommendation.evidence,
+                                        limitations: recommendation.limitations,
+                                        urgency: recommendation.urgency,
+                                        confidence: recommendation.confidence,
+                                        snapshotAt: result.snapshotTime,
+                                        status: "open",
+                                        recommendationSource: result.source,
+                                        humanReviewRequired: true,
+                                        context: { zoneId: recommendation.zoneId },
+                                    }}
+                                    onAskCopilot={() => window.dispatchEvent(new CustomEvent("pulseops:copilot", { detail: { question: `What should the operator know about ${recommendation.zoneLabel} right now?`, zoneId: recommendation.zoneId } }))}
+                                />
                             ))}
                         </div>
                     </>

@@ -157,6 +157,25 @@ also injects live data into the prompt. Mitigations:
   resume simulation — worth stating plainly in the README rather than
   over-engineering disaster recovery for a hackathon judge.
 
+## Post-hackathon revamp security additions
+
+- Migration `0010_venue_scoped_rls.sql` replaces the original authenticated-wide
+  read policies with trusted Admin/non-Admin venue scope for all operational
+  tables. Hosted cross-venue denial must be verified before production use.
+- Migration `0011_telemetry_rollups.sql` exposes rollups read-only to
+  authenticated users through the same venue policy. Only the service-role
+  maintenance route may execute rollup, purge, or insert behavior.
+- `/api/ops/snapshot`, advisor routes, Copilot context, comparison, and report
+  export validate requested venue IDs server-side before querying or generating
+  output.
+- Raw telemetry retention is 30 days, hourly rollups are retained for 90 days,
+  and Copilot query retention remains 24 hours. These windows are implemented
+  in a protected maintenance function and are not yet hosted-verified on the
+  revamp branch.
+- New route logs use safe request IDs and bounded operational context; question
+  text, secret values, and model prompts are excluded from the structured log
+  payload.
+
 ## Pre-submission security checklist
 - [x] RLS enabled on every documented table through applied migrations; live
       anonymous denial, cross-role write denial, authorized writes, and
