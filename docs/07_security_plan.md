@@ -165,6 +165,9 @@ also injects live data into the prompt. Mitigations:
 - Migration `0011_telemetry_rollups.sql` exposes rollups read-only to
   authenticated users through the same venue policy. Only the service-role
   maintenance route may execute rollup, purge, or insert behavior.
+- Migration `0012_venue_policy_cleanup.sql` removes legacy hosted policy
+  aliases, including the old editable-`user_metadata` alert rule, and limits
+  the server-maintenance RLS helper to `service_role`.
 - `/api/ops/snapshot`, advisor routes, Copilot context, comparison, and report
   export validate requested venue IDs server-side before querying or generating
   output.

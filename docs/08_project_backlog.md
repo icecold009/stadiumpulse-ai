@@ -183,9 +183,12 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 The revamp branch has passed local TypeScript, ESLint, 24 contract tests, prompt
 contracts, `git diff --check`, and the production build during implementation.
-Hosted migration, Realtime, authorization, rollup, export, accessibility, and
-hosted production verification remain open until the additive migrations and UI
-changes are reviewed and applied in an isolated hosted environment.
+Migration `0012_venue_policy_cleanup.sql` now removes drifted hosted policy
+aliases, including the unsafe editable-`user_metadata` alert rule, and locks
+the unused `rls_auto_enable()` helper to `service_role`. Hosted migration,
+Realtime, authorization, rollup, export, accessibility, and hosted production
+verification remain open until the additive migrations and UI changes are
+reviewed and applied in an isolated hosted environment.
 
 On 2026-07-19, the pushed GitHub Actions workflow for deployed revision `c7ebfa2`
 passed. The current P1 work passes lint, TypeScript, seventeen

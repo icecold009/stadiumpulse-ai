@@ -201,3 +201,5 @@ of truth and get committed to git (they're small text files, no bloat risk).
   with trusted Admin/non-Admin venue-scoped policies.
 - `0011_telemetry_rollups.sql`: adds idempotent hourly rollups and the
   service-role-only retention function.
+- `0012_venue_policy_cleanup.sql`: removes legacy hosted policy aliases that
+  could bypass venue scope and restricts the server-maintenance RLS helper.
