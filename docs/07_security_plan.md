@@ -161,7 +161,7 @@ also injects live data into the prompt. Mitigations:
 
 - Migration `0010_venue_scoped_rls.sql` replaces the original authenticated-wide
   read policies with trusted Admin/non-Admin venue scope for all operational
-  tables. Hosted cross-venue denial must be verified before production use.
+  tables. It was applied to the hosted project on 2026-08-15.
 - Migration `0011_telemetry_rollups.sql` exposes rollups read-only to
   authenticated users through the same venue policy. Only the service-role
   maintenance route may execute rollup, purge, or insert behavior.
@@ -170,13 +170,21 @@ also injects live data into the prompt. Mitigations:
   the server-maintenance RLS helper to `service_role`.
 - Migration `0013_harden_venue_access_function.sql` keeps venue authorization
   as a `SECURITY INVOKER` helper while retaining its authenticated-only grant.
+- Migration `0014_rls_and_index_hardening.sql` removes a redundant permissive
+  role policy and uses init-plan-safe auth predicates without changing the
+  fail-closed server-only design of `rate_limits`.
 - `/api/ops/snapshot`, advisor routes, Copilot context, comparison, and report
   export validate requested venue IDs server-side before querying or generating
   output.
 - Raw telemetry retention is 30 days, hourly rollups are retained for 90 days,
   and Copilot query retention remains 24 hours. These windows are implemented
-  in a protected maintenance function and are not yet hosted-verified on the
-  revamp branch.
+  in a protected maintenance function. The migration and function permissions
+  are hosted-verified; executing the maintenance route remains an application
+  workflow check.
+- Supabase Security Advisor now reports only the intentional server-only
+  `rate_limits` no-policy info and the project-level leaked-password
+  protection warning. Enable the latter in Auth → Attack Protection when the
+  project plan supports it.
 - New route logs use safe request IDs and bounded operational context; question
   text, secret values, and model prompts are excluded from the structured log
   payload.

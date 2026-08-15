@@ -187,10 +187,12 @@ Migration `0012_venue_policy_cleanup.sql` now removes drifted hosted policy
 aliases, including the unsafe editable-`user_metadata` alert rule, and locks
 the unused `rls_auto_enable()` helper to `service_role`. Migration
 `0013_harden_venue_access_function.sql` also keeps the venue helper as
-`SECURITY INVOKER`. Hosted migration,
-Realtime, authorization, rollup, export, accessibility, and hosted production
-verification remain open until the additive migrations and UI changes are
-reviewed and applied in an isolated hosted environment.
+`SECURITY INVOKER`, and migration `0014_rls_and_index_hardening.sql` adds
+foreign-key indexes and init-plan-safe policy predicates. Hosted migration,
+schema policy, function-grant, and index verification now pass through
+`0014`. Remaining gates are authenticated four-role RLS behavior, Realtime,
+rollup execution, export, accessibility, the final Vercel preview interaction
+check, and enabling Supabase Auth leaked-password protection in the dashboard.
 
 On 2026-07-19, the pushed GitHub Actions workflow for deployed revision `c7ebfa2`
 passed. The current P1 work passes lint, TypeScript, seventeen

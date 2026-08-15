@@ -205,3 +205,6 @@ of truth and get committed to git (they're small text files, no bloat risk).
   could bypass venue scope and restricts the server-maintenance RLS helper.
 - `0013_harden_venue_access_function.sql`: runs venue authorization as the
   invoker so the public helper cannot bypass the caller's RLS boundaries.
+- `0014_rls_and_index_hardening.sql`: covers operational foreign keys and
+  applies init-plan-safe authorization predicates. `rate_limits` remains
+  intentionally server-only with default-deny RLS and no browser policy.
