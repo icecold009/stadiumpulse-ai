@@ -168,6 +168,8 @@ also injects live data into the prompt. Mitigations:
 - Migration `0012_venue_policy_cleanup.sql` removes legacy hosted policy
   aliases, including the old editable-`user_metadata` alert rule, and limits
   the server-maintenance RLS helper to `service_role`.
+- Migration `0013_harden_venue_access_function.sql` keeps venue authorization
+  as a `SECURITY INVOKER` helper while retaining its authenticated-only grant.
 - `/api/ops/snapshot`, advisor routes, Copilot context, comparison, and report
   export validate requested venue IDs server-side before querying or generating
   output.

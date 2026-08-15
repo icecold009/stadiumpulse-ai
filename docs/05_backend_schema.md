@@ -203,3 +203,5 @@ of truth and get committed to git (they're small text files, no bloat risk).
   service-role-only retention function.
 - `0012_venue_policy_cleanup.sql`: removes legacy hosted policy aliases that
   could bypass venue scope and restricts the server-maintenance RLS helper.
+- `0013_harden_venue_access_function.sql`: runs venue authorization as the
+  invoker so the public helper cannot bypass the caller's RLS boundaries.

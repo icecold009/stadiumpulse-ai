@@ -185,7 +185,9 @@ The revamp branch has passed local TypeScript, ESLint, 24 contract tests, prompt
 contracts, `git diff --check`, and the production build during implementation.
 Migration `0012_venue_policy_cleanup.sql` now removes drifted hosted policy
 aliases, including the unsafe editable-`user_metadata` alert rule, and locks
-the unused `rls_auto_enable()` helper to `service_role`. Hosted migration,
+the unused `rls_auto_enable()` helper to `service_role`. Migration
+`0013_harden_venue_access_function.sql` also keeps the venue helper as
+`SECURITY INVOKER`. Hosted migration,
 Realtime, authorization, rollup, export, accessibility, and hosted production
 verification remain open until the additive migrations and UI changes are
 reviewed and applied in an isolated hosted environment.
