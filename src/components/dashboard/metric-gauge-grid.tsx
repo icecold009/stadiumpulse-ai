@@ -7,6 +7,7 @@ type MetricGaugeItem = {
     value: number;
     target: number;
     unit: string;
+    lowerIsBetter?: boolean;
 };
 
 type MetricGaugeGridProps = {
@@ -32,6 +33,7 @@ export default function MetricGaugeGrid({ metrics }: MetricGaugeGridProps) {
                         value={metric.value}
                         target={metric.target}
                         unit={metric.unit}
+                        lowerIsBetter={metric.lowerIsBetter}
                         className="h-full"
                     />
                 ))}

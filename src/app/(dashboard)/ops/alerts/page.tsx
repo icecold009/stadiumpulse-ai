@@ -2,6 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { AlertTriangle, Check, CircleCheck, RefreshCw, X } from "lucide-react";
 import type { Database } from "@/types/database";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -17,12 +18,22 @@ export default function AlertsPage() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+    const [severity, setSeverity] = useState<"" | "warn" | "critical">("");
+    const [status, setStatus] = useState<"open" | "handled">("open");
+    const [ageMinutes, setAgeMinutes] = useState<"" | "5" | "15" | "30" | "60">("");
+    const venueParams = useSearchParams();
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
     const fetchAlerts = useCallback(async () => {
         try {
             setLoadError(null);
-            const res = await fetch("/api/alerts", { cache: "no-store" });
+            const params = new URLSearchParams(venueParams.toString());
+            params.set("status", status);
+            if (severity) params.set("severity", severity);
+            else params.delete("severity");
+            if (ageMinutes) params.set("ageMinutes", ageMinutes);
+            else params.delete("ageMinutes");
+            const res = await fetch(`/api/alerts?${params.toString()}`, { cache: "no-store" });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error ?? "Failed to load alerts.");
             setAlerts(json.alerts ?? []);
@@ -33,7 +44,7 @@ export default function AlertsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [ageMinutes, severity, status, venueParams]);
 
     useEffect(() => {
         const initialLoad = setTimeout(() => void fetchAlerts(), 0);
@@ -98,15 +109,6 @@ export default function AlertsPage() {
         );
     }
 
-    if (alerts.length === 0) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">
-                <p className="text-lg font-medium">All clear</p>
-                <p className="text-sm">No open alerts at this time.</p>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -115,8 +117,40 @@ export default function AlertsPage() {
                     <h1 className="mt-1 text-2xl font-semibold tracking-tight">Open alerts</h1>
                     <p className="mt-1 text-sm text-text-muted">Review evidence, decide on AI guidance, then resolve incidents separately.</p>
                 </div>
-                <span className="rounded-full border border-status-warn/30 bg-status-warn/8 px-3 py-1.5 font-mono text-xs text-status-warn">{alerts.length} active</span>
+                <span className="rounded-full border border-status-warn/30 bg-status-warn/8 px-3 py-1.5 font-mono text-xs text-status-warn">{alerts.length} {status === "open" ? "active" : "handled"}</span>
             </div>
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface/60 p-3">
+                <label className="flex items-center gap-2 text-xs text-text-muted">
+                    <span>Severity</span>
+                    <select value={severity} onChange={(event) => setSeverity(event.target.value as typeof severity)} className="rounded-lg border border-border bg-background px-2.5 py-2 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+                        <option value="">All severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="warn">Watch</option>
+                    </select>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-text-muted">
+                    <span>Status</span>
+                    <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="rounded-lg border border-border bg-background px-2.5 py-2 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+                        <option value="open">Open</option>
+                        <option value="handled">Handled</option>
+                    </select>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-text-muted">
+                    <span>Age</span>
+                    <select value={ageMinutes} onChange={(event) => setAgeMinutes(event.target.value as typeof ageMinutes)} className="rounded-lg border border-border bg-background px-2.5 py-2 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+                        <option value="">Any age</option>
+                        <option value="5">Older than 5 min</option>
+                        <option value="15">Older than 15 min</option>
+                        <option value="30">Older than 30 min</option>
+                        <option value="60">Older than 1 hour</option>
+                    </select>
+                </label>
+                <span className="text-xs text-text-muted">Scope and freshness are enforced server-side.</span>
+            </div>
+            {alerts.length === 0 ? <div className="rounded-xl border border-border bg-background/30 p-6 text-center text-muted-foreground">
+                <p className="text-lg font-medium">{status === "open" ? "All clear" : "No matching handled alerts"}</p>
+                <p className="text-sm">Try a broader severity or age filter.</p>
+            </div> : null}
             {alerts.map((alert) => (
                 <div
                     key={alert.id}
@@ -215,10 +249,17 @@ export default function AlertsPage() {
                             <CircleCheck aria-hidden="true" className="h-4 w-4" />
                             Mark incident handled
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new CustomEvent("pulseops:copilot", { detail: { question: `What should the operator know about this ${alert.severity} alert right now?`, alertId: alert.id, zoneId: alert.zone_id ?? undefined, venueId: alert.venue_id } }))}
+                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-ai-highlight/35 bg-ai-highlight/10 px-3 text-sm font-medium text-ai-highlight transition hover:bg-ai-highlight/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-highlight/50"
+                        >
+                            Ask Copilot
+                        </button>
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                        {new Date(alert.created_at).toLocaleString()}
+                        Detected <time dateTime={alert.created_at}>{new Date(alert.created_at).toLocaleString()}</time>
                     </p>
                 </div>
             ))}

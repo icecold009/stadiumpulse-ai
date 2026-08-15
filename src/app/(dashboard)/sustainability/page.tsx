@@ -1,19 +1,27 @@
 import LiveSustainabilityDashboard from "@/components/dashboard/live-sustainability-dashboard";
 import SustainabilityAdvisorPanel from "@/components/dashboard/sustainability-advisor-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveVenueScope } from "@/lib/auth/venue-scope";
 import type { Database } from "@/types/database";
 
 type SustainabilityRow = Database["public"]["Tables"]["sustainability_metrics"]["Row"];
 type VenueRow = Database["public"]["Tables"]["venues"]["Row"];
 
-export default async function SustainabilityPage() {
+export default async function SustainabilityPage({ searchParams }: { searchParams: Promise<{ venueId?: string }> }) {
     const supabase = await createSupabaseServerClient();
+    const params = await searchParams;
+    const scopeResult = await resolveVenueScope(params.venueId);
+    if (!scopeResult.ok) {
+        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Sustainability</h1><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
+    }
+    const venueIds = scopeResult.scope.queryVenueIds;
 
     const [venuesResult, metricsResult] = await Promise.all([
-        supabase.from("venues").select("id, name, city, capacity, created_at"),
+        supabase.from("venues").select("id, name, city, capacity, created_at").in("id", venueIds),
         supabase
             .from("sustainability_metrics")
             .select("*")
+            .in("venue_id", venueIds)
             .order("recorded_at", { ascending: false })
             .limit(500),
     ]);

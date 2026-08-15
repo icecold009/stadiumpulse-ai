@@ -6,6 +6,22 @@
 
 **Deployed revision:** `c7ebfa2`; local P1 verification also includes the locally committed retention and test-harness work
 
+## Post-hackathon revamp status
+
+The current local implementation is on `codex/pulseops-revamp`. TypeScript,
+ESLint, 24 contract tests, static prompt contracts, `git diff --check`, and the
+production build pass locally. Hosted migrations `0010` through `0014` are
+applied to project `stadiumpulse-hack2skill` and the hosted schema audit
+confirms venue-scoped policies, service-only maintenance helpers, rollups, and
+the foreign-key indexes. Security advisors no longer report unsafe policy or
+function exposure; the remaining warning is the project-level leaked-password
+setting. Performance advisors report only unused-index observations after the
+hardening migration.
+
+The hosted database migration state is verified. Authenticated four-role route,
+Realtime, rollup execution, export, accessibility, and final Vercel preview
+interaction checks remain separate application-level gates.
+
 ## Quality and CI-equivalent gates
 
 | Gate | Result |

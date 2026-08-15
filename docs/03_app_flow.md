@@ -29,12 +29,16 @@ All roles ─────────────► AI Copilot Chat (persistent
 ### 2. Global Overview (Admin only)
 - Card grid: one card per venue, showing occupancy %, active alerts count,
   sustainability score.
-- Click a venue card → drills into that venue's Ops Dashboard.
+- Click a venue card → drills into `/ops?venueId=<uuid>` while preserving the
+  trusted Admin venue scope.
+- Download an Admin-only measured-versus-analysis match summary as JSON or CSV.
 - Top-level incident feed across all venues.
 
 ### 3. Ops Dashboard (Operations Manager)
-- Zone occupancy heatmap (SVG grid, color-coded).
-- Gate throughput line chart (last 60 min).
+- Venue-scoped situation room with freshness-aware occupancy risk and gate flow.
+- Highest-risk zone cards show trend, capacity, open alerts, and contextual
+  Copilot entry points.
+- Gate throughput cards show the latest reading and direction.
 - Live incident/alert list, each with an AI-suggested action and a
   human-controlled Accept, Reject, and Mark handled actions. Accept/reject
   records feedback on the recommendation without claiming the incident was
@@ -57,8 +61,10 @@ All roles ─────────────► AI Copilot Chat (persistent
 - Text input + streamed response.
 - Each response shows a small "grounded in: [data used]" footer so users
   can see it isn't freeform.
-- Chat history scoped to the session, not persisted long-term (keeps DB
-  small and side-steps storing potentially sensitive query logs long-term).
+- Optional zone and venue context can be supplied by a dashboard action; the
+  server validates both IDs against the trusted venue scope.
+- Exchanges are persisted in `copilot_queries` for auditability and purged by
+  the protected 24-hour retention job.
 
 ### 7. Alerts / Anomaly flow (cross-cutting)
 - Backend tick detects threshold breach → writes alert row → Supabase

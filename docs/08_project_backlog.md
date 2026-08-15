@@ -15,9 +15,16 @@ status, dependencies, and acceptance criteria.
 
 ## Current milestone
 
-Achieved and live-verified on 2026-07-18:
+Hackathon submission baseline achieved and live-verified on 2026-07-19. The
+current post-hackathon milestone is the Operations Command Center revamp on
+feature branch `codex/pulseops-revamp`:
 
 `simulation -> capacity alert -> grounded recommendation -> operator handles alert`
+
+Revamp order:
+
+`venue-scoped access -> shared operations snapshot -> operator shell ->
+decision cards -> contextual Copilot -> rollups/comparison/export`
 
 ## Phase 0–5 implementation audit
 
@@ -162,14 +169,30 @@ verified. External-only facts are explicitly marked `Verify externally`.
 
 | ID | Status | Work | Acceptance criteria |
 |---|---|---|---|
-| P2-01 | ready | Admin venue drill-down | Admin can open a venue-specific operational view without losing venue scope |
-| P2-02 | ready | Multi-venue comparison | Admin can compare the small set of metrics needed for cross-venue decisions |
-| P2-03 | ready | Match summary export | A grounded end-of-match summary clearly separates measured facts from generated analysis |
-| P2-04 | ready | Telemetry retention/rollups | Old raw telemetry is safely summarized or purged according to a documented storage policy |
-| P2-05 | ready | Observability upgrade | Structured logs include safe request context; production monitoring recommendations are documented without exposing secrets or user questions |
+| P2-01 | in_progress | Admin venue drill-down | Admin venue cards link to `/ops?venueId=<uuid>`; server and database scope reject unauthorized venue IDs |
+| P2-02 | in_progress | Multi-venue comparison | Admin-only `/api/venues/compare` returns occupancy, risk, alert, gate, and freshness metrics per authorized venue |
+| P2-03 | in_progress | Match summary export | Admin-only `/api/reports/match-summary` returns JSON/CSV with measured facts separated from deterministic analysis |
+| P2-04 | in_progress | Telemetry retention/rollups | Migration `0011` and protected maintenance route roll up hourly data, retain raw telemetry for 30 days, and rollups for 90 days |
+| P2-05 | in_progress | Observability upgrade | `safe-log.ts` emits request IDs, safe route context, status, duration, and counts without secrets or user questions; hosted monitoring still needs review |
 | P2-06 | done | Migrate middleware convention | `src/proxy.ts` exports `proxy` with the existing matcher, Supabase cookie refresh, authentication redirects, and role guards; TypeScript, lint, and the production build pass without the deprecation warning |
+| P2-07 | in_progress | Venue-scoped RLS | Migration `0010` applies trusted Admin/non-Admin venue policies to all telemetry, alert, volunteer, and reference reads/writes |
+| P2-08 | in_progress | Shared operations snapshot | `/api/ops/snapshot` and the Operations situation room share freshness-aware zone, gate, alert, and simulation view models |
+| P2-09 | in_progress | Contextual Copilot | Copilot accepts optional venue, zone, gate, alert, and sustainability context, validates it server-side, and returns scope, freshness, category, and evidence metadata without changing the SSE contract |
 
 ## Current verification
+
+The revamp branch has passed local TypeScript, ESLint, 24 contract tests, prompt
+contracts, `git diff --check`, and the production build during implementation.
+Migration `0012_venue_policy_cleanup.sql` now removes drifted hosted policy
+aliases, including the unsafe editable-`user_metadata` alert rule, and locks
+the unused `rls_auto_enable()` helper to `service_role`. Migration
+`0013_harden_venue_access_function.sql` also keeps the venue helper as
+`SECURITY INVOKER`, and migration `0014_rls_and_index_hardening.sql` adds
+foreign-key indexes and init-plan-safe policy predicates. Hosted migration,
+schema policy, function-grant, and index verification now pass through
+`0014`. Remaining gates are authenticated four-role RLS behavior, Realtime,
+rollup execution, export, accessibility, the final Vercel preview interaction
+check, and enabling Supabase Auth leaked-password protection in the dashboard.
 
 On 2026-07-19, the pushed GitHub Actions workflow for deployed revision `c7ebfa2`
 passed. The current P1 work passes lint, TypeScript, seventeen

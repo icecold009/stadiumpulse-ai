@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import RealtimePageRefresh from "@/components/realtime-page-refresh";
 import type { Database } from "@/types/database";
+import Link from "next/link";
+import { resolveVenueScope } from "@/lib/auth/venue-scope";
 
 type VenueRow = Database["public"]["Tables"]["venues"]["Row"];
 type ZoneRow = Database["public"]["Tables"]["zones"]["Row"];
@@ -8,26 +10,38 @@ type ZoneTelemetryRow = Database["public"]["Tables"]["zone_telemetry"]["Row"];
 type AlertRow = Database["public"]["Tables"]["alerts"]["Row"];
 type SustainabilityRow = Database["public"]["Tables"]["sustainability_metrics"]["Row"];
 
-export default async function OverviewPage() {
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ venueId?: string }> }) {
     const supabase = await createSupabaseServerClient();
+    const scopeResult = await resolveVenueScope((await searchParams).venueId);
+    if (!scopeResult.ok) {
+        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Overview</h1><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
+    }
+    const venueIds = scopeResult.scope.queryVenueIds;
 
-    const [venuesRes, zonesRes, telemetryRes, alertsRes, sustainabilityRes] = await Promise.all([
-        supabase.from("venues").select("*"),
-        supabase.from("zones").select("id, venue_id, capacity"),
-        supabase
-            .from("zone_telemetry")
-            .select("zone_id, occupancy, recorded_at")
-            .order("recorded_at", { ascending: false })
-            .limit(500),
+    const [venuesRes, zonesRes, alertsRes, sustainabilityRes] = await Promise.all([
+        supabase.from("venues").select("*").in("id", venueIds),
+        supabase.from("zones").select("id, venue_id, capacity").in("venue_id", venueIds),
         supabase
             .from("alerts")
-            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_by, decision_at, status, created_at, handled_by, handled_at"),
+            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_by, decision_at, status, created_at, handled_by, handled_at")
+            .in("venue_id", venueIds),
         supabase
             .from("sustainability_metrics")
             .select("*")
+            .in("venue_id", venueIds)
             .order("recorded_at", { ascending: false })
             .limit(500),
     ]);
+
+    const zoneIds = (zonesRes.data ?? []).map((zone) => zone.id);
+    const telemetryRes = zoneIds.length > 0
+        ? await supabase
+            .from("zone_telemetry")
+            .select("zone_id, occupancy, recorded_at")
+            .in("zone_id", zoneIds)
+            .order("recorded_at", { ascending: false })
+            .limit(500)
+        : { data: [], error: null };
 
     if (venuesRes.error || zonesRes.error || telemetryRes.error || alertsRes.error || sustainabilityRes.error) {
         return (
@@ -130,22 +144,28 @@ export default async function OverviewPage() {
                         }
 
                         return (
-                            <article key={venueId} className="rounded-lg border p-4 shadow-sm">
-                                <h2 className="text-lg font-semibold">
-                                    {(venue as { name?: string }).name || `Venue ${venueId}`}
-                                </h2>
-                                <div className="mt-3 space-y-1 text-sm">
-                                    <p>
-                                        <span className="font-medium">Occupancy:</span> {occupancyPct.toFixed(1)}%
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">Open alerts:</span> {openAlerts}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">Sustainability:</span>{" "}
-                                        {sustainabilityPct == null ? "N/A" : `${sustainabilityPct.toFixed(1)}% of target`}
-                                    </p>
-                                </div>
+                            <article key={venueId} className="rounded-2xl border border-border bg-surface/65 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/45 hover:bg-surface">
+                                <Link href={`/ops?venueId=${venueId}`} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                                    <h2 className="text-lg font-semibold">
+                                        {(venue as { name?: string }).name || `Venue ${venueId}`}
+                                    </h2>
+                                    <div className="mt-3 space-y-1 text-sm">
+                                        <p>
+                                            <span className="font-medium">Occupancy:</span> {occupancyPct.toFixed(1)}%
+                                        </p>
+                                        <p>
+                                            <span className="font-medium">Open alerts:</span> {openAlerts}
+                                        </p>
+                                        <p>
+                                            <span className="font-medium">Sustainability:</span>{" "}
+                                            {sustainabilityPct == null ? "N/A" : `${sustainabilityPct.toFixed(1)}% of target`}
+                                        </p>
+                                    </div>
+                                    <p className="mt-4 text-xs font-semibold text-accent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">Open operations view →</p>
+                                </Link>
+                                <a href={`/api/reports/match-summary?venueId=${venueId}&format=csv`} className="mt-3 inline-block text-xs font-semibold text-text-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+                                    Download match summary ↓
+                                </a>
                             </article>
                         );
                     })}

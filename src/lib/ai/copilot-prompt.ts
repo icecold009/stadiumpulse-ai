@@ -99,9 +99,28 @@ ${JSON.stringify(
     )}`;
 }
 
-export function buildCopilotUserContent(dataBlock: string, question: string) {
+export type CopilotFocusContext = {
+    venueId?: string;
+    venueName?: string;
+    zoneId?: string;
+    zoneLabel?: string;
+    gateId?: string;
+    gateLabel?: string;
+    alertId?: string;
+    alertLabel?: string;
+    metricType?: string;
+};
+
+export function buildCopilotUserContent(
+    dataBlock: string,
+    question: string,
+    focusContext?: CopilotFocusContext | null
+) {
     return [
         { type: "text" as const, text: dataBlock },
+        ...(focusContext
+            ? [{ type: "text" as const, text: `FOCUS_CONTEXT:\n${JSON.stringify(focusContext)}` }]
+            : []),
         { type: "text" as const, text: `QUESTION:\n${question}` },
     ];
 }

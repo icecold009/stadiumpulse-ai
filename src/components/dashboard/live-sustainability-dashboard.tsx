@@ -56,6 +56,7 @@ export default function LiveSustainabilityDashboard({
                         label: metricType,
                         value: row.value,
                         target: row.target,
+                        lowerIsBetter: metricType !== "waste_diverted_pct",
                         unit:
                             metricType === "energy_kwh"
                                 ? "kWh"
@@ -76,9 +77,28 @@ export default function LiveSustainabilityDashboard({
                     value: row.value,
                     target: row.target,
                     recorded_at: row.recorded_at,
-                }));
+                }))
+                .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
 
-            return { venue, gauges, trendData };
+            const projections = METRIC_TYPES.flatMap((metricType) => {
+                const points = trendData.filter((point) => point.metric_type === metricType);
+                if (points.length < 2) return [];
+                const current = points.at(-1)!;
+                const previous = points.at(-2)!;
+                const projectedValue = current.value + (current.value - previous.value);
+                const lowerIsBetter = metricType !== "waste_diverted_pct";
+                const projectedBreach = lowerIsBetter
+                    ? projectedValue > current.target
+                    : projectedValue < current.target;
+                return [{
+                    metricType,
+                    projectedValue,
+                    target: current.target,
+                    projectedBreach,
+                }];
+            });
+
+            return { venue, gauges, trendData, projections };
         });
     }, [rows, venues]);
 
@@ -102,7 +122,7 @@ export default function LiveSustainabilityDashboard({
 
     return (
         <div className="space-y-8">
-            {venueSections.map(({ venue, gauges, trendData }) => (
+            {venueSections.map(({ venue, gauges, trendData, projections }) => (
                 <section key={venue.id} className="space-y-5" aria-labelledby={`venue-${venue.id}`}>
                     <div>
                         <h2 id={`venue-${venue.id}`} className="text-xl font-semibold">
@@ -118,6 +138,17 @@ export default function LiveSustainabilityDashboard({
                             description="The venue exists, but no valid sustainability metric rows are available yet."
                         />
                     )}
+                    <section className="rounded-2xl border border-border bg-surface/40 p-4" aria-labelledby={`projection-${venue.id}`}>
+                        <h3 id={`projection-${venue.id}`} className="text-sm font-semibold">Projected next-reading checks</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">A transparent linear estimate from the latest two simulated readings; it is not a model forecast.</p>
+                        {projections.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">Projection unavailable until two readings exist for a metric.</p> : <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+                            {projections.map((projection) => <li key={projection.metricType} className="rounded-xl border border-border bg-background/30 p-3 text-xs">
+                                <p className="font-semibold">{projection.metricType}</p>
+                                <p className="mt-1 text-muted-foreground">Projected {projection.projectedValue.toFixed(1)} vs target {projection.target.toFixed(1)}</p>
+                                <p className={`mt-2 font-semibold ${projection.projectedBreach ? "text-status-warn" : "text-status-ok"}`}>{projection.projectedBreach ? "Potential threshold breach" : "Within threshold"}</p>
+                            </li>)}
+                        </ul>}
+                    </section>
                     <SustainabilityTrend
                         title={`${venue.name} sustainability trend`}
                         initialData={trendData}

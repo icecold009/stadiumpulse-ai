@@ -143,6 +143,76 @@ export type Database = {
         }
         Relationships: []
       }
+      telemetry_rollups: {
+        Row: {
+          average_value: number
+          bucket_end: string
+          bucket_start: string
+          created_at: string
+          gate_id: string | null
+          id: number
+          max_value: number
+          metric_type: string
+          min_value: number
+          sample_count: number
+          total_value: number
+          venue_id: string
+          zone_id: string | null
+        }
+        Insert: {
+          average_value: number
+          bucket_end: string
+          bucket_start: string
+          created_at?: string
+          gate_id?: string | null
+          id?: number
+          max_value: number
+          metric_type: string
+          min_value: number
+          sample_count: number
+          total_value: number
+          venue_id: string
+          zone_id?: string | null
+        }
+        Update: {
+          average_value?: number
+          bucket_end?: string
+          bucket_start?: string
+          created_at?: string
+          gate_id?: string | null
+          id?: number
+          max_value?: number
+          metric_type?: string
+          min_value?: number
+          sample_count?: number
+          total_value?: number
+          venue_id?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telemetry_rollups_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telemetry_rollups_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telemetry_rollups_gate_id_fkey"
+            columns: ["gate_id"]
+            isOneToOne: false
+            referencedRelation: "gates"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       gate_scans: {
         Row: {
           gate_id: string
@@ -405,6 +475,14 @@ export type Database = {
           p_window_seconds: number
         }
         Returns: boolean
+      }
+      rollup_telemetry: {
+        Args: {
+          p_raw_retention_cutoff: string
+          p_rollup_before: string
+          p_rollup_retention_cutoff: string
+        }
+        Returns: Json
       }
     }
     Enums: {

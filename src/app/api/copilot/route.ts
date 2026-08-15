@@ -6,7 +6,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAnthropicClient, COPILOT_MODEL } from "@/lib/ai/client";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { copilotDataAccessForRole, isRole } from "@/lib/auth/roles";
-import { parseCopilotQuestion } from "@/lib/api/contracts";
+import { parseCopilotContext } from "@/lib/api/contracts";
 import {
     buildCopilotContext,
     type RawAlert,
@@ -55,11 +55,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
-    const parsedQuestion = parseCopilotQuestion(body);
-    if (!parsedQuestion.ok) {
-        return NextResponse.json({ error: parsedQuestion.error }, { status: 400 });
+    const parsedRequest = parseCopilotContext(body);
+    if (!parsedRequest.ok) {
+        return NextResponse.json({ error: parsedRequest.error }, { status: 400 });
     }
-    const question = parsedQuestion.value;
+    const {
+        question,
+        zoneId: contextZoneId,
+        venueId: contextVenueId,
+        gateId: contextGateId,
+        alertId: contextAlertId,
+        metricType: contextMetricType,
+    } = parsedRequest.value;
 
     const supabase = await createSupabaseServerClient();
     const {
@@ -97,7 +104,7 @@ export async function POST(request: Request) {
 
     const role = roleRow.role;
     let venueIds: string[] = [];
-    let venueNames: string[] = [];
+    const venueNameById = new Map<string, string>();
 
     if (role === "admin") {
         const { data, error } = await supabase
@@ -117,7 +124,7 @@ export async function POST(request: Request) {
         }
 
         venueIds = (data ?? []).map((venue) => venue.id);
-        venueNames = (data ?? []).map((venue) => venue.name);
+        for (const venue of data ?? []) venueNameById.set(venue.id, venue.name);
     } else {
         const { data, error } = await supabase
             .from("user_venue_access")
@@ -137,13 +144,9 @@ export async function POST(request: Request) {
 
         const accessRows = (data ?? []) as unknown as RawVenueAccess[];
         venueIds = [...new Set(accessRows.map((row) => row.venue_id))];
-        venueNames = [
-            ...new Set(
-                accessRows
-                    .map((row) => row.venues?.name)
-                    .filter((name): name is string => Boolean(name))
-            ),
-        ];
+        for (const row of accessRows) {
+            if (row.venues?.name) venueNameById.set(row.venue_id, row.venues.name);
+        }
     }
 
     if (venueIds.length === 0) {
@@ -152,6 +155,18 @@ export async function POST(request: Request) {
             { status: 403 }
         );
     }
+
+    if (contextVenueId && !venueIds.includes(contextVenueId)) {
+        return NextResponse.json(
+            { error: "Copilot context is outside this account's venue scope." },
+            { status: 403 }
+        );
+    }
+
+    const queryVenueIds = contextVenueId ? [contextVenueId] : venueIds;
+    const queryVenueNames = queryVenueIds
+        .map((venueId) => venueNameById.get(venueId))
+        .filter((name): name is string => Boolean(name));
 
     const allowed = await consumeRateLimit({
         subject: user.id,
@@ -172,8 +187,8 @@ export async function POST(request: Request) {
 
     const { data: zoneData, error: zoneError } = await supabase
         .from("zones")
-        .select("id, label, capacity, venues(name)")
-        .in("venue_id", venueIds);
+        .select("id, venue_id, label, capacity, venues(name)")
+        .in("venue_id", queryVenueIds);
 
     if (zoneError) {
         console.error("[copilot] zone scope query error:", {
@@ -189,6 +204,49 @@ export async function POST(request: Request) {
 
     const zones = (zoneData ?? []) as unknown as RawZone[];
     const zoneIds = zones.map((zone) => zone.id);
+    const contextZone = contextZoneId ? zones.find((zone) => zone.id === contextZoneId) : null;
+    if (contextZoneId && !contextZone) {
+        return NextResponse.json(
+            { error: "Copilot context is outside this account's venue scope." },
+            { status: 403 }
+        );
+    }
+
+    const [contextGateResult, contextAlertResult] = await Promise.all([
+        contextGateId
+            ? supabase.from("gates").select("id, venue_id, label").eq("id", contextGateId).maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+        contextAlertId
+            ? supabase.from("alerts").select("id, venue_id, zone_id, message").eq("id", contextAlertId).maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (contextGateResult.error || contextAlertResult.error) {
+        return NextResponse.json({ error: "Failed to validate Copilot context." }, { status: 500 });
+    }
+    const contextGate = contextGateResult.data;
+    const contextAlert = contextAlertResult.data;
+    if (contextGateId && (!contextGate || !queryVenueIds.includes(contextGate.venue_id))) {
+        return NextResponse.json({ error: "Copilot context is outside this account's venue scope." }, { status: 403 });
+    }
+    if (contextAlertId && (!contextAlert || !queryVenueIds.includes(contextAlert.venue_id))) {
+        return NextResponse.json({ error: "Copilot context is outside this account's venue scope." }, { status: 403 });
+    }
+    const contextVenueIds = [contextZone?.venue_id, contextGate?.venue_id, contextAlert?.venue_id].filter((id): id is string => Boolean(id));
+    if (contextVenueIds.some((id) => id !== (contextVenueId ?? contextVenueIds[0]))) {
+        return NextResponse.json({ error: "Copilot context must belong to one venue." }, { status: 400 });
+    }
+    const resolvedContextVenueId = contextVenueId ?? contextVenueIds[0] ?? null;
+    const focusContext = {
+        venueId: resolvedContextVenueId ?? undefined,
+        venueName: resolvedContextVenueId ? venueNameById.get(resolvedContextVenueId) : undefined,
+        zoneId: contextZone?.id,
+        zoneLabel: contextZone?.label,
+        gateId: contextGate?.id,
+        gateLabel: contextGate?.label,
+        alertId: contextAlert?.id,
+        alertLabel: contextAlert?.message,
+        metricType: contextMetricType,
+    };
     const dataAccess = copilotDataAccessForRole(role);
 
     const telemetryQuery = dataAccess.telemetry && zoneIds.length > 0
@@ -204,7 +262,7 @@ export async function POST(request: Request) {
         ? supabase
               .from("alerts")
               .select("id, severity, message, ai_recommendation, status, created_at, zones(label, venues(name)), venues(name)")
-              .in("venue_id", venueIds)
+              .in("venue_id", queryVenueIds)
               .eq("status", "open")
               .order("created_at", { ascending: false })
               .limit(20)
@@ -213,7 +271,7 @@ export async function POST(request: Request) {
         ? supabase
               .from("sustainability_metrics")
               .select("metric_type, value, target, recorded_at, venues(name)")
-              .in("venue_id", venueIds)
+              .in("venue_id", queryVenueIds)
               .gte("recorded_at", windowStart)
               .order("recorded_at", { ascending: false })
               .limit(50)
@@ -222,7 +280,7 @@ export async function POST(request: Request) {
         ? supabase
               .from("volunteers")
               .select("name, status, venues(name), zones(label)")
-              .in("venue_id", venueIds)
+              .in("venue_id", queryVenueIds)
               .limit(50)
         : Promise.resolve({ data: [], error: null });
 
@@ -268,8 +326,8 @@ export async function POST(request: Request) {
 
     const { slice, groundedSummary } = buildCopilotContext({
         role,
-        venueIds,
-        venueNames,
+        venueIds: queryVenueIds,
+        venueNames: queryVenueNames,
         zones,
         telemetryRows: (telemetryResult.data ?? []) as unknown as RawTelemetry[],
         alertRows: (alertsResult.data ?? []) as unknown as RawAlert[],
@@ -292,7 +350,7 @@ export async function POST(request: Request) {
             messages: [
                 {
                     role: "user",
-                    content: buildCopilotUserContent(dataBlock, question),
+                    content: buildCopilotUserContent(dataBlock, question, Object.values(focusContext).some(Boolean) ? focusContext : null),
                 },
             ],
             stream: true,
@@ -322,7 +380,16 @@ export async function POST(request: Request) {
                             groundedSummary,
                             dataWindowMinutes: WINDOW_MINUTES,
                             requesterRole: role,
-                            venuesIncluded: venueNames,
+                            selectedVenueId: resolvedContextVenueId,
+                            dataStatus: getCopilotDataStatus(slice),
+                            snapshotAt: slice.fetchedAt,
+                            venuesIncluded: queryVenueNames,
+                            dataCategoriesIncluded: Object.entries(dataAccess).filter(([, included]) => included).map(([category]) => category),
+                            evidenceLabels: [...new Set([
+                                ...zones.map((zone) => `${zone.venues?.name ?? "Unknown venue"} / ${zone.label}`),
+                                ...queryVenueNames,
+                                ...(contextAlert?.message ? [contextAlert.message] : []),
+                            ])],
                             zonesIncluded: [...new Set(telemetry.map((t) => `${t.venue_name} / ${t.zone_label}`))],
                             alertCount: alerts.length,
                         })}\n\n`
@@ -416,4 +483,18 @@ export async function POST(request: Request) {
             Connection: "keep-alive",
         },
     });
+}
+
+function getCopilotDataStatus(slice: { telemetry: Array<{ recorded_at: string }>; alerts: Array<{ created_at: string }>; sustainability: Array<{ recorded_at: string }>; fetchedAt: string; windowMinutes: number }): "fresh" | "stale" | "missing" {
+    const timestamps = [
+        ...slice.telemetry.map((row) => row.recorded_at),
+        ...slice.alerts.map((row) => row.created_at),
+        ...slice.sustainability.map((row) => row.recorded_at),
+    ];
+    if (timestamps.length === 0) return "missing";
+    const newest = Math.max(...timestamps.map((timestamp) => Date.parse(timestamp)));
+    if (!Number.isFinite(newest)) return "missing";
+    const age = Date.parse(slice.fetchedAt) - newest;
+    if (age > slice.windowMinutes * 60 * 1000) return "stale";
+    return "fresh";
 }

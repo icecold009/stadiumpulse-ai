@@ -159,6 +159,12 @@ recommendation, evidence, and human-controlled outcome.
   four-role Copilot behavior pass. The final public and authenticated hosted
   interaction harnesses passed on 2026-07-19, including all route matrices,
   API permissions, grounded streams, and prompt-injection resistance.
+- Post-hackathon revamp work is currently on `codex/pulseops-revamp`. Hosted
+  migrations `0010_venue_scoped_rls.sql` through
+  `0014_rls_and_index_hardening.sql` are applied and the hosted schema/security
+  audit passes aside from the project-level leaked-password protection setting.
+  Shared `/api/ops/snapshot`, Admin comparison/export, and contextual Copilot
+  behavior still require their separate authenticated application-level checks.
 
 Do not assume these notes remain current: verify and update both this section
 and the backlog when the underlying state changes.

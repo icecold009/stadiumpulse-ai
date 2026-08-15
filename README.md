@@ -84,7 +84,11 @@ npm.cmd run verify:p0-hosted
 trusted role rows, and explicit venue assignments for non-admin demo users. It
 never prints secret values. Migrations under
 `supabase/migrations` are the database source of truth; do not reproduce them
-with manual dashboard edits.
+with manual dashboard edits. Migration `0010` enforces the same venue scope in
+RLS for reference, telemetry, alert, sustainability, and volunteer tables.
+Migration `0011` adds protected hourly telemetry rollups and retention
+maintenance; apply both before using the multi-venue comparison or summary
+export surfaces.
 
 For the complete hosted check, also set `PULSEOPS_APP_URL` in the invoking
 shell (it is not a required deployment variable). `verify:p0-hosted` checks
@@ -135,6 +139,15 @@ removes its test rows.
 `verify:public` requires only `PULSEOPS_APP_URL`. It checks the public login
 shell, protected dashboard redirects, local-font build, and unauthenticated API
 denial without changing application data.
+
+The post-hackathon Operations command center uses these additive interfaces:
+
+- `/api/ops/snapshot?venueId=<uuid>&windowMinutes=60`
+- `/api/venues/compare?windowMinutes=60` (Admin only)
+- `/api/reports/match-summary?venueId=<uuid>&format=json|csv` (Admin only)
+
+The venue selector is URL-backed, and all requested venue IDs are validated
+against trusted role and venue-assignment scope on the server.
 
 `verify:p1-hosted` exercises the role-scoped advisors, judge access, Realtime
 tables, volunteer reassignment, incident handling, and Copilot persistence,
@@ -189,15 +202,16 @@ Then:
 For normal live simulation, authenticated Admin/Ops sessions may call the
 manual tick endpoint at a bounded rate. Vercel Cron calls the same route with
 `Authorization: Bearer <CRON_SECRET>`. Each successful tick runs alert
-detection automatically. A second protected daily cron calls
-`/api/maintenance/copilot-retention` and deletes Copilot audit rows older than
-24 hours while preserving newer rows.
+detection automatically. Protected daily maintenance routes call
+`/api/maintenance/copilot-retention` for 24-hour Copilot audit retention and
+`/api/maintenance/telemetry-rollup` for the 30-day raw / 90-day rollup policy.
 
 ## Failure and recovery
 
 API failures return safe messages without exposing stack traces. Telemetry is
 synthetic and regenerable: redeploy from `main`, apply migrations, run
-`seed:demo`, and resume the protected simulator. Vercel logs are the current
+`seed:demo`, and resume the protected simulator. Apply migrations through
+`0011` before enabling retention/rollup maintenance. Vercel logs are the current
 operational log surface; structured external monitoring is a post-MVP item.
 
 ## Known limitations
@@ -206,8 +220,9 @@ operational log surface; structured external monitoring is a post-MVP item.
   connected.
 - Hobby-compatible cron runs only daily. During a demo, fresh telemetry relies
   on bounded polling from an authenticated Admin or Operations session.
-- Monitoring is limited to Vercel logs; external alerting and telemetry
-  retention/rollups remain post-MVP work.
+- Monitoring is limited to Vercel logs; external alerting remains post-MVP.
+- The new venue-scoped RLS, rollup, comparison, and export changes require
+  isolated hosted migration and four-role verification before production use.
 - Automated accessibility testing covers the login page. Authenticated routes
   received accessibility-tree, contrast, and source reviews, but a complete
   manual keyboard-only walkthrough, assistive-technology screen-reader test,

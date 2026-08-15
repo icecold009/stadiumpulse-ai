@@ -23,6 +23,40 @@ export function parseCopilotQuestion(body: unknown): ValidationResult<string> {
     return { ok: true, value: trimmed };
 }
 
+export type CopilotContextRequest = {
+    question: string;
+    zoneId?: string;
+    venueId?: string;
+    gateId?: string;
+    alertId?: string;
+    metricType?: "energy_kwh" | "water_l" | "waste_diverted_pct";
+};
+
+export function parseCopilotContext(body: unknown): ValidationResult<CopilotContextRequest> {
+    const questionResult = parseCopilotQuestion(body);
+    if (!questionResult.ok) return questionResult;
+
+    const record = body && typeof body === "object"
+        ? body as { zoneId?: unknown; venueId?: unknown; gateId?: unknown; alertId?: unknown; metricType?: unknown }
+        : {};
+    for (const [key, value] of [["zoneId", record.zoneId], ["venueId", record.venueId], ["gateId", record.gateId], ["alertId", record.alertId]] as const) {
+        if (value !== undefined && (typeof value !== "string" || !UUID_PATTERN.test(value))) {
+            return { ok: false, error: `${key} must be a valid UUID when provided.` };
+        }
+    }
+    if (record.metricType !== undefined && !["energy_kwh", "water_l", "waste_diverted_pct"].includes(record.metricType as string)) {
+        return { ok: false, error: "metricType must be a supported sustainability metric when provided." };
+    }
+
+    const value: CopilotContextRequest = { question: questionResult.value };
+    if (typeof record.zoneId === "string") value.zoneId = record.zoneId;
+    if (typeof record.venueId === "string") value.venueId = record.venueId;
+    if (typeof record.gateId === "string") value.gateId = record.gateId;
+    if (typeof record.alertId === "string") value.alertId = record.alertId;
+    if (typeof record.metricType === "string") value.metricType = record.metricType as CopilotContextRequest["metricType"];
+    return { ok: true, value };
+}
+
 export function parseAlertAction(body: unknown): ValidationResult<AlertAction> {
     const action =
         body && typeof body === "object"

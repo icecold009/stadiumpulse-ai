@@ -9,6 +9,7 @@ export type RawTelemetry = {
 
 export type RawZone = {
     id: string;
+    venue_id: string;
     label: string;
     capacity: number;
     venues: { name: string } | null;

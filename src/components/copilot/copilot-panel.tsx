@@ -11,6 +11,15 @@ type CopilotMessage = {
     groundedSummary?: string;
 };
 
+type CopilotContext = {
+    question: string;
+    zoneId?: string;
+    venueId?: string;
+    gateId?: string;
+    alertId?: string;
+    metricType?: "energy_kwh" | "water_l" | "waste_diverted_pct";
+};
+
 const initialMessages: CopilotMessage[] = [
     {
         id: "welcome",
@@ -52,6 +61,7 @@ export default function CopilotPanel() {
     const [draft, setDraft] = useState("");
     const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [context, setContext] = useState<Omit<CopilotContext, "question"> | null>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -95,6 +105,19 @@ export default function CopilotPanel() {
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [isOpen]);
 
+    useEffect(() => {
+        function handleContext(event: Event) {
+            const detail = (event as CustomEvent<CopilotContext>).detail;
+            if (!detail?.question) return;
+            setContext({ zoneId: detail.zoneId, venueId: detail.venueId });
+            setDraft(detail.question.slice(0, 500));
+            setIsOpen(true);
+        }
+
+        window.addEventListener("pulseops:copilot", handleContext);
+        return () => window.removeEventListener("pulseops:copilot", handleContext);
+    }, []);
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -127,7 +150,7 @@ export default function CopilotPanel() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ question: nextDraft }),
+                body: JSON.stringify({ question: nextDraft, ...context }),
             });
 
             if (!response.ok || !response.body) {

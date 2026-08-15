@@ -88,7 +88,7 @@ schema and security are designed together, not bolted on after.
 | name | text | |
 | status | text | `assigned` \| `available` |
 
-### `copilot_queries` (short-lived, session-scoped log)
+### `copilot_queries` (short-lived audit log)
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid, pk | |
@@ -126,6 +126,24 @@ cannot mutate assignments. Admin receives cross-venue Copilot scope from its
 trusted role; every other role must have at least one assignment or Copilot
 fails closed before loading context or calling the model.
 
+### `telemetry_rollups` (hourly retention layer)
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint, pk, identity | |
+| venue_id | uuid, fk → venues.id | RLS-scoped venue |
+| zone_id | uuid, fk → zones.id, nullable | set for occupancy buckets |
+| gate_id | uuid, fk → gates.id, nullable | set for gate buckets |
+| metric_type | text | occupancy, gate_scans, energy_kwh, water_l, waste_diverted_pct |
+| bucket_start / bucket_end | timestamptz | one-hour idempotent bucket |
+| min_value / max_value | numeric | measured range |
+| average_value / total_value | numeric | aggregate values |
+| sample_count | int | source row count |
+| created_at | timestamptz | |
+
+Migration `0011` provides a service-role-only `rollup_telemetry` function. Raw
+telemetry is retained for 30 days, hourly rollups for 90 days, and browser
+clients receive read-only rollups through the same trusted venue policy.
+
 ### `rate_limits` (server-only abuse control)
 | Column | Type | Notes |
 |---|---|---|
@@ -154,9 +172,8 @@ is no public self-signup because this is an internal organizer tool.
 - All `recorded_at` / `created_at` columns on append-only tables are
   indexed — dashboards always query "last N minutes," so this keeps reads
   fast without needing a time-series DB.
-- Consider a nightly job to roll up `zone_telemetry` older than 24h into
-  hourly aggregates and drop raw rows, if the simulator runs for an
-  extended demo period — keeps storage flat.
+- Migration `0011` runs the protected nightly rollup and retention function;
+  no browser client can insert, update, purge, or execute it.
 
 ## Migrations
 
@@ -180,3 +197,14 @@ of truth and get committed to git (they're small text files, no bloat risk).
   acceptance/rejection separately from incident handling.
 - `0009_user_venue_access.sql`: adds protected user-to-venue assignments and
   backfills current non-admin demo users to the seeded venues.
+- `0010_venue_scoped_rls.sql`: replaces authenticated-wide operational reads
+  with trusted Admin/non-Admin venue-scoped policies.
+- `0011_telemetry_rollups.sql`: adds idempotent hourly rollups and the
+  service-role-only retention function.
+- `0012_venue_policy_cleanup.sql`: removes legacy hosted policy aliases that
+  could bypass venue scope and restricts the server-maintenance RLS helper.
+- `0013_harden_venue_access_function.sql`: runs venue authorization as the
+  invoker so the public helper cannot bypass the caller's RLS boundaries.
+- `0014_rls_and_index_hardening.sql`: covers operational foreign keys and
+  applies init-plan-safe authorization predicates. `rate_limits` remains
+  intentionally server-only with default-deny RLS and no browser policy.

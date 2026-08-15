@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 import type { SustainabilityAdvisorResult } from "@/lib/ai/sustainability-advisor";
+import GroundedRecommendationCard from "@/components/dashboard/grounded-recommendation-card";
 
 const METRIC_LABELS = {
     energy_kwh: "Energy",
@@ -17,12 +19,15 @@ export default function SustainabilityAdvisorPanel() {
     const [result, setResult] = useState<SustainabilityAdvisorResult | null>(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const venueId = searchParams.get("venueId");
 
     const loadAdvice = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
-            const response = await fetch("/api/sustainability-advisor", {
+            const query = venueId ? `?venueId=${encodeURIComponent(venueId)}` : "";
+            const response = await fetch(`/api/sustainability-advisor${query}`, {
                 cache: "no-store",
                 headers: { Accept: "application/json" },
             });
@@ -46,7 +51,7 @@ export default function SustainabilityAdvisorPanel() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [venueId]);
 
     useEffect(() => {
         const initialLoad = setTimeout(() => void loadAdvice(), 0);
@@ -119,24 +124,25 @@ export default function SustainabilityAdvisorPanel() {
                         </p>
                         <div className="grid gap-4 xl:grid-cols-3">
                             {result.interventions.map((intervention) => (
-                                <article
+                                <GroundedRecommendationCard
                                     key={`${intervention.venueId}:${intervention.metricType}`}
-                                    className="rounded-xl border border-border bg-surface p-4"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <h3 className="font-semibold">{METRIC_LABELS[intervention.metricType]}</h3>
-                                            <p className="text-xs text-text-muted">{intervention.venueName}</p>
-                                        </div>
-                                        <span className="rounded-full border border-ai-highlight/50 px-2 py-1 text-[11px] font-semibold uppercase text-ai-highlight">
-                                            {intervention.urgency}
-                                        </span>
-                                    </div>
-                                    <p className="mt-3 text-sm font-medium leading-6">{intervention.action}</p>
-                                    <p className="mt-3 text-xs leading-5"><span className="font-semibold text-text-muted">Evidence:</span> {intervention.evidence}</p>
-                                    <p className="mt-2 text-xs leading-5"><span className="font-semibold text-text-muted">Limitations:</span> {intervention.limitations}</p>
-                                    <p className="mt-3 text-xs text-text-muted">Confidence: {intervention.confidence}</p>
-                                </article>
+                                    recommendation={{
+                                        source: "sustainability-advisor",
+                                        title: `${METRIC_LABELS[intervention.metricType]} · ${intervention.venueName}`,
+                                        action: intervention.action,
+                                        rationale: "Generated from the latest sustainability metric snapshot.",
+                                        evidence: intervention.evidence,
+                                        limitations: intervention.limitations,
+                                        urgency: intervention.urgency,
+                                        confidence: intervention.confidence,
+                                        snapshotAt: result.snapshotTime,
+                                        status: "open",
+                                        recommendationSource: result.source,
+                                        humanReviewRequired: true,
+                                        context: { venueId: intervention.venueId, metricType: intervention.metricType },
+                                    }}
+                                    onAskCopilot={() => window.dispatchEvent(new CustomEvent("pulseops:copilot", { detail: { question: `What should the operator know about ${METRIC_LABELS[intervention.metricType]} sustainability performance right now?`, venueId: intervention.venueId, metricType: intervention.metricType } }))}
+                                />
                             ))}
                         </div>
                     </>

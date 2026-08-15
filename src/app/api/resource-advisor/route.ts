@@ -1,6 +1,6 @@
 import "server-only";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAnthropicClient, RECOMMENDATION_MODEL } from "@/lib/ai/client";
 import {
     buildResourceAdvisorPrompt,
@@ -13,13 +13,12 @@ import {
 import { isRole } from "@/lib/auth/roles";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveVenueScope } from "@/lib/auth/venue-scope";
 
 export const runtime = "nodejs";
 
 const HORIZON_MINUTES = 15;
 
-type VenueRow = { id: string; name: string };
-type AccessRow = { venue_id: string };
 type ZoneRow = { id: string; venue_id: string; label: string; capacity: number };
 type TelemetryRow = {
     zone_id: string;
@@ -28,7 +27,7 @@ type TelemetryRow = {
 };
 type VolunteerRow = { venue_id: string; status: string };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const {
         data: { user },
@@ -58,6 +57,11 @@ export async function GET() {
         );
     }
 
+    const scopeResult = await resolveVenueScope(request.nextUrl.searchParams.get("venueId"));
+    if (!scopeResult.ok) {
+        return NextResponse.json({ error: scopeResult.error }, { status: scopeResult.status });
+    }
+
     const allowed = await consumeRateLimit({
         subject: user.id,
         action: "resource_advisor",
@@ -71,45 +75,8 @@ export async function GET() {
         );
     }
 
-    const { data: venueData, error: venueError } = await supabase
-        .from("venues")
-        .select("id, name")
-        .order("name");
-    if (venueError) {
-        return NextResponse.json(
-            { error: "Could not load authorized venue data." },
-            { status: 500 }
-        );
-    }
-
-    const venues = (venueData ?? []) as VenueRow[];
-    let venueIds = venues.map((venue) => venue.id);
-    if (roleRow.role !== "admin") {
-        const { data, error } = await supabase
-            .from("user_venue_access")
-            .select("venue_id")
-            .eq("user_id", user.id);
-        if (error) {
-            console.error("[resource-advisor] venue access query failed", {
-                userId: user.id,
-                message: error.message,
-            });
-            return NextResponse.json(
-                { error: "Could not resolve resource-advisor venue access." },
-                { status: 500 }
-            );
-        }
-        venueIds = (data as AccessRow[] | null)?.map((row) => row.venue_id) ?? [];
-    }
-
-    if (venueIds.length === 0) {
-        return NextResponse.json(
-            { error: "No venue access is assigned to this account." },
-            { status: 403 }
-        );
-    }
-
-    const venueNames = new Map(venues.map((venue) => [venue.id, venue.name]));
+    const venueIds = scopeResult.scope.queryVenueIds;
+    const venueNames = new Map(scopeResult.scope.venues.map((venue) => [venue.id, venue.name]));
     const { data: zoneData, error: zoneError } = await supabase
         .from("zones")
         .select("id, venue_id, label, capacity")
