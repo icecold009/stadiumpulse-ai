@@ -45,6 +45,9 @@ type AlertRow = Pick<
     | "snapshot_at"
     | "operator_decision"
     | "decision_at"
+    | "decision_by"
+    | "handled_at"
+    | "handled_by"
     | "status"
     | "created_at"
 >;
@@ -166,6 +169,9 @@ export function buildOpsSnapshot(input: SnapshotInput): OpsSnapshot {
         snapshotAt: alert.snapshot_at,
         operatorDecision: alert.operator_decision as AlertSummary["operatorDecision"],
         decisionAt: alert.decision_at,
+        decisionBy: alert.decision_by,
+        handledAt: alert.handled_at,
+        handledBy: alert.handled_by,
         status: alert.status as AlertSummary["status"],
         createdAt: alert.created_at,
     }));

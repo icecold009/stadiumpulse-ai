@@ -1,12 +1,8 @@
 # PulseOps — StadiumPulse AI
 
-PulseOps is a GenAI command center for FIFA World Cup 2026 stadium operations.
-It turns simulated crowd, alert, volunteer, and sustainability signals into
-grounded recommendations that remain under human control.
+PulseOps is a GenAI command center for stadium operations. It turns simulated crowd, alert, volunteer, and sustainability signals into structured recommendations that remain under human control.
 
-The project targets crowd management, operational intelligence,
-sustainability, and real-time decision support for organizers, venue staff,
-and volunteers.
+The product is built around a simple operational loop: observe a signal, explain why it matters, recommend a bounded next step, and let an authenticated person decide what happens.
 
 ## Core decision loop
 
@@ -32,7 +28,7 @@ and utility meters. Simulation is isolated behind the ingestion route, so a
 real venue feed could replace it without redesigning the dashboard or GenAI
 decision layer. All product telemetry must be presented as simulated.
 
-## Stack
+## Technology
 
 - Next.js 16 App Router and TypeScript
 - Supabase Postgres, Auth, RLS, and Realtime
@@ -155,7 +151,7 @@ restoring or removing temporary records. `verify:copilot-retention` requires a
 running current app plus `PULSEOPS_APP_URL` and verifies the protected 24-hour
 purge with isolated rows.
 
-## Two-minute judge walkthrough
+## Judge walkthrough
 
 Share demo credentials privately through the submission platform; never place
 passwords in this repository or a public post. Give the judge the public app

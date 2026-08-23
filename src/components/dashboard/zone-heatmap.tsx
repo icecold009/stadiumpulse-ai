@@ -115,6 +115,14 @@ export default function ZoneHeatmap({
         }
         return [...groups.values()];
     }, [initialZones]);
+    const summary = zonesByVenue
+        .flatMap((zones) => zones.slice(0, 6))
+        .map((zone) => {
+            const latest = latestByZoneId.get(String(zone.id));
+            const occupancyPct = getOccupancyPct(latest?.occupancy ?? 0, zone.capacity ?? 0);
+            return `${zone.label}: ${occupancyPct.toFixed(0)} percent occupied, ${getStatus(occupancyPct)}.`;
+        })
+        .join(" ");
 
     return (
         <section
@@ -134,6 +142,7 @@ export default function ZoneHeatmap({
                     </p>
                 </div>
             </div>
+            <p className="sr-only">{summary || "No zones are available for the stadium spatial view."}</p>
 
             {zonesByVenue.length > 0 ? (
                 <div className="mt-5 space-y-5">
@@ -151,7 +160,7 @@ export default function ZoneHeatmap({
                 </p>
             )}
 
-            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-text-muted" aria-hidden="true">
+            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-text-muted" aria-label="Zone status legend">
                 <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-sky-400" />Normal</span>
                 <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-status-warn" />Watch</span>
                 <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-status-critical" />Critical</span>

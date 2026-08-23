@@ -43,6 +43,25 @@ body {
     font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+:where(button, a, select, textarea, input, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+button,
+a,
+select {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    :where(button, a, select):not(:disabled):hover {
+        transition-property: color, background-color, border-color, opacity, transform;
+        transition-duration: 160ms;
+        transition-timing-function: ease-out;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
     *,
