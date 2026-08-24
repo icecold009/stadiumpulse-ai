@@ -30,7 +30,7 @@ export default function MetricGauge({
     return (
         <section
             aria-label={`${label}: ${value} ${unit}, ${statusText}. ${observedAt ? `Observed ${new Date(observedAt).toLocaleString()}.` : "Timestamp unavailable."}`}
-            className={`group relative overflow-hidden rounded-2xl border border-border bg-[linear-gradient(145deg,rgba(28,36,45,0.9),rgba(20,26,33,0.75))] p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:border-accent/25 ${className}`}
+            className={`group metric-gauge relative overflow-hidden rounded-2xl border border-border bg-[linear-gradient(145deg,rgba(28,36,45,0.9),rgba(20,26,33,0.75))] p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-200 ${className}`}
         >
             <div aria-hidden="true" className={`absolute left-0 top-0 h-0.5 w-full ${statusClassName} opacity-70`} />
             <div className="mb-5 flex items-start justify-between gap-4">

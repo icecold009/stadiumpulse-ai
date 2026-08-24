@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, CircleAlert, Clock3, Gauge, MapPinned, RefreshCw, ShieldAlert, Users } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import DataFreshnessBadge from "@/components/dashboard/data-freshness-badge";
@@ -27,7 +27,7 @@ export default function OpsCommandCenter({ initialSnapshot }: Props) {
     const [snapshot, setSnapshot] = useState(initialSnapshot);
     const [error, setError] = useState("");
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isPending, startTransition] = useTransition();
+    const [pendingActionId, setPendingActionId] = useState<string | null>(null);
     const [isAlertFocusMode, setIsAlertFocusMode] = useState(() => initialSnapshot.alerts.length > 0);
     const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -78,20 +78,26 @@ export default function OpsCommandCenter({ initialSnapshot }: Props) {
         return () => window.removeEventListener("pulseops:refresh", handleShortcutRefresh);
     }, [refresh]);
 
-    function handleAlertAction(alertId: string, action: "accept" | "reject" | "handled") {
-        startTransition(async () => {
+    async function handleAlertAction(alertId: string, action: "accept" | "reject" | "handled") {
+        setPendingActionId(alertId);
+        setError("");
+        try {
             const response = await fetch(`/api/alerts/${alertId}/handle`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action }),
             });
+            const payload = (await response.json().catch(() => ({}))) as { error?: string };
             if (!response.ok) {
-                const payload = (await response.json()) as { error?: string };
                 setError(payload.error ?? "Alert decision could not be recorded.");
                 return;
             }
             await refresh();
-        });
+        } catch (actionError) {
+            setError(actionError instanceof Error ? actionError.message : "Alert decision could not be recorded.");
+        } finally {
+            setPendingActionId(null);
+        }
     }
 
     const criticalZones = snapshot.zones.filter((zone) => zone.status === "critical").length;
@@ -161,9 +167,9 @@ export default function OpsCommandCenter({ initialSnapshot }: Props) {
                 <p className="mt-2 text-sm font-medium leading-6">{priorityAlert.aiRecommendation || priorityAlert.message}</p>
                 <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-text-muted"><Clock3 aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Evidence: {priorityAlert.aiEvidence || "Unavailable"}</p>
                 <div className="mt-4 grid grid-cols-1 gap-2">
-                    <button type="button" onClick={() => handleAlertAction(priorityAlert.id, "accept")} disabled={isPending || priorityAlert.operatorDecision === "accepted"} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-status-ok/40 bg-status-ok/10 px-3 text-sm font-semibold text-status-ok transition-colors active:scale-[0.98] disabled:opacity-50">Accept recommendation</button>
-                    <button type="button" onClick={() => handleAlertAction(priorityAlert.id, "reject")} disabled={isPending || priorityAlert.operatorDecision === "rejected"} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-status-warn/40 bg-status-warn/10 px-3 text-sm font-semibold text-status-warn transition-colors active:scale-[0.98] disabled:opacity-50">Reject recommendation</button>
-                    <button type="button" onClick={() => handleAlertAction(priorityAlert.id, "handled")} disabled={isPending} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-foreground transition-colors active:scale-[0.98] disabled:opacity-50">Mark incident handled</button>
+                    <button type="button" onClick={() => void handleAlertAction(priorityAlert.id, "accept")} disabled={pendingActionId !== null || priorityAlert.operatorDecision === "accepted"} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-status-ok/40 bg-status-ok/10 px-3 text-sm font-semibold text-status-ok transition-colors active:scale-[0.98] disabled:opacity-50">Accept recommendation</button>
+                    <button type="button" onClick={() => void handleAlertAction(priorityAlert.id, "reject")} disabled={pendingActionId !== null || priorityAlert.operatorDecision === "rejected"} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-status-warn/40 bg-status-warn/10 px-3 text-sm font-semibold text-status-warn transition-colors active:scale-[0.98] disabled:opacity-50">Reject recommendation</button>
+                    <button type="button" onClick={() => void handleAlertAction(priorityAlert.id, "handled")} disabled={pendingActionId !== null} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-foreground transition-colors active:scale-[0.98] disabled:opacity-50">Mark incident handled</button>
                 </div>
                 <p className="mt-3 text-xs text-text-muted">Scope and freshness remain visible above. Secondary panels are available on wider screens.</p>
             </section> : null}
@@ -247,7 +253,7 @@ export default function OpsCommandCenter({ initialSnapshot }: Props) {
                 </div>
                 <div className="mt-5 grid gap-4 lg:grid-cols-2">
                     {snapshot.alerts.length === 0 ? <p className="rounded-xl border border-border bg-background/30 p-4 text-sm text-text-muted">No open incidents in this venue scope.</p> : snapshot.alerts.slice(0, 4).map((alert) => (
-                        <GroundedRecommendationCard key={alert.id} recommendation={recommendationFromAlert(alert)} pending={isPending} onAction={(action) => handleAlertAction(alert.id, action)} onAskCopilot={() => askCopilot({ question: `What should the operator know about this ${alert.severity} alert in ${alert.zoneLabel ?? "the venue"}?`, alertId: alert.id, zoneId: alert.zoneId ?? undefined, venueId: alert.venueId })} />
+                        <GroundedRecommendationCard key={alert.id} recommendation={recommendationFromAlert(alert)} pending={pendingActionId !== null} onAction={(action) => void handleAlertAction(alert.id, action)} onAskCopilot={() => askCopilot({ question: `What should the operator know about this ${alert.severity} alert in ${alert.zoneLabel ?? "the venue"}?`, alertId: alert.id, zoneId: alert.zoneId ?? undefined, venueId: alert.venueId })} />
                     ))}
                 </div>
             </section>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 function isTypingTarget(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false;
@@ -20,8 +19,6 @@ function focusElement(id: string) {
 }
 
 export default function DashboardKeyboardShortcuts() {
-    const router = useRouter();
-
     useEffect(() => {
         function handleKeyDown(event: KeyboardEvent) {
             if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
@@ -34,7 +31,6 @@ export default function DashboardKeyboardShortcuts() {
                 case "r":
                     event.preventDefault();
                     window.dispatchEvent(new Event("pulseops:refresh"));
-                    router.refresh();
                     break;
                 case "c":
                     event.preventDefault();
@@ -51,7 +47,7 @@ export default function DashboardKeyboardShortcuts() {
 
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [router]);
+    }, []);
 
     return (
         <p className="sr-only">

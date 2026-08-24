@@ -1,7 +1,7 @@
 // src/app/(dashboard)/ops/alerts/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertTriangle, Check, CircleCheck, RefreshCw, X } from "lucide-react";
 import type { Database } from "@/types/database";
@@ -22,7 +22,8 @@ export default function AlertsPage() {
     const [alerts, setAlerts] = useState<AlertWithZone[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
+    const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
     const [severity, setSeverity] = useState<"" | "warn" | "critical">("");
     const [status, setStatus] = useState<"open" | "handled">("open");
     const [ageMinutes, setAgeMinutes] = useState<"" | "5" | "15" | "30" | "60">("");
@@ -69,30 +70,36 @@ export default function AlertsPage() {
         };
     }, [fetchAlerts, supabase]);
 
+    useEffect(() => {
+        const handleShortcutRefresh = () => void fetchAlerts();
+        window.addEventListener("pulseops:refresh", handleShortcutRefresh);
+        return () => window.removeEventListener("pulseops:refresh", handleShortcutRefresh);
+    }, [fetchAlerts]);
+
     async function handleFeedback(
         id: string,
         action: "accept" | "reject" | "handled"
     ) {
-        startTransition(async () => {
+        setPendingActionId(id);
+        setActionError(null);
+        try {
             const res = await fetch(`/api/alerts/${id}/handle`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action }),
             });
-            if (res.ok) {
-                const json = await res.json();
-                setAlerts((current) =>
-                    action === "handled"
-                        ? current.filter((alert) => alert.id !== id)
-                        : current.map((alert) =>
-                              alert.id === id ? { ...alert, ...json.alert } : alert
-                          )
-                );
-            } else {
-                const json = await res.json();
-                alert(`Error: ${json.error}`);
-            }
-        });
+            const json = await res.json().catch(() => ({})) as { alert?: AlertWithZone; error?: string };
+            if (!res.ok) throw new Error(json.error ?? "Alert decision could not be recorded.");
+            setAlerts((current) =>
+                action === "handled"
+                    ? current.filter((alert) => alert.id !== id)
+                    : current.map((alert) => alert.id === id && json.alert ? { ...alert, ...json.alert } : alert)
+            );
+        } catch (error) {
+            setActionError(error instanceof Error ? error.message : "Alert decision could not be recorded.");
+        } finally {
+            setPendingActionId(null);
+        }
     }
 
     if (loading) return <p className="p-6 text-muted-foreground">Loading alerts…</p>;
@@ -152,6 +159,7 @@ export default function AlertsPage() {
                 </label>
                 <span className="text-xs text-text-muted">Scope and freshness are enforced server-side.</span>
             </div>
+            {actionError ? <p role="alert" className="rounded-xl border border-status-critical/40 bg-status-critical/10 px-4 py-3 text-sm text-status-critical">{actionError}</p> : null}
             {alerts.length === 0 ? <div className="rounded-xl border border-border bg-background/30 p-6 text-center text-muted-foreground">
                 <p className="text-lg font-medium">{status === "open" ? "All clear" : "No matching handled alerts"}</p>
                 <p className="text-sm">Try a broader severity or age filter.</p>
@@ -234,7 +242,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "accept")}
-                            disabled={isPending || alert.operator_decision === "accepted"}
+                            disabled={pendingActionId !== null || alert.operator_decision === "accepted"}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-status-ok/45 bg-status-ok/8 px-3 text-sm font-medium text-status-ok transition hover:bg-status-ok/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-ok/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <Check aria-hidden="true" className="h-4 w-4" />
@@ -243,7 +251,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "reject")}
-                            disabled={isPending || alert.operator_decision === "rejected"}
+                            disabled={pendingActionId !== null || alert.operator_decision === "rejected"}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-status-warn/45 bg-status-warn/8 px-3 text-sm font-medium text-status-warn transition hover:bg-status-warn/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-warn/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <X aria-hidden="true" className="h-4 w-4" />
@@ -252,7 +260,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "handled")}
-                            disabled={isPending}
+                            disabled={pendingActionId !== null}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm font-medium transition hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <CircleCheck aria-hidden="true" className="h-4 w-4" />

@@ -60,6 +60,11 @@ select {
         transition-duration: 160ms;
         transition-timing-function: ease-out;
     }
+
+    .metric-gauge:hover {
+        border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+        transform: translateY(-2px);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
