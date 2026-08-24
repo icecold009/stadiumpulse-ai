@@ -62,6 +62,11 @@ export default function TrendLine({
                 }),
             }));
     }, [liveData, zoneId, hoursBack]);
+    const latestPoint = data.at(-1);
+    const peakOccupancy = data.reduce((peak, point) => Math.max(peak, point.occupancy), 0);
+    const summary = data.length === 0
+        ? `${title}. No telemetry data is available for the selected range.`
+        : `${title}. ${data.length} timestamped occupancy samples from the last ${hoursBack} hours. Latest total occupancy ${latestPoint?.occupancy ?? "unavailable"} people; peak ${peakOccupancy} people.`;
 
     return (
         <section className="w-full overflow-hidden rounded-2xl border border-border bg-surface-raised/70 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
@@ -81,8 +86,9 @@ export default function TrendLine({
                 <div
                     className="mt-5 h-70 w-full"
                     role="img"
-                    aria-label={`${title}, showing ${data.length} live occupancy samples.`}
+                    aria-label={summary}
                 >
+                    <p className="sr-only">{summary}</p>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data} accessibilityLayer>
                             <CartesianGrid stroke="#26303a" strokeDasharray="3 6" vertical={false} />

@@ -31,7 +31,7 @@ export async function loadOpsSnapshot(
             .in("venue_id", scope.queryVenueIds),
         supabase
             .from("alerts")
-            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_at, status, created_at")
+            .select("id, venue_id, zone_id, severity, message, ai_recommendation, ai_urgency, ai_evidence, ai_limitations, ai_confidence, recommendation_source, snapshot_at, operator_decision, decision_at, decision_by, handled_at, handled_by, status, created_at")
             .in("venue_id", scope.queryVenueIds)
             .eq("status", "open")
             .order("created_at", { ascending: false })

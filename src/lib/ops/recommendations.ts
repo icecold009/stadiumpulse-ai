@@ -13,6 +13,11 @@ export type GroundedRecommendation = {
     status: "open" | "handled";
     recommendationSource: "ai" | "fallback";
     humanReviewRequired: true;
+    operatorDecision?: "accepted" | "rejected" | null;
+    decisionAt?: string | null;
+    decisionBy?: string | null;
+    handledAt?: string | null;
+    handledBy?: string | null;
     context?: {
         venueId?: string;
         zoneId?: string;
@@ -36,6 +41,11 @@ export function recommendationFromAlert(alert: AlertSummary): GroundedRecommenda
         status: alert.status,
         recommendationSource: alert.recommendationSource,
         humanReviewRequired: true,
+        operatorDecision: alert.operatorDecision,
+        decisionAt: alert.decisionAt,
+        decisionBy: alert.decisionBy,
+        handledAt: alert.handledAt,
+        handledBy: alert.handledBy,
         context: {
             venueId: alert.venueId,
             zoneId: alert.zoneId ?? undefined,

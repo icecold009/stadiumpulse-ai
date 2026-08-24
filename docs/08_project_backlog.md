@@ -178,6 +178,7 @@ verified. External-only facts are explicitly marked `Verify externally`.
 | P2-07 | in_progress | Venue-scoped RLS | Migration `0010` applies trusted Admin/non-Admin venue policies to all telemetry, alert, volunteer, and reference reads/writes |
 | P2-08 | in_progress | Shared operations snapshot | `/api/ops/snapshot` and the Operations situation room share freshness-aware zone, gate, alert, and simulation view models |
 | P2-09 | in_progress | Contextual Copilot | Copilot accepts optional venue, zone, gate, alert, and sustainability context, validates it server-side, and returns scope, freshness, category, and evidence metadata without changing the SSE contract |
+| P2-10 | in_progress | Operator console hierarchy and trust polish | Alert priority, incident-focus/mobile emergency states, freshness/action metadata, keyboard shortcuts, resilient inline operator feedback, single-path refresh handling, AI evidence/status states, focus restoration, and chart/heatmap summaries are implemented locally; manual keyboard-only, assistive-technology, 200% zoom, and hosted interaction walkthroughs remain |
 
 ## Current verification
 

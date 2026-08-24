@@ -1,7 +1,7 @@
 // src/app/(dashboard)/ops/alerts/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertTriangle, Check, CircleCheck, RefreshCw, X } from "lucide-react";
 import type { Database } from "@/types/database";
@@ -13,11 +13,17 @@ type AlertWithZone = AlertRow & {
     zones: { label: string; capacity: number } | null;
 };
 
+function isStaleRecommendation(snapshotAt: string): boolean {
+    const age = Date.now() - Date.parse(snapshotAt);
+    return Number.isFinite(age) && age >= 15 * 60 * 1000;
+}
+
 export default function AlertsPage() {
     const [alerts, setAlerts] = useState<AlertWithZone[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
+    const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
     const [severity, setSeverity] = useState<"" | "warn" | "critical">("");
     const [status, setStatus] = useState<"open" | "handled">("open");
     const [ageMinutes, setAgeMinutes] = useState<"" | "5" | "15" | "30" | "60">("");
@@ -64,30 +70,36 @@ export default function AlertsPage() {
         };
     }, [fetchAlerts, supabase]);
 
+    useEffect(() => {
+        const handleShortcutRefresh = () => void fetchAlerts();
+        window.addEventListener("pulseops:refresh", handleShortcutRefresh);
+        return () => window.removeEventListener("pulseops:refresh", handleShortcutRefresh);
+    }, [fetchAlerts]);
+
     async function handleFeedback(
         id: string,
         action: "accept" | "reject" | "handled"
     ) {
-        startTransition(async () => {
+        setPendingActionId(id);
+        setActionError(null);
+        try {
             const res = await fetch(`/api/alerts/${id}/handle`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action }),
             });
-            if (res.ok) {
-                const json = await res.json();
-                setAlerts((current) =>
-                    action === "handled"
-                        ? current.filter((alert) => alert.id !== id)
-                        : current.map((alert) =>
-                              alert.id === id ? { ...alert, ...json.alert } : alert
-                          )
-                );
-            } else {
-                const json = await res.json();
-                alert(`Error: ${json.error}`);
-            }
-        });
+            const json = await res.json().catch(() => ({})) as { alert?: AlertWithZone; error?: string };
+            if (!res.ok) throw new Error(json.error ?? "Alert decision could not be recorded.");
+            setAlerts((current) =>
+                action === "handled"
+                    ? current.filter((alert) => alert.id !== id)
+                    : current.map((alert) => alert.id === id && json.alert ? { ...alert, ...json.alert } : alert)
+            );
+        } catch (error) {
+            setActionError(error instanceof Error ? error.message : "Alert decision could not be recorded.");
+        } finally {
+            setPendingActionId(null);
+        }
     }
 
     if (loading) return <p className="p-6 text-muted-foreground">Loading alerts…</p>;
@@ -110,7 +122,7 @@ export default function AlertsPage() {
     }
 
     return (
-        <div className="space-y-5">
+        <div id="alert-queue" data-alert-queue="true" tabIndex={-1} className="space-y-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-status-warn">Incident command</p>
@@ -147,6 +159,7 @@ export default function AlertsPage() {
                 </label>
                 <span className="text-xs text-text-muted">Scope and freshness are enforced server-side.</span>
             </div>
+            {actionError ? <p role="alert" className="rounded-xl border border-status-critical/40 bg-status-critical/10 px-4 py-3 text-sm text-status-critical">{actionError}</p> : null}
             {alerts.length === 0 ? <div className="rounded-xl border border-border bg-background/30 p-6 text-center text-muted-foreground">
                 <p className="text-lg font-medium">{status === "open" ? "All clear" : "No matching handled alerts"}</p>
                 <p className="text-sm">Try a broader severity or age filter.</p>
@@ -184,8 +197,11 @@ export default function AlertsPage() {
                     </div>
 
                     {alert.ai_recommendation && (
-                        <div className="rounded-2xl border border-ai-highlight/35 bg-[linear-gradient(135deg,rgba(139,92,246,0.08),rgba(20,26,33,0.75))] px-4 py-4 text-sm">
+                        <div className="rounded-2xl border border-ai-highlight/35 bg-[linear-gradient(135deg,rgba(139,92,246,0.08),rgba(20,26,33,0.75))] px-4 py-4 text-sm shadow-[inset_3px_0_0_rgba(167,139,250,0.8)]">
                             <div className="flex flex-wrap items-center gap-2">
+                                <span className="rounded-full border border-ai-highlight/35 bg-ai-highlight/10 px-2 py-0.5 text-xs font-semibold text-ai-highlight">
+                                    Human decision required
+                                </span>
                                 <span className="text-xs font-semibold uppercase tracking-wide text-ai-highlight">
                                     {alert.recommendation_source === "ai"
                                         ? "AI recommendation"
@@ -199,9 +215,10 @@ export default function AlertsPage() {
                                 </span>
                             </div>
                             <p className="mt-2 font-medium">{alert.ai_recommendation}</p>
+                            {isStaleRecommendation(alert.snapshot_at) ? <p className="mt-2 text-xs font-semibold text-status-warn">Stale recommendation — review the current telemetry before acting.</p> : null}
                             {alert.operator_decision ? (
                                 <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-accent">
-                                    Operator {alert.operator_decision} this recommendation
+                                    Operator {alert.operator_decision} this recommendation{alert.decision_by ? " · Recorded by authenticated operator" : ""}
                                 </p>
                             ) : null}
                             <dl className="mt-3 grid gap-2 text-xs text-text-muted">
@@ -225,7 +242,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "accept")}
-                            disabled={isPending || alert.operator_decision === "accepted"}
+                            disabled={pendingActionId !== null || alert.operator_decision === "accepted"}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-status-ok/45 bg-status-ok/8 px-3 text-sm font-medium text-status-ok transition hover:bg-status-ok/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-ok/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <Check aria-hidden="true" className="h-4 w-4" />
@@ -234,7 +251,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "reject")}
-                            disabled={isPending || alert.operator_decision === "rejected"}
+                            disabled={pendingActionId !== null || alert.operator_decision === "rejected"}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-status-warn/45 bg-status-warn/8 px-3 text-sm font-medium text-status-warn transition hover:bg-status-warn/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-warn/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <X aria-hidden="true" className="h-4 w-4" />
@@ -243,7 +260,7 @@ export default function AlertsPage() {
                         <button
                             type="button"
                             onClick={() => handleFeedback(alert.id, "handled")}
-                            disabled={isPending}
+                            disabled={pendingActionId !== null}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm font-medium transition hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                             <CircleCheck aria-hidden="true" className="h-4 w-4" />
