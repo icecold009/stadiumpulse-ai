@@ -51,12 +51,16 @@ export default function LiveSustainabilityDashboard({
             const gauges = METRIC_TYPES.flatMap((metricType) => {
                 const row = latestByType.get(metricType);
                 if (!row) return [];
+                const lowerIsBetter = metricType !== "waste_diverted_pct";
+                const isOnTarget = lowerIsBetter ? row.value <= row.target : row.value >= row.target;
                 return [
                     {
                         label: metricType,
                         value: row.value,
                         target: row.target,
-                        lowerIsBetter: metricType !== "waste_diverted_pct",
+                        lowerIsBetter,
+                        observedAt: row.recorded_at,
+                        nextAction: isOnTarget ? "Continue monitoring" : "Review intervention",
                         unit:
                             metricType === "energy_kwh"
                                 ? "kWh"

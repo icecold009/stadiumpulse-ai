@@ -62,7 +62,7 @@ const roleLabels: Record<Role, string> = {
     volunteer_coordinator: "Volunteer Coordinator",
 };
 
-export default function RoleNav({ role }: { role: Role }) {
+export default function RoleNav({ role, unresolvedAlertCount = 0 }: { role: Role; unresolvedAlertCount?: number }) {
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createBrowserClient(
@@ -78,8 +78,8 @@ export default function RoleNav({ role }: { role: Role }) {
     }
 
     return (
-        <aside className="flex h-full flex-col border-r border-border/80 bg-[#0a0f14]/95 px-4 py-5 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen">
-            <div className="mb-8 flex items-center gap-3 px-2">
+        <aside className="flex h-auto flex-col border-b border-border/80 bg-[#0a0f14]/95 px-4 py-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:py-5">
+            <div className="mb-4 flex items-center gap-3 px-2 lg:mb-8">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent shadow-[0_0_24px_rgba(61,214,196,0.08)]">
                     <ShieldCheck aria-hidden="true" className="h-5 w-5" />
                 </span>
@@ -94,28 +94,36 @@ export default function RoleNav({ role }: { role: Role }) {
             </div>
 
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-muted">Workspace</p>
-            <nav aria-label="Dashboard navigation" className="space-y-1.5">
+            <nav aria-label="Dashboard navigation" className="grid grid-cols-2 gap-1.5 lg:block lg:space-y-1.5">
                 {visibleItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.href;
+                    const isActive = item.href === "/ops"
+                        ? pathname === item.href
+                        : pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
                             aria-current={isActive ? "page" : undefined}
-                            className={`group flex h-11 items-center gap-3 rounded-xl border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${isActive
+                            className={`group flex min-h-11 min-w-0 items-center gap-3 rounded-xl border px-3 text-sm font-medium transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${isActive
                                 ? "border-accent/25 bg-accent/10 text-accent shadow-[inset_3px_0_0_#3dd6c4]"
                                 : "border-transparent text-text-muted hover:border-border hover:bg-surface hover:text-foreground"
                                 }`}
                         >
                             <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
-                            {item.label}
+                            <span className="truncate">{item.label}</span>
+                            {item.href === "/ops/alerts" && unresolvedAlertCount > 0 ? (
+                                <span className="ml-auto inline-flex min-w-6 items-center justify-center rounded-full border border-status-critical/40 bg-status-critical/12 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[#ff9a9d]">
+                                    <span className="sr-only">{unresolvedAlertCount} unresolved alerts</span>
+                                    {unresolvedAlertCount > 99 ? "99+" : unresolvedAlertCount}
+                                </span>
+                            ) : null}
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="mt-auto rounded-2xl border border-border bg-surface/80 p-4">
+            <div className="mt-4 rounded-2xl border border-border bg-surface/80 p-4 lg:mt-auto">
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-ok opacity-40" />
@@ -132,7 +140,7 @@ export default function RoleNav({ role }: { role: Role }) {
             <button
                 type="button"
                 onClick={handleSignOut}
-                className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-transparent text-sm font-medium text-text-muted transition hover:border-accent/50 hover:bg-accent/5 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-transparent text-sm font-medium text-text-muted transition-colors active:scale-[0.98] hover:border-accent/50 hover:bg-accent/5 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
             >
                 <LogOut aria-hidden="true" className="h-4 w-4" />
                 Sign out

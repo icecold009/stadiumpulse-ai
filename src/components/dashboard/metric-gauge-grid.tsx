@@ -8,6 +8,8 @@ type MetricGaugeItem = {
     target: number;
     unit: string;
     lowerIsBetter?: boolean;
+    observedAt?: string | null;
+    nextAction?: string;
 };
 
 type MetricGaugeGridProps = {
@@ -34,6 +36,8 @@ export default function MetricGaugeGrid({ metrics }: MetricGaugeGridProps) {
                         target={metric.target}
                         unit={metric.unit}
                         lowerIsBetter={metric.lowerIsBetter}
+                        observedAt={metric.observedAt}
+                        nextAction={metric.nextAction}
                         className="h-full"
                     />
                 ))}

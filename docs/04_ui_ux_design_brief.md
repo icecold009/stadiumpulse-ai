@@ -54,6 +54,30 @@ not red/green) — direct tie to the Accessibility evaluation criterion.
   status color.
 - Respect `prefers-reduced-motion` for chart transitions.
 
+## Operator console interaction contract
+
+The post-hackathon console keeps the decision loop visible at the point of
+action:
+
+- Priority alerts, current venue scope, and data freshness appear before
+  secondary metrics. An incident-focus mode collapses gate flow and decision
+  history while an alert is active; the mobile emergency view exposes only
+  scope context, the critical recommendation, and human actions.
+- Measured values use the neutral/teal data language. AI suggestions keep the
+  purple treatment and must show evidence, confidence, limitations, source,
+  snapshot time, freshness, and an explicit human-review state.
+- Accept and reject are recommendation feedback. Mark handled is the separate
+  incident outcome. If an operator decision is recorded, the UI says so
+  without exposing the operator's private identifier.
+- A, R, C, and M focus alerts, refresh the current view, open Copilot, and
+  return focus to main content. Focus rings remain visible for every action.
+- Copilot is a right-origin slide-over with a short drawer transition. It
+  returns focus to the originating control and distinguishes loading, failed,
+  stale, missing-data, and grounded response states.
+- Numeric values do not animate on every telemetry tick. Realtime changes use
+  restrained color/opacity feedback, and reduced-motion users receive no
+  transform-based motion.
+
 ## Component inventory (build once, reuse everywhere)
 
 `StatusBadge`, `MetricGauge`, `ZoneHeatmapCell`, `AlertCard`,

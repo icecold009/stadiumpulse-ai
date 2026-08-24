@@ -1,9 +1,13 @@
+import StatusBadge from "@/components/dashboard/status-badge";
+
 type MetricGaugeProps = {
     label: string;
     value: number;
     target: number;
     unit: string;
     lowerIsBetter?: boolean;
+    observedAt?: string | null;
+    nextAction?: string;
     className?: string;
 };
 
@@ -13,6 +17,8 @@ export default function MetricGauge({
     target,
     unit,
     lowerIsBetter = true,
+    observedAt = null,
+    nextAction,
     className = "",
 }: MetricGaugeProps) {
     const progress = target === 0 ? 0 : Math.min((value / target) * 100, 100);
@@ -23,8 +29,8 @@ export default function MetricGauge({
 
     return (
         <section
-            aria-label={`${label} metric gauge`}
-            className={`group relative overflow-hidden rounded-2xl border border-border bg-[linear-gradient(145deg,rgba(28,36,45,0.9),rgba(20,26,33,0.75))] p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:border-accent/25 ${className}`}
+            aria-label={`${label}: ${value} ${unit}, ${statusText}. ${observedAt ? `Observed ${new Date(observedAt).toLocaleString()}.` : "Timestamp unavailable."}`}
+            className={`group metric-gauge relative overflow-hidden rounded-2xl border border-border bg-[linear-gradient(145deg,rgba(28,36,45,0.9),rgba(20,26,33,0.75))] p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-200 ${className}`}
         >
             <div aria-hidden="true" className={`absolute left-0 top-0 h-0.5 w-full ${statusClassName} opacity-70`} />
             <div className="mb-5 flex items-start justify-between gap-4">
@@ -50,12 +56,13 @@ export default function MetricGauge({
                 />
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
-                <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                    <i aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${statusClassName}`} />
-                    {statusText}
-                </span>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+                <StatusBadge status={isOnTarget ? "ok" : "warn"} label={statusText} />
                 <span className="font-mono">{variance >= 0 ? "+" : ""}{variance.toFixed(1)}% variance</span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3 text-[11px] text-text-muted">
+                <span>Next: {nextAction ?? (isOnTarget ? "Continue monitoring" : "Review intervention")}</span>
+                <span>{observedAt ? `Observed ${new Date(observedAt).toLocaleString()}` : "Timestamp unavailable"}</span>
             </div>
         </section>
     );

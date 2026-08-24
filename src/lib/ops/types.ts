@@ -51,6 +51,9 @@ export type AlertSummary = {
     snapshotAt: string;
     operatorDecision: "accepted" | "rejected" | null;
     decisionAt: string | null;
+    decisionBy: string | null;
+    handledAt: string | null;
+    handledBy: string | null;
     status: "open" | "handled";
     createdAt: string;
 };

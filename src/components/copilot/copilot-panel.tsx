@@ -9,6 +9,11 @@ type CopilotMessage = {
     role: "user" | "assistant";
     content: string;
     groundedSummary?: string;
+    dataStatus?: "fresh" | "stale" | "missing";
+    snapshotAt?: string;
+    state?: "ready" | "loading" | "error" | "no-context";
+    errorMessage?: string;
+    retryQuestion?: string;
 };
 
 type CopilotContext = {
@@ -42,6 +47,8 @@ type StreamEvent =
         dataWindowMinutes?: number;
         zonesIncluded?: string[];
         alertCount?: number;
+        dataStatus?: "fresh" | "stale" | "missing";
+        snapshotAt?: string;
     }
     | {
         type: "delta";
@@ -56,6 +63,13 @@ type StreamEvent =
         error: string;
     };
 
+type StreamState = {
+    assistantText: string;
+    groundedSummary: string;
+    dataStatus?: "fresh" | "stale" | "missing";
+    snapshotAt?: string;
+};
+
 export default function CopilotPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const [draft, setDraft] = useState("");
@@ -63,9 +77,11 @@ export default function CopilotPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [context, setContext] = useState<Omit<CopilotContext, "question"> | null>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const originRef = useRef<HTMLElement | null>(null);
     const panelRef = useRef<HTMLElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const wasOpen = useRef(false);
+    const streamStateRef = useRef<StreamState>({ assistantText: "", groundedSummary: "" });
 
     const trimmedDraft = useMemo(() => draft.slice(0, 500), [draft]);
 
@@ -73,7 +89,12 @@ export default function CopilotPanel() {
         const previouslyOpen = wasOpen.current;
         wasOpen.current = isOpen;
         if (!isOpen) {
-            if (previouslyOpen) triggerRef.current?.focus();
+            if (previouslyOpen) {
+                const origin = originRef.current;
+                if (origin?.isConnected) origin.focus();
+                else triggerRef.current?.focus();
+                originRef.current = null;
+            }
             return;
         }
 
@@ -106,10 +127,21 @@ export default function CopilotPanel() {
     }, [isOpen]);
 
     useEffect(() => {
+        function handleToggle() {
+            originRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+            setIsOpen((currentOpen) => !currentOpen);
+        }
+
+        window.addEventListener("pulseops:copilot:toggle", handleToggle);
+        return () => window.removeEventListener("pulseops:copilot:toggle", handleToggle);
+    }, []);
+
+    useEffect(() => {
         function handleContext(event: Event) {
             const detail = (event as CustomEvent<CopilotContext>).detail;
             if (!detail?.question) return;
-            setContext({ zoneId: detail.zoneId, venueId: detail.venueId });
+            originRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+            setContext({ zoneId: detail.zoneId, venueId: detail.venueId, gateId: detail.gateId, alertId: detail.alertId, metricType: detail.metricType });
             setDraft(detail.question.slice(0, 500));
             setIsOpen(true);
         }
@@ -118,10 +150,9 @@ export default function CopilotPanel() {
         return () => window.removeEventListener("pulseops:copilot", handleContext);
     }, []);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        const nextDraft = trimmedDraft.trim();
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement> | null, questionOverride?: string) {
+        event?.preventDefault();
+        const nextDraft = (questionOverride ?? trimmedDraft).trim();
         if (!nextDraft || isSubmitting) return;
 
         const userMessage: CopilotMessage = {
@@ -139,6 +170,8 @@ export default function CopilotPanel() {
                 id: assistantId,
                 role: "assistant",
                 content: "",
+                state: "loading",
+                retryQuestion: nextDraft,
             },
         ]);
         setDraft("");
@@ -166,8 +199,7 @@ export default function CopilotPanel() {
             const decoder = new TextDecoder();
 
             let buffer = "";
-            let assistantText = "";
-            let groundedSummary = "";
+            streamStateRef.current = { assistantText: "", groundedSummary: "" };
 
             while (true) {
                 const { value, done } = await reader.read();
@@ -189,13 +221,22 @@ export default function CopilotPanel() {
                     const parsed = JSON.parse(payload) as StreamEvent;
 
                     if (parsed.type === "meta") {
-                        groundedSummary = parsed.groundedSummary ?? groundedSummary;
+                        streamStateRef.current = {
+                            ...streamStateRef.current,
+                            groundedSummary: parsed.groundedSummary ?? streamStateRef.current.groundedSummary,
+                            dataStatus: parsed.dataStatus,
+                            snapshotAt: parsed.snapshotAt,
+                        };
+                        const streamState = streamStateRef.current;
                         setMessages((currentMessages) =>
                             currentMessages.map((message) =>
                                 message.id === assistantId
                                     ? {
                                         ...message,
-                                        groundedSummary,
+                                        groundedSummary: streamState.groundedSummary,
+                                        dataStatus: parsed.dataStatus,
+                                        snapshotAt: parsed.snapshotAt,
+                                        state: parsed.dataStatus === "missing" ? "no-context" : "loading",
                                     }
                                     : message
                             )
@@ -204,14 +245,19 @@ export default function CopilotPanel() {
                     }
 
                     if (parsed.type === "delta") {
-                        assistantText += parsed.text;
+                        streamStateRef.current = {
+                            ...streamStateRef.current,
+                            assistantText: `${streamStateRef.current.assistantText}${parsed.text}`,
+                        };
+                        const streamState = streamStateRef.current;
                         setMessages((currentMessages) =>
                             currentMessages.map((message) =>
                                 message.id === assistantId
                                     ? {
                                         ...message,
-                                        content: assistantText,
-                                        groundedSummary,
+                                        content: streamState.assistantText,
+                                        groundedSummary: streamState.groundedSummary,
+                                        state: streamState.dataStatus === "missing" ? "no-context" : "ready",
                                     }
                                     : message
                             )
@@ -220,14 +266,21 @@ export default function CopilotPanel() {
                     }
 
                     if (parsed.type === "done") {
-                        groundedSummary = parsed.groundedSummary ?? groundedSummary;
+                        streamStateRef.current = {
+                            ...streamStateRef.current,
+                            groundedSummary: parsed.groundedSummary ?? streamStateRef.current.groundedSummary,
+                        };
+                        const streamState = streamStateRef.current;
                         setMessages((currentMessages) =>
                             currentMessages.map((message) =>
                                 message.id === assistantId
                                     ? {
                                         ...message,
-                                        content: assistantText.trim(),
-                                        groundedSummary,
+                                        content: streamState.assistantText.trim(),
+                                        groundedSummary: streamState.groundedSummary,
+                                        dataStatus: streamState.dataStatus,
+                                        snapshotAt: streamState.snapshotAt,
+                                        state: streamState.dataStatus === "missing" ? "no-context" : "ready",
                                     }
                                     : message
                             )
@@ -241,6 +294,7 @@ export default function CopilotPanel() {
                 }
             }
 
+            const streamState = streamStateRef.current;
             setMessages((currentMessages) =>
                 currentMessages.map((message) =>
                     message.id === assistantId
@@ -249,7 +303,10 @@ export default function CopilotPanel() {
                             content:
                                 message.content.trim() ||
                                 "I could not generate a response from the available data.",
-                            groundedSummary,
+                            groundedSummary: streamState.groundedSummary,
+                            dataStatus: streamState.dataStatus,
+                            snapshotAt: streamState.snapshotAt,
+                            state: streamState.dataStatus === "missing" ? "no-context" : "ready",
                         }
                         : message
                 )
@@ -263,7 +320,10 @@ export default function CopilotPanel() {
                     entry.id === assistantId
                         ? {
                             ...entry,
-                            content: `Sorry — ${message}`,
+                            content: "",
+                            state: "error",
+                            errorMessage: message,
+                            retryQuestion: nextDraft,
                         }
                         : entry
                 )
@@ -273,6 +333,12 @@ export default function CopilotPanel() {
         }
     }
 
+    function retryMessage(messageId: string, question: string) {
+        if (isSubmitting) return;
+        setMessages((currentMessages) => currentMessages.filter((message) => message.id !== messageId));
+        void handleSubmit(null, question);
+    }
+
     return (
         <>
             <button
@@ -280,15 +346,19 @@ export default function CopilotPanel() {
                 aria-label="Close copilot panel"
                 tabIndex={isOpen ? 0 : -1}
                 onClick={() => setIsOpen(false)}
-                className={`fixed inset-0 z-40 bg-background/65 backdrop-blur-[2px] transition-opacity ${isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+                className={`fixed inset-0 z-40 bg-background/35 backdrop-blur-[1px] transition-opacity duration-150 ${isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
             />
             <button
                 ref={triggerRef}
                 type="button"
-                onClick={() => setIsOpen((currentOpen) => !currentOpen)}
+                onClick={() => {
+                    originRef.current = triggerRef.current;
+                    setIsOpen((currentOpen) => !currentOpen);
+                }}
                 aria-expanded={isOpen}
                 aria-controls="copilot-panel"
-                className="group fixed bottom-6 right-6 z-40 inline-flex h-13 items-center gap-3 rounded-2xl border border-ai-highlight/45 bg-[linear-gradient(135deg,rgba(139,92,246,0.22),rgba(28,36,45,0.98)_60%)] px-4 text-sm font-semibold text-foreground shadow-[0_18px_55px_rgba(0,0,0,0.48),0_0_28px_rgba(139,92,246,0.09)] transition hover:-translate-y-0.5 hover:border-ai-highlight/80 focus:outline-none focus:ring-2 focus:ring-ai-highlight focus:ring-offset-2 focus:ring-offset-background"
+                aria-keyshortcuts="C"
+                className="group fixed bottom-6 right-6 z-40 inline-flex h-13 items-center gap-3 rounded-2xl border border-ai-highlight/45 bg-[linear-gradient(135deg,rgba(139,92,246,0.22),rgba(28,36,45,0.98)_60%)] px-4 text-sm font-semibold text-foreground shadow-[0_18px_55px_rgba(0,0,0,0.48),0_0_28px_rgba(139,92,246,0.09)] transition-transform active:scale-[0.98] hover:-translate-y-0.5 hover:border-ai-highlight/80 focus:outline-none focus:ring-2 focus:ring-ai-highlight focus:ring-offset-2 focus:ring-offset-background"
             >
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ai-highlight text-white shadow-[0_6px_18px_rgba(139,92,246,0.28)]">
                     <MessageSquareText aria-hidden="true" className="h-4 w-4" />
@@ -300,7 +370,7 @@ export default function CopilotPanel() {
             <aside
                 ref={panelRef}
                 id="copilot-panel"
-                className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-[460px] flex-col border-l border-ai-highlight/20 bg-[#10161d]/98 shadow-[0_24px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                    className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-[460px] flex-col border-l border-ai-highlight/20 bg-[#10161d]/98 shadow-[0_24px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 aria-label="AI copilot panel"
                 role="dialog"
@@ -337,6 +407,7 @@ export default function CopilotPanel() {
                         <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-ai-highlight" />
                         Recommendations require human review. No action is automatic.
                     </div>
+                    <p className="relative mt-3 text-[11px] leading-5 text-text-muted">Each answer shows its evidence, snapshot time, and whether the source is fresh, stale, or unavailable.</p>
                 </header>
 
                 <div
@@ -352,6 +423,11 @@ export default function CopilotPanel() {
                                 role={message.role}
                                 content={message.content}
                                 groundedSummary={message.groundedSummary}
+                                dataStatus={message.dataStatus}
+                                snapshotAt={message.snapshotAt}
+                                state={message.state}
+                                errorMessage={message.errorMessage}
+                                onRetry={message.retryQuestion ? () => retryMessage(message.id, message.retryQuestion!) : undefined}
                             />
                         ))}
                     </div>
