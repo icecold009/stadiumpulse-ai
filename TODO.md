@@ -72,4 +72,3 @@ Snapshot and alert refreshes can overlap through filters, shortcuts, and Realtim
 - [ ] Local and hosted role evidence is current and separately reported.
 - [ ] Backlog and known-current-state notes match verified reality.
 - [ ] Feature branch is pushed and clean; `main` is untouched and unmerged.
-
