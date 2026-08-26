@@ -16,8 +16,9 @@ status, dependencies, and acceptance criteria.
 ## Current milestone
 
 Hackathon submission baseline achieved and live-verified on 2026-07-19. The
-current post-hackathon milestone is the Operations Command Center revamp on
-feature branch `codex/pulseops-revamp`:
+Operations Command Center revamp has since landed on `main`. The current
+post-hackathon recovery/evidence slice is maintained on feature branch
+`codex/luna-pulseops-refresh-evidence`:
 
 `simulation -> capacity alert -> grounded recommendation -> operator handles alert`
 
@@ -25,6 +26,59 @@ Revamp order:
 
 `venue-scoped access -> shared operations snapshot -> operator shell ->
 decision cards -> contextual Copilot -> rollups/comparison/export`
+
+## Active implementation queue — 2026-08-25
+
+This is the only queue from which an implementation agent should select new
+work. The phase, priority, and verification tables below are the supporting
+evidence register, not secondary task lists. When an item completes, blocks,
+splits, or is deferred, update this queue and every affected evidence row in the
+same change.
+
+Current baseline: ESLint, 24 Node tests, TypeScript, and the Next.js production
+build pass. Feedback actions use settled catch/finally paths and the keyboard
+shortcut emits one refresh event. Hosted/authenticated claims must be
+reverified against the intended commit.
+
+- [ ] **OPS-01 — Reconcile backlog scope and evidence.** Mark the completed
+      feedback/shortcut work accurately, tie every remaining P1/P2 condition to
+      this queue, and label local, browser, hosted schema, authenticated role,
+      Realtime, and production evidence separately.
+- [ ] **OPS-02 — Make snapshot and alert refresh request-order safe.** Add
+      AbortController or request identity, mounted cleanup, safe non-JSON
+      parsing, and explicit coalesce-or-supersede semantics. A late request must
+      never overwrite current venue/filter state. Test intentionally reordered,
+      aborted, malformed, and unmounted responses.
+- [ ] **OPS-03 — Preserve last good data and expose honest freshness.** Show
+      initial loading, refreshing, last successful refresh, stale, partial, and
+      failed states without blanking valid prior data or advancing freshness on
+      failure. Cover successful retry and Realtime-triggered coalescing.
+- [ ] **OPS-04 — Finish action-specific operator recovery.** Keep success/error
+      next to the acted-on alert, prevent duplicate submissions, retain context,
+      and preserve the original recommendation across edits or overrides.
+      Distinguish unauthorized, duplicate, rate-limited, non-JSON, network, and
+      successful retry outcomes in route and component tests.
+- [ ] **OPS-05 — Complete accessibility and scale checks.** Verify shortcut
+      help, focus after refresh/action, alert text summaries, non-color status,
+      narrow layouts, reduced motion, long alert lists, streaming Copilot,
+      keyboard-only operation, 200% zoom, and an assistive-technology spot check.
+- [ ] **OPS-06 — Reverify authenticated hosted behavior.** Exercise Admin,
+      Operations Manager, Sustainability Lead, Volunteer Coordinator, and
+      unauthorized flows against venue-scoped data. Verify P2 drill-down,
+      comparison, JSON/CSV export, rollup execution, monitoring, RLS, shared
+      snapshot, contextual Copilot, alert mutation, audit persistence, Realtime,
+      and failure recovery without printing secrets.
+- [ ] **OPS-07 — Close the release handoff.** Run lint, tests, TypeScript,
+      prompt contracts, production build, and `git diff --check`; reconcile the
+      leaked-password-protection plan limitation; record the exact
+      commit/date/environment; and update this backlog to the final verified
+      state before preparing a reviewable PR.
+
+Recommended commit checkpoints:
+
+1. `fix(ops): make dashboard refresh request-order safe`
+2. `test(ops): cover refresh freshness and action recovery`
+3. `docs(ops): reconcile hosted evidence and backlog`
 
 ## Phase 0–5 implementation audit
 
