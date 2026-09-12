@@ -30,7 +30,7 @@ export default function MetricGauge({
     return (
         <section
             aria-label={`${label}: ${value} ${unit}, ${statusText}. ${observedAt ? `Observed ${new Date(observedAt).toLocaleString()}.` : "Timestamp unavailable."}`}
-            className={`group metric-gauge relative overflow-hidden rounded-2xl border border-border bg-[linear-gradient(145deg,rgba(28,36,45,0.9),rgba(20,26,33,0.75))] p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-200 ${className}`}
+            className={`panel group metric-gauge relative overflow-hidden p-5 transition-[border-color,background-color,box-shadow] duration-200 ${className}`}
         >
             <div aria-hidden="true" className={`absolute left-0 top-0 h-0.5 w-full ${statusClassName} opacity-70`} />
             <div className="mb-5 flex items-start justify-between gap-4">
@@ -40,7 +40,7 @@ export default function MetricGauge({
                         Target {target.toLocaleString()} {unit}
                     </p>
                 </div>
-                <div className="text-right font-mono text-2xl font-semibold tracking-tight text-foreground">
+                <div className="mono-data text-right text-2xl font-bold tracking-tight text-foreground">
                     {value.toLocaleString()}
                     <span className="ml-1 text-xs font-normal text-text-muted">{unit}</span>
                 </div>
@@ -48,17 +48,17 @@ export default function MetricGauge({
 
             <div
                 aria-hidden="true"
-                className="h-1.5 overflow-hidden rounded-full bg-background/70"
+                className="h-1.5 overflow-hidden rounded-full bg-surface-muted"
             >
                 <div
-                    className={`h-full rounded-full transition-[width] duration-300 ${statusClassName}`}
+                    className={`h-full rounded-full transition-[width] duration-200 ${statusClassName}`}
                     style={{ width: `${progress}%` }}
                 />
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
                 <StatusBadge status={isOnTarget ? "ok" : "warn"} label={statusText} />
-                <span className="font-mono">{variance >= 0 ? "+" : ""}{variance.toFixed(1)}% variance</span>
+                <span className="mono-data">{variance >= 0 ? "+" : ""}{variance.toFixed(1)}% variance</span>
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3 text-[11px] text-text-muted">
                 <span>Next: {nextAction ?? (isOnTarget ? "Continue monitoring" : "Review intervention")}</span>

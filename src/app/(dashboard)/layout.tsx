@@ -47,30 +47,30 @@ export default async function DashboardLayout({
         : null;
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(61,214,196,0.1),transparent_30%),linear-gradient(180deg,#0b0f14_0%,#091015_100%)] text-[#edeff2]">
+        <div className="min-h-screen bg-background text-foreground">
             <DashboardKeyboardShortcuts />
             <a
                 href="#main-content"
-                className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-accent px-4 py-2 font-semibold text-background transition focus:translate-y-0"
+                className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-[10px] bg-accent px-4 py-2 font-semibold text-background transition-transform duration-150 focus:translate-y-0"
             >
                 Skip to main content
             </a>
-            <div className="mx-auto grid min-h-screen w-full max-w-[1600px] lg:grid-cols-[280px_minmax(0,1fr)]">
-                <RoleNav role={role} unresolvedAlertCount={alertCountResult?.count ?? 0} />
+            <div className="mx-auto grid min-h-screen w-full max-w-[1680px] lg:grid-cols-[248px_minmax(0,1fr)]">
+                <RoleNav role={role} venues={venueScope.scope.venues} unresolvedAlertCount={alertCountResult?.count ?? 0} />
                 <DashboardPoller role={role} />
-                <main id="main-content" tabIndex={-1} className="min-w-0 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+                <main id="main-content" tabIndex={-1} className="min-w-0 px-4 py-5 sm:px-7 lg:px-10 lg:py-8">
                     <OperatorContextBanner />
-                    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
-                            <span className="font-semibold uppercase tracking-[0.14em] text-foreground">Current scope</span>
+                            <span className="font-bold uppercase tracking-[0.14em] text-foreground">Current scope</span>
                             <span>Simulated telemetry · authenticated venue access</span>
-                            <span className="hidden text-text-muted/70 sm:inline">A alerts · R refresh · C Copilot · M main</span>
+                            <span className="hidden text-text-subtle sm:inline">A alerts · R refresh · C Copilot · M main</span>
                         </div>
-                        <VenueScopeSelector role={role} venues={venueScope.scope.venues} />
+                        <div className="hidden lg:block">
+                            <VenueScopeSelector role={role} venues={venueScope.scope.venues} />
+                        </div>
                     </div>
-                    <div className="rounded-3xl border border-[#26303a] bg-[#141a21]/90 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-6 lg:p-8">
-                        {children}
-                    </div>
+                    {children}
                 </main>
             </div>
 

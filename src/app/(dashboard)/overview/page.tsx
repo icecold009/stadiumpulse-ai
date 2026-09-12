@@ -3,6 +3,7 @@ import RealtimePageRefresh from "@/components/realtime-page-refresh";
 import type { Database } from "@/types/database";
 import Link from "next/link";
 import { resolveVenueScope } from "@/lib/auth/venue-scope";
+import { PageHeader, Panel } from "@/components/ui/primitives";
 
 type VenueRow = Database["public"]["Tables"]["venues"]["Row"];
 type ZoneRow = Database["public"]["Tables"]["zones"]["Row"];
@@ -14,7 +15,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     const supabase = await createSupabaseServerClient();
     const scopeResult = await resolveVenueScope((await searchParams).venueId);
     if (!scopeResult.ok) {
-        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Overview</h1><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
+        return <section className="space-y-3"><PageHeader eyebrow="Venue intelligence" title="Overview" /><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
     }
     const venueIds = scopeResult.scope.queryVenueIds;
 
@@ -46,7 +47,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     if (venuesRes.error || zonesRes.error || telemetryRes.error || alertsRes.error || sustainabilityRes.error) {
         return (
             <section className="space-y-3">
-                <h1 className="text-2xl font-semibold">Overview</h1>
+                <PageHeader eyebrow="Venue intelligence" title="Overview" />
                 <p className="text-sm text-destructive">Failed to load admin overview data.</p>
             </section>
         );
@@ -106,11 +107,11 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     }
 
     return (
-        <section className="space-y-6">
+        <section className="space-y-7">
             <RealtimePageRefresh
                 tables={["zone_telemetry", "alerts", "sustainability_metrics"]}
             />
-            <h1 className="text-2xl font-semibold">Overview</h1>
+            <PageHeader eyebrow="Venue intelligence" title="Venue overview" description="A cross-venue read on crowd pressure, active incidents, and sustainability performance." />
 
             {venues.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No venues found.</p>
@@ -144,29 +145,24 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                         }
 
                         return (
-                            <article key={venueId} className="rounded-2xl border border-border bg-surface/65 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/45 hover:bg-surface">
+                            <Panel as="article" key={venueId} className="group p-5 transition-[border-color,background-color,transform] duration-160 hover:-translate-y-0.5 hover:border-accent-strong/55 hover:bg-surface-raised">
                                 <Link href={`/ops?venueId=${venueId}`} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                                    <h2 className="text-lg font-semibold">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <h2 className="text-lg font-semibold tracking-[-0.03em]">
                                         {(venue as { name?: string }).name || `Venue ${venueId}`}
-                                    </h2>
-                                    <div className="mt-3 space-y-1 text-sm">
-                                        <p>
-                                            <span className="font-medium">Occupancy:</span> {occupancyPct.toFixed(1)}%
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Open alerts:</span> {openAlerts}
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Sustainability:</span>{" "}
-                                            {sustainabilityPct == null ? "N/A" : `${sustainabilityPct.toFixed(1)}% of target`}
-                                        </p>
+                                        </h2>
+                                        <span className="text-xs font-semibold text-accent-strong">Open →</span>
                                     </div>
-                                    <p className="mt-4 text-xs font-semibold text-accent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">Open operations view →</p>
+                                    <div className="mt-6 grid grid-cols-3 gap-3 border-t border-border pt-4 text-sm">
+                                        <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-text-subtle">Occupancy</p><p className="mono-data mt-1 text-lg font-semibold">{occupancyPct.toFixed(1)}%</p></div>
+                                        <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-text-subtle">Open alerts</p><p className={`mono-data mt-1 text-lg font-semibold ${openAlerts > 0 ? "text-status-warn" : "text-status-ok"}`}>{openAlerts}</p></div>
+                                        <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-text-subtle">Sustainability</p><p className="mono-data mt-1 text-lg font-semibold">{sustainabilityPct == null ? "—" : `${sustainabilityPct.toFixed(0)}%`}</p></div>
+                                    </div>
                                 </Link>
-                                <a href={`/api/reports/match-summary?venueId=${venueId}&format=csv`} className="mt-3 inline-block text-xs font-semibold text-text-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
-                                    Download match summary ↓
+                                <a href={`/api/reports/match-summary?venueId=${venueId}&format=csv`} className="control mt-5 inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong/60">
+                                    Download match summary <span aria-hidden="true">↓</span>
                                 </a>
-                            </article>
+                            </Panel>
                         );
                     })}
                 </div>

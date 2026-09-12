@@ -3,6 +3,7 @@ import SustainabilityAdvisorPanel from "@/components/dashboard/sustainability-ad
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveVenueScope } from "@/lib/auth/venue-scope";
 import type { Database } from "@/types/database";
+import { PageHeader } from "@/components/ui/primitives";
 
 type SustainabilityRow = Database["public"]["Tables"]["sustainability_metrics"]["Row"];
 type VenueRow = Database["public"]["Tables"]["venues"]["Row"];
@@ -12,7 +13,7 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
     const params = await searchParams;
     const scopeResult = await resolveVenueScope(params.venueId);
     if (!scopeResult.ok) {
-        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Sustainability</h1><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
+        return <section className="space-y-3"><PageHeader eyebrow="Resource stewardship" title="Sustainability" /><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
     }
     const venueIds = scopeResult.scope.queryVenueIds;
 
@@ -29,7 +30,7 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
     if (venuesResult.error || metricsResult.error) {
         return (
             <section className="space-y-3">
-                <h1 className="text-2xl font-semibold">Sustainability</h1>
+                <PageHeader eyebrow="Resource stewardship" title="Sustainability" description="Track utility targets, understand the next threshold, and keep interventions grounded in the latest readings." />
                 <p className="text-sm text-destructive">Failed to load sustainability metrics.</p>
             </section>
         );
@@ -39,8 +40,8 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
     const rows = (metricsResult.data ?? []) as SustainabilityRow[];
 
     return (
-        <section className="space-y-6">
-            <h1 className="text-2xl font-semibold">Sustainability</h1>
+        <section className="space-y-7">
+            <PageHeader eyebrow="Resource stewardship" title="Sustainability" description="Track utility targets, understand the next threshold, and keep interventions grounded in the latest readings." />
             <SustainabilityAdvisorPanel />
             <LiveSustainabilityDashboard venues={venues} initialData={rows} />
         </section>

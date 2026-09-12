@@ -358,19 +358,19 @@ export default function CopilotPanel() {
                 aria-expanded={isOpen}
                 aria-controls="copilot-panel"
                 aria-keyshortcuts="C"
-                className="group fixed bottom-6 right-6 z-40 inline-flex h-13 items-center gap-3 rounded-2xl border border-ai-highlight/45 bg-[linear-gradient(135deg,rgba(139,92,246,0.22),rgba(28,36,45,0.98)_60%)] px-4 text-sm font-semibold text-foreground shadow-[0_18px_55px_rgba(0,0,0,0.48),0_0_28px_rgba(139,92,246,0.09)] transition-transform active:scale-[0.98] hover:-translate-y-0.5 hover:border-ai-highlight/80 focus:outline-none focus:ring-2 focus:ring-ai-highlight focus:ring-offset-2 focus:ring-offset-background"
+                className="control button-ai fixed bottom-5 right-5 z-40 h-12 px-3.5 text-sm shadow-[0_12px_30px_rgb(0_0_0_/_0.22)] sm:bottom-6 sm:right-6"
             >
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ai-highlight text-white shadow-[0_6px_18px_rgba(139,92,246,0.28)]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ai-highlight text-background">
                     <MessageSquareText aria-hidden="true" className="h-4 w-4" />
                 </span>
                 <span className="text-left leading-tight"><span className="block text-[10px] font-medium uppercase tracking-[0.15em] text-text-muted">AI assistant</span>{isOpen ? "Close Copilot" : "Ask Copilot"}</span>
-                <ChevronRight aria-hidden="true" className="h-4 w-4 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-ai-highlight" />
+                <ChevronRight aria-hidden="true" className="h-4 w-4 text-text-muted" />
             </button>
 
             <aside
                 ref={panelRef}
                 id="copilot-panel"
-                    className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-[460px] flex-col border-l border-ai-highlight/20 bg-[#10161d]/98 shadow-[0_24px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? "translate-x-0" : "translate-x-full"
+                    className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-[460px] flex-col border-l border-ai-highlight/30 bg-surface-raised shadow-[0_24px_90px_rgb(0_0_0_/_0.32)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 aria-label="AI copilot panel"
                 role="dialog"
@@ -378,11 +378,10 @@ export default function CopilotPanel() {
                 aria-hidden={!isOpen}
                 inert={!isOpen}
             >
-                <header className="relative overflow-hidden border-b border-border px-5 py-5">
-                    <div aria-hidden="true" className="absolute -right-8 -top-14 h-32 w-32 rounded-full bg-ai-highlight/12 blur-3xl" />
-                    <div className="relative flex items-center justify-between gap-3">
+                <header className="border-b border-border px-5 py-5">
+                    <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-ai-highlight/30 bg-ai-highlight/12 text-ai-highlight">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-ai-highlight/30 bg-ai-highlight/12 text-ai-highlight">
                                 <Bot aria-hidden="true" className="h-5 w-5" />
                             </span>
                             <div>
@@ -397,13 +396,13 @@ export default function CopilotPanel() {
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-text-muted transition hover:border-accent/50 hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="control button-quiet h-9 w-9 border border-border bg-surface p-0"
                             aria-label="Close copilot panel"
                         >
                             <X aria-hidden="true" className="h-4 w-4" />
                         </button>
                     </div>
-                    <div className="relative mt-4 flex items-center gap-2 rounded-xl border border-ai-highlight/20 bg-ai-highlight/6 px-3 py-2 text-[11px] leading-5 text-text-muted">
+                    <div className="mt-4 flex items-center gap-2 rounded-xl border border-ai-highlight/30 bg-ai-soft/55 px-3 py-2 text-[11px] leading-5 text-text-muted">
                         <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-ai-highlight" />
                         Recommendations require human review. No action is automatic.
                     </div>
@@ -448,7 +447,7 @@ export default function CopilotPanel() {
                                             setDraft(question);
                                             textareaRef.current?.focus();
                                         }}
-                                        className="rounded-full border border-border bg-surface px-3 py-1.5 text-left text-xs text-text-muted transition hover:border-ai-highlight/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-highlight/50"
+                                        className="control rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs text-text-muted hover:border-ai-highlight/45 hover:text-foreground"
                                     >
                                         {question}
                                     </button>
@@ -465,7 +464,7 @@ export default function CopilotPanel() {
                             rows={3}
                             maxLength={500}
                             placeholder="Ask about alerts, staffing, or sustainability trends..."
-                            className="min-h-24 w-full resize-none rounded-2xl border border-border bg-background/70 px-4 py-3 pr-12 text-sm leading-6 text-foreground outline-none placeholder:text-text-muted focus:border-ai-highlight/60 focus:ring-2 focus:ring-ai-highlight/20"
+                            className="control min-h-24 w-full resize-none rounded-xl border border-border bg-background/70 px-4 py-3 pr-12 text-sm leading-6 text-foreground outline-none placeholder:text-text-muted focus:border-ai-highlight/60 focus:ring-2 focus:ring-ai-highlight/20"
                             disabled={isSubmitting}
                         />
                     </label>
@@ -475,7 +474,7 @@ export default function CopilotPanel() {
                         <button
                             type="submit"
                             disabled={isSubmitting || !trimmedDraft.trim()}
-                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-semibold text-background shadow-[0_8px_22px_rgba(61,214,196,0.16)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface-raised"
+                            className="control button-primary h-10 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <SendHorizonal aria-hidden="true" className="h-4 w-4" />
                             {isSubmitting ? "Sending..." : "Send"}

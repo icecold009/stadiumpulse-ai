@@ -83,7 +83,7 @@ export default function SustainabilityAdvisorPanel() {
 
     return (
         <section
-            className="rounded-2xl border border-ai-highlight/60 bg-surface-raised p-5"
+            className="panel border-ai-highlight/45 bg-ai-soft/35 p-5"
             aria-labelledby="sustainability-advisor-heading"
         >
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -102,7 +102,7 @@ export default function SustainabilityAdvisorPanel() {
                     type="button"
                     onClick={() => void loadAdvice()}
                     disabled={loading}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium transition hover:border-ai-highlight hover:text-ai-highlight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-highlight disabled:opacity-60"
+                    className="control button-ai min-h-10 px-3 py-2 text-sm disabled:opacity-60"
                 >
                     <RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     {loading ? "Refreshing" : "Refresh advice"}

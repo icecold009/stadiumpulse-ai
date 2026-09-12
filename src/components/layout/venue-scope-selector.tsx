@@ -26,13 +26,13 @@ export default function VenueScopeSelector({ role, venues }: Props) {
     }
 
     return (
-        <label className="flex min-w-[220px] items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-text-muted">
-            <MapPinned aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
+        <label className="flex min-w-[220px] items-center gap-2 rounded-[10px] border border-border bg-surface px-3 py-2 text-xs text-text-muted">
+            <MapPinned aria-hidden="true" className="h-4 w-4 shrink-0 text-accent-strong" />
             <span className="sr-only">Venue scope</span>
             <select
                 value={selectedVenueId}
                 onChange={(event) => handleChange(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent font-medium text-foreground outline-none"
+                className="min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none"
                 aria-label="Venue scope"
             >
                 {role === "admin" ? <option value="all">All venues</option> : null}

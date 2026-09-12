@@ -38,12 +38,12 @@ function getStatus(occupancyPct: number): ZoneStatus {
 
 function getStatusClasses(status: ZoneStatus): string {
     if (status === "Normal") {
-        return "border-sky-400/40 bg-sky-400/10 text-sky-100";
+        return "border-status-ok/40 bg-status-ok/10 text-status-ok";
     }
     if (status === "Watch") {
-        return "border-status-warn/55 bg-status-warn/10 text-amber-100";
+        return "border-status-warn/55 bg-status-warn/10 text-status-warn";
     }
-    return "border-status-critical/60 bg-status-critical/12 text-red-100";
+    return "border-status-critical/60 bg-status-critical/12 text-status-critical";
 }
 
 function getShortLabel(label: string): string {
@@ -58,7 +58,7 @@ function StadiumDiagram({
     latestByZoneId: Map<string, ZoneTelemetryRow>;
 }) {
     return (
-        <div className="relative mx-auto aspect-[1.12/1] w-full max-w-[360px] rounded-[42%] border border-border/90 bg-[#0d141a] p-5 shadow-[inset_0_0_36px_rgba(61,214,196,0.04)] sm:p-6">
+        <div className="relative mx-auto aspect-[1.12/1] w-full max-w-[360px] rounded-[42%] border border-border/90 bg-surface-muted p-5 sm:p-6">
             <div className="grid h-full grid-cols-[1fr_1.15fr_1fr] grid-rows-[1fr_1.15fr_1fr] gap-2">
                 {zones.slice(0, 6).map((zone, index) => {
                     const latest = latestByZoneId.get(String(zone.id));
@@ -76,7 +76,7 @@ function StadiumDiagram({
                             <h3 className="truncate text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
                                 {getShortLabel(zone.label)}
                             </h3>
-                            <p className="font-mono text-sm font-semibold leading-tight sm:text-base">
+                            <p className="mono-data text-sm font-semibold leading-tight sm:text-base">
                                 {occupancyPct.toFixed(0)}%
                             </p>
                             <p className="text-[9px] leading-tight opacity-75 sm:text-[10px]">{status}</p>
@@ -85,7 +85,7 @@ function StadiumDiagram({
                 })}
 
                 <div className="col-start-2 row-start-2 flex items-center justify-center rounded-[35%] border border-accent/35 bg-accent/8 p-2">
-                    <div className="flex h-full w-full items-center justify-center rounded-[32%] border border-dashed border-accent/25 bg-[#10231f]">
+                        <div className="flex h-full w-full items-center justify-center rounded-[32%] border border-dashed border-accent/25 bg-accent-soft">
                         <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-accent/75">
                             Pitch
                         </span>
@@ -126,7 +126,7 @@ export default function ZoneHeatmap({
 
     return (
         <section
-            className="h-full rounded-2xl border border-border bg-surface-raised p-5"
+            className="panel-raised h-full p-5"
             aria-labelledby="stadium-spatial-heading"
         >
             <div className="flex items-start gap-3">
@@ -161,7 +161,7 @@ export default function ZoneHeatmap({
             )}
 
             <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-text-muted" aria-label="Zone status legend">
-                <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-sky-400" />Normal</span>
+                <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-status-ok" />Normal</span>
                 <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-status-warn" />Watch</span>
                 <span><i className="mr-1.5 inline-block h-2 w-2 rounded-full bg-status-critical" />Critical</span>
             </div>

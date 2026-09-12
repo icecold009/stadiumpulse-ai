@@ -1,5 +1,6 @@
 import OpsCommandCenter from "@/components/dashboard/ops-command-center";
 import { loadOpsSnapshot } from "@/lib/ops/load-snapshot";
+import { PageHeader } from "@/components/ui/primitives";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
     if (!result.ok) {
         return (
             <section className="space-y-3">
-                <h1 className="text-2xl font-semibold">Operations</h1>
+                <PageHeader eyebrow="Venue command center" title="Operations" />
                 <p className="text-sm text-status-critical">{result.error}</p>
             </section>
         );

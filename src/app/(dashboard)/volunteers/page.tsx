@@ -2,6 +2,7 @@ import VolunteerDeploymentSummary from "@/components/dashboard/volunteer-deploym
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveVenueScope } from "@/lib/auth/venue-scope";
 import type { Database } from "@/types/database";
+import { PageHeader } from "@/components/ui/primitives";
 
 type VolunteerRow = Database["public"]["Tables"]["volunteers"]["Row"];
 type ZoneRow = Database["public"]["Tables"]["zones"]["Row"];
@@ -12,7 +13,7 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
     const params = await searchParams;
     const scopeResult = await resolveVenueScope(params.venueId);
     if (!scopeResult.ok) {
-        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Volunteers</h1><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
+        return <section className="space-y-3"><PageHeader eyebrow="People operations" title="Volunteers" /><p className="text-sm text-status-critical">{scopeResult.error}</p></section>;
     }
     const venueIds = scopeResult.scope.queryVenueIds;
 
@@ -24,7 +25,7 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
     if (volunteersRes.error || zonesRes.error) {
         return (
             <section className="space-y-3">
-                <h1 className="text-2xl font-semibold">Volunteers</h1>
+                <PageHeader eyebrow="People operations" title="Volunteers" description="Keep coverage aligned to current occupancy while every reassignment remains a human decision." />
                 <p className="text-sm text-destructive">Failed to load volunteers data.</p>
             </section>
         );
@@ -42,13 +43,13 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
             .limit(500)
         : { data: [], error: null };
     if (telemetryResult.error) {
-        return <section className="space-y-3"><h1 className="text-2xl font-semibold">Volunteers</h1><p className="text-sm text-destructive">Failed to load volunteer coverage data.</p></section>;
+        return <section className="space-y-3"><PageHeader eyebrow="People operations" title="Volunteers" /><p className="text-sm text-destructive">Failed to load volunteer coverage data.</p></section>;
     }
     const telemetry = (telemetryResult.data ?? []) as ZoneTelemetryRow[];
 
     return (
-        <section className="space-y-6">
-            <h1 className="text-2xl font-semibold">Volunteers</h1>
+        <section className="space-y-7">
+            <PageHeader eyebrow="People operations" title="Volunteers" description="Keep coverage aligned to current occupancy while every reassignment remains a human decision." />
             <VolunteerDeploymentSummary
                 initialVolunteers={volunteers}
                 zones={zones}

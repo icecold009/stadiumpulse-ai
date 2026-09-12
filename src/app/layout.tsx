@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/inter";
-import "@fontsource-variable/jetbrains-mono";
+import Script from "next/script";
+import "@fontsource-variable/dm-sans";
+import "@fontsource/ibm-plex-mono";
 
 import "./globals.css";
+import ThemeProvider from "@/components/theme/theme-provider";
 
 export const metadata: Metadata = {
     title: "PulseOps — Tournament Ops Command Center",
@@ -14,9 +16,14 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" data-theme="dark" suppressHydrationWarning>
+            <head>
+                <Script id="pulseops-theme-init" strategy="beforeInteractive">
+                    {`try { var savedTheme = localStorage.getItem("pulseops-theme"); if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme; } catch (_) {}`}
+                </Script>
+            </head>
             <body className="bg-background text-foreground antialiased">
-                {children}
+                <ThemeProvider>{children}</ThemeProvider>
             </body>
         </html>
     );

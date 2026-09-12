@@ -3,47 +3,69 @@
 ## Design principles
 1. **Operator tool, not a marketing site.** Dense, scannable, low
    ornamentation. Every pixel should help someone make a decision faster.
-2. **Status must be legible at a glance.** Color coding for
-   normal/warning/critical is the primary visual language.
+2. **Status must be legible at a glance.** Color is paired with labels and
+   icons for normal/warning/critical states; no decision depends on color
+   alone.
 3. **AI output looks distinct from raw data**, so users always know what's
    measured vs. what's generated — this builds trust and satisfies the
    "responsible GenAI use" spirit of the challenge.
 
 ## Color system
 
-| Token | Hex | Use |
-|---|---|---|
-| `--bg-base` | `#0B0F14` | App background (dark mode default — control-room feel) |
-| `--surface` | `#141A21` | Cards, panels |
-| `--surface-raised` | `#1C242D` | Modals, chat panel |
-| `--text-primary` | `#EDEFF2` | Primary text |
-| `--text-muted` | `#8B96A3` | Secondary text |
-| `--accent` | `#3DD6C4` | Primary accent (teal — FIFA-adjacent but not infringing on brand colors) |
-| `--status-ok` | `#2FBF71` | Normal occupancy / on-target sustainability |
-| `--status-warn` | `#F5A524` | Approaching threshold |
-| `--status-critical` | `#E5484D` | Breach / active incident |
-| `--ai-highlight` | `#A78BFA` | Any AI-generated content border/badge (distinct from data color language, AA on dark surfaces) |
+The console uses a refined dark theme by default and an explicit light theme
+for bright operating environments. Theme state is applied to `<html>` with
+`data-theme`, persisted under `pulseops-theme`, and initialized dark during
+server rendering to avoid a light-mode flash. Theme controls are available on
+the login surface and in the authenticated shell.
 
-Heatmap gradient uses a **color-blind-safe** scale (blue → yellow → red,
-not red/green) — direct tie to the Accessibility evaluation criterion.
+| Token | Dark | Light | Use |
+|---|---|---|
+| `--canvas` | `#111513` | `#F1EFE8` | App canvas |
+| `--surface` | `#181D19` | `#FBFAF6` | Panels and primary sections |
+| `--surface-raised` | `#202720` | `#FFFFFF` | Drawers, focused surfaces |
+| `--foreground` | `#F2F0E8` | `#1C2420` | Primary ink |
+| `--accent` | `#B8D7BD` | `#2F6B4D` | Brand and confirmed/active affordances |
+| `--status-warn` | `#E0AA59` | `#9A5B12` | Watch state and review-needed state |
+| `--status-critical` | `#E17A72` | `#A33E37` | Breach and active incident |
+| `--ai-highlight` | `#B7A1D6` | `#72509B` | AI-generated content and evidence treatment |
+| `--border` | `#2C362E` | `#D7DED6` | Quiet structure and control boundaries |
+
+The palette avoids decorative gradients. Status surfaces use restrained tint,
+border, icon, and text combinations, with an accessible label alongside each
+state.
 
 ## Typography
 
-- **UI font:** Inter (system-ui fallback) — excellent legibility at small
-  sizes for dense dashboards.
-- **Monospace (for data/numbers):** JetBrains Mono — used for all live
-  metrics so numbers align in tables/lists.
-- Scale: 12/14/16/20/28px, minimal weight variation (400/500/600 only) to
-  keep density calm rather than shouty.
+- **UI font:** DM Sans, bundled locally with a system sans fallback.
+- **Telemetry font:** IBM Plex Mono, used for measured values, counts,
+  percentages, timestamps, and compact operational identifiers.
+- Scale: 11/13/15/18/24/36px, with deliberate weight contrast for page titles,
+  labels, and measured values.
 
 ## Layout
 
-- 12-column responsive grid, collapsing to a single column under 768px.
-- Persistent left nav (role-appropriate items only).
+- Full-width canvas with a compact 248px desktop rail and a single-column
+  mobile flow. Panels use quiet borders, 14–18px radii, and restrained
+  elevation instead of nested rounded containers.
+- Persistent role-appropriate navigation on desktop; a sticky two-row mobile
+  header keeps scope, theme, navigation, and emergency alert access visible.
 - AI Copilot as a right-side slide-over panel, never a full-page takeover —
   keeps dashboard data visible while chatting.
-- Every AI-generated card/suggestion carries a small purple-bordered badge
-  labeled "AI suggestion" — never presented identically to raw sensor data.
+- Every AI-generated card/suggestion carries muted lilac borders and an
+  explicit "AI suggestion" or "Grounded in" treatment — never presented
+  identically to raw sensor data.
+
+## Component standards
+
+- `Panel`, `PageHeader`, and `SectionHeader` establish the shared hierarchy.
+- Buttons use `Primary`, `Secondary`, `Quiet`, `AI`, and `Danger` semantics.
+  Transitions name only the properties that change, and press feedback is
+  subtle.
+- `StatusBadge` and `DataFreshnessBadge` always include text and an icon.
+- Loading, empty, stale, unavailable, and error states explain what is known,
+  what is missing, and the next safe action. No fabricated metrics or advice.
+- The operator context strip exposes the trust chain:
+  `Simulated live → Signal → Risk → AI guidance → Human decision`.
 
 ## Accessibility requirements (non-negotiable, tied to evaluation)
 
@@ -52,7 +74,9 @@ not red/green) — direct tie to the Accessibility evaluation criterion.
 - Full keyboard navigation; visible focus states using `--accent`.
 - No information conveyed by color alone — icons/labels accompany every
   status color.
-- Respect `prefers-reduced-motion` for chart transitions.
+- Respect `prefers-reduced-motion` for all transitions; transform-based motion
+  is removed. Hover-only motion is restricted to pointer-capable devices and
+  keyboard actions do not trigger decorative motion.
 
 ## Operator console interaction contract
 
@@ -80,9 +104,9 @@ action:
 
 ## Component inventory (build once, reuse everywhere)
 
-`StatusBadge`, `MetricGauge`, `ZoneHeatmapCell`, `AlertCard`,
-`AISuggestionCard`, `ChatBubble` (user vs. AI variants), `RoleNav`,
-`TrendLine`.
+`Panel`, `PageHeader`, `SectionHeader`, `StatusBadge`, `DataFreshnessBadge`,
+`MetricGauge`, `ZoneHeatmapCell`, `AlertCard`, `AISuggestionCard`, `ChatBubble`
+(user vs. AI variants), `RoleNav`, `ThemeToggle`, and `TrendLine`.
 
 ## Tone of voice for AI-generated text
 

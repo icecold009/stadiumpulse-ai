@@ -18,15 +18,16 @@ export default function AppError({
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
-            <section className="max-w-md rounded-2xl border border-border bg-surface p-6 text-center">
-                <h1 className="text-xl font-semibold">PulseOps hit a temporary problem</h1>
+            <section className="panel panel-raised max-w-md p-8 text-center">
+                <p className="eyebrow text-status-critical">System pause</p>
+                <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em]">PulseOps hit a temporary problem</h1>
                 <p className="mt-2 text-sm text-text-muted">
                     No operational action was taken. Retry this screen or return to the dashboard.
                 </p>
                 <button
                     type="button"
                     onClick={reset}
-                    className="mt-5 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-background"
+                    className="control button-primary mt-5"
                 >
                     Try again
                 </button>

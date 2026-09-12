@@ -1,6 +1,7 @@
 "use client";
 
 import MetricGauge from "@/components/dashboard/metric-gauge";
+import { Panel } from "@/components/ui/primitives";
 
 type MetricGaugeItem = {
     label: string;
@@ -18,11 +19,7 @@ type MetricGaugeGridProps = {
 
 export default function MetricGaugeGrid({ metrics }: MetricGaugeGridProps) {
     if (!metrics.length) {
-        return (
-            <section className="w-full">
-                <p className="text-sm text-muted-foreground">No metrics available.</p>
-            </section>
-        );
+        return <Panel tone="muted" className="w-full"><p className="text-sm text-muted-foreground">No metrics available.</p></Panel>;
     }
 
     return (

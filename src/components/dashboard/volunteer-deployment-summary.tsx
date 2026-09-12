@@ -145,27 +145,27 @@ export default function VolunteerDeploymentSummary({
     return (
         <div className="space-y-6">
             <MetricGaugeGrid metrics={gauges} />
-            <section className="rounded-lg border p-4" aria-labelledby="coverage-heading">
+            <section className="panel p-5" aria-labelledby="coverage-heading">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                         <h2 id="coverage-heading" className="text-lg font-semibold">Coverage versus planning baseline</h2>
                         <p className="mt-1 text-sm text-muted-foreground">Recommendation uses a transparent baseline of one volunteer per 100 people in the latest simulated occupancy reading.</p>
                     </div>
-                    <span className="text-xs text-muted-foreground">Human coordinator decides</span>
+                    <span className="rounded-lg border border-accent/30 bg-accent/8 px-2.5 py-1 text-xs font-semibold text-accent">Human coordinator decides</span>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {coverageRows.map((row) => (
-                        <article key={row.id} className="rounded-lg border border-border bg-surface/50 p-3">
+                        <article key={row.id} className="rounded-xl border border-border bg-surface-muted/45 p-3">
                             <div className="flex items-center justify-between gap-3">
                                 <h3 className="text-sm font-semibold">{row.label}</h3>
-                                <span className={`text-xs font-semibold ${row.assigned >= row.recommended ? "text-status-ok" : "text-status-warn"}`}>{row.assigned}/{row.recommended}</span>
+                                <span className={`mono-data text-xs font-semibold ${row.assigned >= row.recommended ? "text-status-ok" : "text-status-warn"}`}>{row.assigned}/{row.recommended}</span>
                             </div>
                             <p className="mt-2 text-xs text-muted-foreground">{row.coveragePercent.toFixed(0)}% covered{row.recordedAt ? ` · reading ${new Date(row.recordedAt).toLocaleTimeString()}` : " · no current reading"}</p>
                         </article>
                     ))}
                 </div>
             </section>
-            <section className="rounded-lg border p-4" aria-labelledby="reassign-heading">
+            <section className="panel p-5" aria-labelledby="reassign-heading">
                 <h2 id="reassign-heading" className="text-lg font-semibold">Reassign a volunteer</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     Human-controlled assignment. Only Admin and Volunteer Coordinator database policies permit this update.
@@ -182,7 +182,7 @@ export default function VolunteerDeploymentSummary({
                                     volunteers.find((volunteer) => volunteer.id === nextId)?.zone_id ?? ""
                                 );
                             }}
-                            className="min-h-11 rounded-xl border border-border bg-surface px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            className="control min-h-11 rounded-xl border border-border bg-surface px-3 text-sm text-foreground"
                         >
                             {volunteers.map((volunteer) => (
                                 <option key={volunteer.id} value={volunteer.id}>{volunteer.name}</option>
@@ -194,7 +194,7 @@ export default function VolunteerDeploymentSummary({
                         <select
                             value={zoneId}
                             onChange={(event) => setZoneId(event.target.value)}
-                            className="min-h-11 rounded-xl border border-border bg-surface px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            className="control min-h-11 rounded-xl border border-border bg-surface px-3 text-sm text-foreground"
                         >
                             <option value="">Available pool</option>
                             {destinationZones.map((zone) => (
@@ -205,12 +205,12 @@ export default function VolunteerDeploymentSummary({
                     <button
                         type="submit"
                         disabled={!volunteerId || submitting}
-                        className="min-h-11 rounded-xl bg-accent px-4 text-sm font-semibold text-background transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
+                        className="control button-primary min-h-11 px-4 text-sm disabled:opacity-60"
                     >
                         {submitting ? "Saving…" : "Confirm reassignment"}
                     </button>
                 </form>
-                <div className="mt-4 rounded-xl border border-accent/25 bg-accent/5 px-3 py-3 text-sm" aria-live="polite">
+                <div className="mt-4 rounded-xl border border-accent/25 bg-accent/8 px-3 py-3 text-sm" aria-live="polite">
                     <span className="font-semibold">Preview:</span> {selectedVolunteer?.name ?? "Select a volunteer"} moves from {selectedCurrentLabel} to {selectedDestinationLabel}. No change is saved until confirmation.
                 </div>
                 <p
@@ -221,13 +221,13 @@ export default function VolunteerDeploymentSummary({
                     {feedback}
                 </p>
             </section>
-            <section className="rounded-lg border p-4">
+            <section className="panel p-5">
                 <h2 className="text-lg font-semibold">Current deployment</h2>
                 <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {assignments.map(([label, count]) => (
-                        <li key={label} className="rounded-lg border border-border p-3">
+                        <li key={label} className="rounded-xl border border-border bg-surface-muted/35 p-3">
                             <p className="text-sm text-muted-foreground">{label}</p>
-                            <p className="mt-1 text-xl font-semibold">{count}</p>
+                            <p className="mono-data mt-1 text-xl font-bold">{count}</p>
                         </li>
                     ))}
                 </ul>

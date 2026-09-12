@@ -22,7 +22,7 @@ export default function GroundedRecommendationCard({ recommendation, onAction, o
     const decisionLabel = recommendation.operatorDecision === "accepted" ? "Accepted" : recommendation.operatorDecision === "rejected" ? "Rejected" : null;
 
     return (
-        <article className="rounded-2xl border border-ai-highlight/35 bg-[linear-gradient(145deg,rgba(139,92,246,0.08),rgba(28,36,45,0.92)_55%)] p-4 shadow-[inset_3px_0_0_rgba(167,139,250,0.8)]">
+        <article className="panel border-ai-highlight/45 bg-ai-soft/35 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-ai-highlight/30 bg-ai-highlight/10 text-ai-highlight">
@@ -77,17 +77,17 @@ export default function GroundedRecommendationCard({ recommendation, onAction, o
             {onAction && isOpenAlert || onAskCopilot ? (
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-border/70 pt-4">
                     {onAction && isOpenAlert ? <>
-                        <button type="button" onClick={() => onAction("accept")} disabled={pending || recommendation.operatorDecision === "accepted"} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-status-ok/35 bg-status-ok/10 px-3 text-xs font-semibold text-status-ok transition-colors active:scale-[0.98] hover:bg-status-ok/15 disabled:opacity-50">
+                        <button type="button" onClick={() => onAction("accept")} disabled={pending || recommendation.operatorDecision === "accepted"} className="control button-secondary min-h-9 border-status-ok/35 bg-status-ok/10 px-3 text-xs font-semibold text-status-ok hover:border-status-ok/60 hover:bg-status-ok/15 disabled:opacity-50">
                             <Check aria-hidden="true" className="h-3.5 w-3.5" /> Accept
                         </button>
-                        <button type="button" onClick={() => onAction("reject")} disabled={pending || recommendation.operatorDecision === "rejected"} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-status-warn/35 bg-status-warn/10 px-3 text-xs font-semibold text-status-warn transition-colors active:scale-[0.98] hover:bg-status-warn/15 disabled:opacity-50">
+                        <button type="button" onClick={() => onAction("reject")} disabled={pending || recommendation.operatorDecision === "rejected"} className="control button-secondary min-h-9 border-status-warn/35 bg-status-warn/10 px-3 text-xs font-semibold text-status-warn hover:border-status-warn/60 hover:bg-status-warn/15 disabled:opacity-50">
                             <X aria-hidden="true" className="h-3.5 w-3.5" /> Reject
                         </button>
-                        <button type="button" onClick={() => onAction("handled")} disabled={pending} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-text-muted transition-colors active:scale-[0.98] hover:border-accent/40 hover:text-accent disabled:opacity-50">
+                        <button type="button" onClick={() => onAction("handled")} disabled={pending} className="control button-secondary min-h-9 border-border bg-surface px-3 text-xs font-semibold text-text-muted hover:border-accent/40 hover:text-accent disabled:opacity-50">
                             <CircleAlert aria-hidden="true" className="h-3.5 w-3.5" /> Mark handled
                         </button>
                     </> : null}
-                    {onAskCopilot ? <button type="button" onClick={onAskCopilot} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-ai-highlight/35 bg-ai-highlight/10 px-3 text-xs font-semibold text-ai-highlight transition-colors active:scale-[0.98] hover:bg-ai-highlight/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-highlight/60">
+                    {onAskCopilot ? <button type="button" onClick={onAskCopilot} className="control button-ai min-h-9 px-3 text-xs">
                         Ask Copilot
                     </button> : null}
                     {pending ? <span role="status" className="inline-flex items-center text-xs text-text-muted">Saving operator decision…</span> : null}

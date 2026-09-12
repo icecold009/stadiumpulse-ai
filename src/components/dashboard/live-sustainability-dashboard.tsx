@@ -128,11 +128,12 @@ export default function LiveSustainabilityDashboard({
         <div className="space-y-8">
             {venueSections.map(({ venue, gauges, trendData, projections }) => (
                 <section key={venue.id} className="space-y-5" aria-labelledby={`venue-${venue.id}`}>
-                    <div>
-                        <h2 id={`venue-${venue.id}`} className="text-xl font-semibold">
+                    <div className="border-b border-border pb-3">
+                        <p className="eyebrow">Venue sustainability</p>
+                        <h2 id={`venue-${venue.id}`} className="mt-1.5 text-xl font-semibold tracking-[-0.03em]">
                             {venue.name}
                         </h2>
-                        <p className="text-sm text-muted-foreground">{venue.city}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{venue.city}</p>
                     </div>
                     {gauges.length > 0 ? (
                         <MetricGaugeGrid metrics={gauges} />
@@ -142,12 +143,13 @@ export default function LiveSustainabilityDashboard({
                             description="The venue exists, but no valid sustainability metric rows are available yet."
                         />
                     )}
-                    <section className="rounded-2xl border border-border bg-surface/40 p-4" aria-labelledby={`projection-${venue.id}`}>
-                        <h3 id={`projection-${venue.id}`} className="text-sm font-semibold">Projected next-reading checks</h3>
+                    <section className="panel bg-surface-muted/55 p-4" aria-labelledby={`projection-${venue.id}`}>
+                        <p className="eyebrow">Transparent projection</p>
+                        <h3 id={`projection-${venue.id}`} className="mt-1.5 text-sm font-semibold">Projected next-reading checks</h3>
                         <p className="mt-1 text-xs text-muted-foreground">A transparent linear estimate from the latest two simulated readings; it is not a model forecast.</p>
                         {projections.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">Projection unavailable until two readings exist for a metric.</p> : <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-                            {projections.map((projection) => <li key={projection.metricType} className="rounded-xl border border-border bg-background/30 p-3 text-xs">
-                                <p className="font-semibold">{projection.metricType}</p>
+                            {projections.map((projection) => <li key={projection.metricType} className="rounded-xl border border-border bg-surface/50 p-3 text-xs">
+                                <p className="font-semibold capitalize">{projection.metricType.replaceAll("_", " ")}</p>
                                 <p className="mt-1 text-muted-foreground">Projected {projection.projectedValue.toFixed(1)} vs target {projection.target.toFixed(1)}</p>
                                 <p className={`mt-2 font-semibold ${projection.projectedBreach ? "text-status-warn" : "text-status-ok"}`}>{projection.projectedBreach ? "Potential threshold breach" : "Within threshold"}</p>
                             </li>)}

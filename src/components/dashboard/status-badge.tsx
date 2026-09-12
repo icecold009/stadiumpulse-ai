@@ -32,7 +32,7 @@ const statusConfig: Record<
     critical: {
         icon: CircleAlert,
         text: "Critical",
-        className: "border-status-critical/30 bg-status-critical/12 text-[#ff9a9d]",
+        className: "border-status-critical/30 bg-status-critical/12 text-status-critical",
         ariaLabel: "Status critical",
     },
 };
@@ -44,7 +44,7 @@ export default function StatusBadge({ status, label, className = "" }: StatusBad
     return (
         <span
             aria-label={label ?? config.ariaLabel}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${config.className} ${className}`}
+            className={`inline-flex items-center gap-2 rounded-lg border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${config.className} ${className}`}
         >
             <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
             <span>{label ?? config.text}</span>

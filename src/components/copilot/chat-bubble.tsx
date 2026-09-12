@@ -43,9 +43,9 @@ export default function ChatBubble({
                 {isAssistant ? <Bot aria-hidden="true" className="h-3.5 w-3.5" /> : <UserRound aria-hidden="true" className="h-3.5 w-3.5" />}
             </span>
             <div
-                className={`max-w-[88%] rounded-2xl border px-4 py-3 shadow-sm ${isAssistant
+                className={`max-w-[88%] rounded-xl border px-4 py-3 shadow-sm ${isAssistant
                     ? state === "error"
-                        ? "rounded-tl-md border-status-critical/35 bg-status-critical/8 text-foreground"
+                    ? "rounded-tl-md border-status-critical/35 bg-status-critical/8 text-foreground"
                         : "rounded-tl-md border-border bg-surface text-foreground"
                     : "rounded-tr-md border-accent/25 bg-accent/10 text-foreground"
                     }`}
@@ -66,7 +66,7 @@ export default function ChatBubble({
                 </p>
 
                 {isAssistant && state === "error" && onRetry ? (
-                    <button type="button" onClick={onRetry} className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-status-critical/35 bg-status-critical/8 px-2.5 text-xs font-semibold text-status-critical transition-colors active:scale-[0.98] hover:bg-status-critical/14 focus-visible:ring-2 focus-visible:ring-status-critical/60">
+                    <button type="button" onClick={onRetry} className="control button-danger mt-3 min-h-8 px-2.5 text-xs">
                         <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" /> Retry generation
                     </button>
                 ) : null}

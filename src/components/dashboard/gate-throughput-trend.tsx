@@ -71,13 +71,13 @@ export default function GateThroughputTrend({
     }, [gateLabels, liveScans]);
 
     return (
-        <section className="w-full overflow-hidden rounded-2xl border border-border bg-surface-raised/70 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+        <section className="panel-raised w-full overflow-hidden p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Entry flow</p>
+                    <p className="eyebrow">Entry flow</p>
                     <h2 className="mt-1 text-lg font-semibold">Gate throughput</h2>
                 </div>
-                <span className="rounded-full border border-border bg-surface px-2.5 py-1 font-mono text-xs text-text-muted">{totalScans.toLocaleString()} scans</span>
+                <span className="mono-data rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-text-muted">{totalScans.toLocaleString()} scans</span>
             </div>
             <p className="sr-only">
                 {points.length === 0
@@ -98,10 +98,12 @@ export default function GateThroughputTrend({
                     >
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={points} accessibilityLayer>
-                                <CartesianGrid stroke="#26303a" strokeDasharray="3 6" vertical={false} />
-                                <XAxis dataKey="label" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
-                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
+                                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 6" vertical={false} />
+                                <XAxis dataKey="label" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)", fontSize: 11 }} />
+                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)", fontSize: 11 }} />
                                 <Tooltip
+                                    contentStyle={{ background: "var(--surface-raised)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--foreground)" }}
+                                    labelStyle={{ color: "var(--text-muted)" }}
                                     labelFormatter={(_, payload) => {
                                         const point = payload?.[0]?.payload as
                                             | { recordedAt?: string }
@@ -115,10 +117,10 @@ export default function GateThroughputTrend({
                                     type="monotone"
                                     dataKey="scans"
                                     name="Scans per interval"
-                                    stroke="#3DD6C4"
+                                    stroke="var(--chart-brand)"
                                     strokeWidth={2}
                                     dot={false}
-                                    activeDot={{ r: 4, fill: "#3DD6C4", stroke: "#0b0f14", strokeWidth: 2 }}
+                                    activeDot={{ r: 4, fill: "var(--chart-brand)", stroke: "var(--canvas)", strokeWidth: 2 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>

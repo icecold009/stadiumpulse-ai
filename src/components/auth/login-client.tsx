@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { defaultRouteForRole, isRole, type Role } from "@/lib/auth/roles";
+import { Activity, ArrowRight, ShieldCheck } from "lucide-react";
+import ThemeToggle from "@/components/theme/theme-toggle";
 
 const DEMO_ROLES: Array<{ role: Role; label: string; description: string }> = [
     { role: "admin", label: "Admin", description: "Cross-venue overview" },
@@ -79,18 +81,50 @@ export default function LoginClient({ demoEnabled }: { demoEnabled: boolean }) {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,rgba(61,214,196,0.12),transparent_34%),linear-gradient(180deg,#0b0f14_0%,#091015_100%)] px-4 py-10 text-[#edeff2]">
-            <section className="w-full max-w-2xl rounded-2xl border border-[#26303a] bg-[#141a21] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-10">
-                <div className="mb-8 space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-[0.32em] text-[#8b96a3]">StadiumPulse AI</p>
-                    <h1 className="text-2xl font-semibold">PulseOps command center</h1>
-                    <p className="text-sm leading-6 text-[#8b96a3]">Fictional, simulated World Cup 2026 operations data.</p>
-                </div>
+        <main className="min-h-screen bg-background px-4 py-5 text-foreground sm:px-8 sm:py-8">
+            <div className="mx-auto flex w-full max-w-6xl justify-end"><ThemeToggle /></div>
+            <div className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+                <section className="space-y-8">
+                    <div className="max-w-xl">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-strong/50 bg-accent-soft text-accent-strong">
+                                <ShieldCheck aria-hidden="true" className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <p className="eyebrow">StadiumPulse AI</p>
+                                <p className="text-lg font-semibold tracking-[-0.03em]">PulseOps</p>
+                            </div>
+                        </div>
+                        <p className="eyebrow mt-12">Operations intelligence</p>
+                        <h1 className="mt-3 max-w-lg text-[clamp(2.5rem,6vw,4.5rem)] font-semibold leading-[0.98] tracking-[-0.07em]">Make the next stadium decision with confidence.</h1>
+                        <p className="mt-6 max-w-lg text-base leading-7 text-text-muted">A grounded command center for crowd flow, sustainability, volunteers, and the human decisions that keep match day moving.</p>
+                    </div>
+                    <div className="grid max-w-xl gap-3 sm:grid-cols-3">
+                        {[
+                            ["Signal", "Live venue telemetry"],
+                            ["Risk", "Evidence, not guesswork"],
+                            ["Decision", "Human-controlled action"],
+                        ].map(([label, description]) => (
+                            <div key={label} className="border-l-2 border-accent-strong/50 pl-3">
+                                <p className="text-sm font-semibold">{label}</p>
+                                <p className="mt-1 text-xs leading-5 text-text-muted">{description}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="flex items-center gap-2 text-xs text-text-subtle"><Activity aria-hidden="true" className="h-3.5 w-3.5 text-status-ok" /> Fictional World Cup 2026 venue data · simulated environment</p>
+                </section>
+
+                <section className="panel panel-raised p-6 sm:p-8">
+                    <div className="mb-7 space-y-2">
+                        <p className="eyebrow">Operator access</p>
+                        <h2 className="text-2xl font-semibold tracking-[-0.04em]">Enter the command center</h2>
+                        <p className="text-sm leading-6 text-text-muted">Use a demo role or sign in with an authorized operator account.</p>
+                    </div>
 
                 {demoEnabled ? (
                     <section aria-labelledby="demo-heading">
-                        <h2 id="demo-heading" className="text-lg font-semibold">Explore the demo</h2>
-                        <p className="mt-1 text-sm text-[#8b96a3]">Choose a role. No password is shown or sent to the browser.</p>
+                        <h3 id="demo-heading" className="text-sm font-semibold">Explore the demo</h3>
+                        <p className="mt-1 text-sm text-text-muted">Choose a role. No password is shown or sent to the browser.</p>
                         <div className="mt-4 grid gap-3 sm:grid-cols-2">
                             {DEMO_ROLES.map((item) => (
                                 <button
@@ -98,36 +132,37 @@ export default function LoginClient({ demoEnabled }: { demoEnabled: boolean }) {
                                     type="button"
                                     onClick={() => void enterDemo(item.role)}
                                     disabled={demoRole !== null || loading}
-                                    className="rounded-xl border border-[#26303a] bg-[#1c242d] p-4 text-left transition hover:border-[#3dd6c4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3dd6c4] disabled:opacity-60"
+                                    className="control button-secondary min-h-[76px] w-full flex-col items-start p-4 text-left"
                                 >
-                                    <span className="block font-semibold text-[#edeff2]">{demoRole === item.role ? "Opening..." : item.label}</span>
-                                    <span className="mt-1 block text-sm text-[#8b96a3]">{item.description}</span>
+                                    <span className="block text-sm font-semibold text-foreground">{demoRole === item.role ? "Opening..." : item.label}</span>
+                                    <span className="mt-1 block text-xs font-normal text-text-muted">{item.description}</span>
                                 </button>
                             ))}
                         </div>
-                        <div className="my-7 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-[#8b96a3]">
-                            <span className="h-px flex-1 bg-[#26303a]" />
+                        <div className="my-7 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.18em] text-text-subtle">
+                            <span className="h-px flex-1 bg-border" />
                             Operator sign-in
-                            <span className="h-px flex-1 bg-[#26303a]" />
+                            <span className="h-px flex-1 bg-border" />
                         </div>
                     </section>
                 ) : null}
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
                     <label className="block space-y-2">
-                        <span className="text-sm font-medium">Email</span>
-                        <input type="email" name="email" autoComplete="email" required className="h-12 w-full rounded-xl border border-[#26303a] bg-[#1c242d] px-4 text-sm outline-none focus:border-[#3dd6c4] focus:ring-2 focus:ring-[#3dd6c4]/25" placeholder="operator@stadiumpulse.ai" />
+                        <span className="text-sm font-semibold">Email</span>
+                        <input type="email" name="email" autoComplete="email" required className="h-12 w-full rounded-[10px] border border-border bg-surface-muted px-4 text-sm outline-none placeholder:text-text-subtle focus:border-accent-strong focus:ring-2 focus:ring-accent-strong/20" placeholder="operator@stadiumpulse.ai" />
                     </label>
                     <label className="block space-y-2">
-                        <span className="text-sm font-medium">Password</span>
-                        <input type="password" name="password" autoComplete="current-password" required className="h-12 w-full rounded-xl border border-[#26303a] bg-[#1c242d] px-4 text-sm outline-none focus:border-[#3dd6c4] focus:ring-2 focus:ring-[#3dd6c4]/25" placeholder="Enter your password" />
+                        <span className="text-sm font-semibold">Password</span>
+                        <input type="password" name="password" autoComplete="current-password" required className="h-12 w-full rounded-[10px] border border-border bg-surface-muted px-4 text-sm outline-none placeholder:text-text-subtle focus:border-accent-strong focus:ring-2 focus:ring-accent-strong/20" placeholder="Enter your password" />
                     </label>
-                    {error ? <p role="alert" className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p> : null}
-                    <button type="submit" disabled={loading || demoRole !== null} className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#3dd6c4] px-4 text-sm font-semibold text-[#0b0f14] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3dd6c4] disabled:opacity-60">
-                        {loading ? "Signing in..." : "Sign in"}
+                    {error ? <p role="alert" className="rounded-[10px] border border-status-critical/45 bg-status-critical/10 px-4 py-3 text-sm text-status-critical">{error}</p> : null}
+                    <button type="submit" disabled={loading || demoRole !== null} className="control button-primary h-12 w-full">
+                        {loading ? "Signing in..." : "Sign in"} <ArrowRight aria-hidden="true" className="h-4 w-4" />
                     </button>
                 </form>
-            </section>
+                </section>
+            </div>
         </main>
     );
 }

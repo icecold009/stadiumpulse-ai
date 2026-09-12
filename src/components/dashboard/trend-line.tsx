@@ -69,10 +69,10 @@ export default function TrendLine({
         : `${title}. ${data.length} timestamped occupancy samples from the last ${hoursBack} hours. Latest total occupancy ${latestPoint?.occupancy ?? "unavailable"} people; peak ${peakOccupancy} people.`;
 
     return (
-        <section className="w-full overflow-hidden rounded-2xl border border-border bg-surface-raised/70 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+        <section className="panel-raised w-full overflow-hidden p-5">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Live telemetry</p>
+                    <p className="eyebrow">Live telemetry</p>
                     <h3 className="mt-1 text-base font-semibold">{title}</h3>
                 </div>
                 <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-[10px] font-medium text-text-muted">{hoursBack}h window</span>
@@ -91,10 +91,12 @@ export default function TrendLine({
                     <p className="sr-only">{summary}</p>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data} accessibilityLayer>
-                            <CartesianGrid stroke="#26303a" strokeDasharray="3 6" vertical={false} />
-                            <XAxis dataKey="xLabel" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
-                            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#8b96a3", fontSize: 11 }} />
+                                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 6" vertical={false} />
+                            <XAxis dataKey="xLabel" minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)", fontSize: 11 }} />
+                            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)", fontSize: 11 }} />
                             <Tooltip
+                                contentStyle={{ background: "var(--surface-raised)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--foreground)" }}
+                                labelStyle={{ color: "var(--text-muted)" }}
                                 labelFormatter={(_, payload) => {
                                     const item = payload?.[0]?.payload as
                                         | { recorded_at?: string }
@@ -107,10 +109,10 @@ export default function TrendLine({
                             <Line
                                 type="monotone"
                                 dataKey="occupancy"
-                                stroke="#3DD6C4"
+                                stroke="var(--chart-brand)"
                                 strokeWidth={2.5}
                                 dot={false}
-                                activeDot={{ r: 4, fill: "#3DD6C4", stroke: "#0b0f14", strokeWidth: 2 }}
+                                activeDot={{ r: 4, fill: "var(--chart-brand)", stroke: "var(--canvas)", strokeWidth: 2 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>

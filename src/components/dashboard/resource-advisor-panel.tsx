@@ -82,17 +82,16 @@ export default function ResourceAdvisorPanel() {
 
     return (
         <section
-            className="relative h-full overflow-hidden rounded-2xl border border-ai-highlight/40 bg-[linear-gradient(145deg,rgba(139,92,246,0.08),rgba(28,36,45,0.92)_42%)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.14)]"
+            className="panel h-full overflow-hidden border-ai-highlight/45 bg-ai-soft/35 p-5"
             aria-labelledby="resource-advisor-heading"
         >
-            <div aria-hidden="true" className="absolute -left-20 -top-20 h-48 w-48 rounded-full bg-ai-highlight/8 blur-3xl" />
-            <div className="relative flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ai-highlight/30 bg-ai-highlight/10 text-ai-highlight">
                         <BrainCircuit aria-hidden="true" className="h-5 w-5" />
                     </span>
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ai-highlight">Human-reviewed AI</p>
+                        <p className="eyebrow text-ai-highlight">Human-reviewed AI</p>
                         <h2 id="resource-advisor-heading" className="mt-1 text-lg font-semibold">Resource advisor</h2>
                         <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">15-minute occupancy projections inform bounded staffing suggestions.</p>
                     </div>
@@ -101,7 +100,7 @@ export default function ResourceAdvisorPanel() {
                     type="button"
                     onClick={() => void loadAdvice()}
                     disabled={loading}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition hover:border-ai-highlight/55 hover:text-ai-highlight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-highlight disabled:cursor-wait disabled:opacity-60"
+                    className="control button-ai min-h-10 px-3 py-2 text-sm disabled:cursor-wait disabled:opacity-60"
                 >
                     <RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     {loading ? "Refreshing" : "Refresh advice"}
