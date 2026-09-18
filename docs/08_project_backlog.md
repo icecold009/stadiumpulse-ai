@@ -292,6 +292,7 @@ The concise evidence table is recorded in `docs/09_verification_report.md`.
 | SUB-02 | done | Final security audit | Every applicable checkbox in doc 07 is verified and results are recorded; the historical root-commit `.gitignore` exception is explicitly disclosed |
 | SUB-03 | done | Repository audit | Public access returned HTTP 200; single-branch, size, secrets, setup, licensing/assets, Git integrity, and nine ordered migrations were checked on 2026-07-19. No project license is granted and no separately sourced media assets are included |
 | SUB-04 | done | Final publish and tag | The verified submission state is published on `main` and tagged `prompt-wars-2026-submission` |
+| DOC-01 | done | Source-faithful architecture diagram and portfolio narrative | GitDiagram PNG and Mermaid exports are stored under `docs/architecture`; README and the portfolio entry describe operator entry points, alert lifecycle, data/API/background boundaries, and local/hosted/provider evidence limits |
 
 ## Completed planning work
 

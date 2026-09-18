@@ -14,6 +14,13 @@ Use this page to find the minimum context needed for a task.
 | `08_project_backlog.md` | Prioritized, status-tracked future work | Starting or completing any planned task |
 | `09_verification_report.md` | Concise CI, security, latency, accessibility, and live-role evidence | Reviewing submission readiness or judge-facing quality claims |
 
+## Architecture artifact
+
+- [`architecture/pulseops.png`](architecture/pulseops.png) — hosted GitDiagram
+  export generated from the default `main` branch.
+- [`architecture/pulseops.mmd`](architecture/pulseops.mmd) — Mermaid source
+  with clickable links to the sampled repository paths.
+
 ## Recommended reading paths
 
 - **Small UI change:** 04, then the relevant part of 03.

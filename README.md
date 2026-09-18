@@ -20,6 +20,95 @@ structured interventions grounded in the latest energy, water, and waste
 metrics. Volunteer Coordinators can reassign a volunteer through the user's
 session, with RLS enforcing the write.
 
+## Architecture at a glance
+
+![PulseOps architecture diagram](docs/architecture/pulseops.png)
+
+Read the diagram from left to right: an authenticated operator enters through
+the role-scoped dashboard, the UI calls server-only Route Handlers, and the
+simulation and decision-support paths apply risk, freshness, authorization,
+and grounding rules before reading or writing Supabase. Realtime returns
+telemetry and alert changes to the operator, while Accept, Reject, and Mark
+handled remain explicit human outcomes. The [Mermaid source](docs/architecture/pulseops.mmd)
+was exported from [GitDiagram](https://gitdiagram.com/icecold009/stadiumpulse-ai)
+using the repository default branch, `main`.
+
+### Operator entry points
+
+- [Overview](src/app/(dashboard)/overview/page.tsx) gives Admin users the
+  cross-venue view and drill-down path.
+- [Operations](src/app/(dashboard)/ops/page.tsx) is the primary venue-scoped
+  situation room; [Alerts](src/app/(dashboard)/ops/alerts/page.tsx) exposes
+  the incident feed and human decision controls.
+- [Sustainability](src/app/(dashboard)/sustainability/page.tsx) and
+  [Volunteers](src/app/(dashboard)/volunteers/page.tsx) are role-scoped
+  advisor and reassignment surfaces.
+- [Copilot](src/components/copilot/copilot-panel.tsx) is the persistent
+  contextual entry point for grounded questions.
+
+### Alert lifecycle
+
+1. [`/api/simulate-tick`](src/app/api/simulate-tick/route.ts) creates
+   synthetic telemetry for a demo or scheduled tick.
+2. [`check-alerts.ts`](src/lib/alerts/check-alerts.ts) applies thresholds and
+   duplicate prevention, requests structured advice, and persists an alert.
+3. Supabase Realtime delivers the new alert to the dashboard and incident
+   feed; [`/api/alerts`](src/app/api/alerts/route.ts) provides the scoped
+   query boundary.
+4. An authenticated operator uses
+   [`/api/alerts/[id]/handle`](src/app/api/alerts/[id]/handle/route.ts) to
+   accept or reject the recommendation, then separately mark the incident
+   handled. The AI never executes an operational action.
+
+### Data stores
+
+Supabase Postgres is the source of truth for venues, role and venue scope,
+telemetry, alerts, volunteers, sustainability metrics, rollups, and Copilot
+audit rows. The schema is versioned in [`supabase/migrations`](supabase/migrations)
+and the server clients are kept in [`src/lib/supabase`](src/lib/supabase).
+Supabase Realtime carries authorized change notifications; it is not a second
+source of truth. This repository does not use SQLite, a vector database, or a
+paper-trading store.
+
+### API boundaries
+
+Next.js Route Handlers are the server boundary. They authenticate the session
+or a protected cron secret, validate role and venue scope, read a bounded data
+slice, and return structured data or a text stream. The central surfaces are
+[`/api/ops/snapshot`](src/app/api/ops/snapshot/route.ts),
+[`/api/copilot`](src/app/api/copilot/route.ts), the two role-scoped advisor
+routes, volunteer reassignment, venue comparison, and match-summary export.
+Service-role, AI, and cron credentials are server-only; no provider credential
+is part of the public diagram or client bundle.
+
+### Background work and deployment assumptions
+
+[`vercel.json`](vercel.json) schedules the protected simulator and maintenance
+routes. [`/api/maintenance/telemetry-rollup`](src/app/api/maintenance/telemetry-rollup/route.ts)
+maintains rollups, while the Copilot retention route removes aged audit rows.
+Locally, [`npm.cmd run demo:reset`](scripts/reset-demo-scenario.mjs) creates a
+deterministic scenario against the configured Supabase project. The hosted
+path assumes Vercel environment variables, Supabase migrations, and a valid
+`CRON_SECRET`; local/demo execution does not prove production scheduling or
+delivery.
+
+### Evidence boundaries
+
+The diagram intentionally keeps these modes separate:
+
+- **Recorded/demo/local:** synthetic telemetry, deterministic reset, static
+  prompt contracts, and local lint/type/test/build results.
+- **Hosted:** Vercel, Supabase Auth/RLS/Realtime, scheduled routes, and any
+  authenticated interaction verified against the deployed URL.
+- **Provider-backed:** the Anthropic-compatible model called from the server
+  AI client; it may be unavailable, in which case the product labels the
+  deterministic safety fallback.
+
+There is no paper-trading or live-provider credential path in PulseOps and no
+autonomous kill-switch node to imply. The real approval boundary is the
+human-controlled alert feedback and handling route above, backed by
+[`grounded-recommendation-card.tsx`](src/components/dashboard/grounded-recommendation-card.tsx).
+
 ## Why the data is simulated
 
 Hackathon teams do not have access to real FIFA 2026 stadium telemetry. This
