@@ -1,0 +1,88 @@
+%% GitDiagram export for https://gitdiagram.com/icecold009/stadiumpulse-ai
+%% Source: icecold009/stadiumpulse-ai default branch (main)
+flowchart TD
+
+subgraph group_actors["Operators"]
+  node_operator(("Authenticated Operator"))
+end
+
+subgraph group_ingestion["Signal Ingestion"]
+  node_simulator["Telemetry Simulator<br/>[route.ts]"]
+  node_alert_check["Alert Detection<br/>[check-alerts.ts]"]
+end
+
+subgraph group_decisions["Decision Support"]
+  node_resource_advisor["Resource Advisor<br/>[route.ts]"]
+  node_sustainability_advisor["Sustainability Advisor<br/>[route.ts]"]
+  node_copilot_route["Operations Copilot<br/>[route.ts]"]
+end
+
+subgraph group_operations["Operations APIs"]
+  node_alert_route["Alert Queries<br/>[route.ts]"]
+  node_alert_handle["Incident Handling<br/>[route.ts]"]
+  node_ops_dashboard["Operations Dashboard"]
+  node_snapshot_route["Operations Snapshot<br/>[route.ts]"]
+  node_volunteer_route["Volunteer Reassignment<br/>[route.ts]"]
+  node_compare_route["Venue Comparison<br/>[route.ts]"]
+  node_summary_route["Match Summary<br/>[route.ts]"]
+end
+
+subgraph group_platform["Data Platform"]
+  node_anthropic["Anthropic-Compatible AI"]
+  node_supabase_db[("Supabase Postgres")]
+  node_supabase_realtime["Supabase Realtime"]
+  node_auth_scope["Auth And Scope<br/>[venue-scope.ts]"]
+  node_retention["Retention Maintenance<br/>[route.ts]"]
+end
+
+node_operator -->|"uses dashboard"| node_ops_dashboard
+node_simulator -->|"writes telemetry"| node_supabase_db
+node_simulator -->|"checks alerts"| node_alert_check
+node_alert_check -->|"requests advice"| node_anthropic
+node_alert_check -->|"stores alerts"| node_supabase_db
+node_supabase_realtime -->|"delivers updates"| node_ops_dashboard
+node_operator -->|"loads alerts"| node_alert_route
+node_operator -->|"handles incident"| node_alert_handle
+node_alert_handle -->|"updates alert"| node_supabase_db
+node_ops_dashboard -->|"loads snapshot"| node_snapshot_route
+node_snapshot_route -->|"reads metrics"| node_supabase_db
+node_resource_advisor -->|"reads staffing data"| node_supabase_db
+node_resource_advisor -->|"requests advice"| node_anthropic
+node_sustainability_advisor -->|"reads utility data"| node_supabase_db
+node_sustainability_advisor -->|"requests advice"| node_anthropic
+node_copilot_route -->|"reads scoped context"| node_supabase_db
+node_copilot_route -->|"streams answer"| node_anthropic
+node_copilot_route -->|"logs query"| node_supabase_db
+node_volunteer_route -->|"writes reassignment"| node_supabase_db
+node_compare_route -->|"loads snapshot"| node_snapshot_route
+node_summary_route -->|"loads snapshot"| node_snapshot_route
+node_auth_scope -->|"checks assignments"| node_supabase_db
+node_retention -->|"rolls up data"| node_supabase_db
+
+click node_simulator "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/simulate-tick/route.ts"
+click node_alert_check "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/lib/alerts/check-alerts.ts"
+click node_alert_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/alerts/route.ts"
+click node_alert_handle "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/alerts/%5Bid%5D/handle/route.ts"
+click node_ops_dashboard "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/components/dashboard/ops-command-center.tsx"
+click node_snapshot_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/ops/snapshot/route.ts"
+click node_resource_advisor "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/resource-advisor/route.ts"
+click node_sustainability_advisor "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/sustainability-advisor/route.ts"
+click node_copilot_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/copilot/route.ts"
+click node_volunteer_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/volunteers/%5Bid%5D/reassign/route.ts"
+click node_compare_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/venues/compare/route.ts"
+click node_summary_route "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/reports/match-summary/route.ts"
+click node_auth_scope "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/lib/auth/venue-scope.ts"
+click node_retention "https://github.com/icecold009/stadiumpulse-ai/blob/main/src/app/api/maintenance/telemetry-rollup/route.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_operator toneBlue
+class node_simulator,node_alert_check toneAmber
+class node_resource_advisor,node_sustainability_advisor,node_copilot_route toneMint
+class node_alert_route,node_alert_handle,node_ops_dashboard,node_snapshot_route,node_volunteer_route,node_compare_route,node_summary_route toneRose
+class node_anthropic,node_supabase_db,node_supabase_realtime,node_auth_scope,node_retention toneIndigo
