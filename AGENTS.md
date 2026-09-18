@@ -117,14 +117,14 @@ recommendation, evidence, and human-controlled outcome.
 
 ## Git and repository hygiene
 
-- Work on `main` unless the user explicitly changes the workflow.
+- Work only on a dedicated feature branch (use a `codex/` prefix by default). Never edit or merge `main` directly.
 - Never commit merely because an implementation is finished. First verify the
   affected code and workflow successfully, report the results, and wait for an
   explicit user request to create the commit.
 - Preserve logical commit history for multi-stage work. Use separate,
   intentional commits for distinct completed changes; do not compress or
   squash the whole task into one commit unless the user explicitly requests it.
-- Do not commit, push, tag, deploy, or open a PR unless explicitly requested.
+- Do not commit, push, tag, deploy, or open a PR unless explicitly requested. For GitHub branch, pull request, review, check, and merge operations, use the GitHub connector whenever supported; do not ask for `gh auth login`, `gh pr`, or a local GitHub CLI token.
 - Never commit `.env*`, generated build output, logs, or secrets.
 - Keep the repository small; do not add datasets, model weights, recordings,
   or large binary assets.
