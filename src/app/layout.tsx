@@ -35,6 +35,7 @@ export const metadata: Metadata = {
             "A human-controlled stadium operations command center with simulated telemetry and grounded recommendations.",
     },
     robots: { index: true, follow: true },
+    verification: { google: "1x0ZiOr6RUU3_PnhQXVEgqc9HLaZJpIpGCV0cTgar0g" },
 };
 
 export default function RootLayout({
