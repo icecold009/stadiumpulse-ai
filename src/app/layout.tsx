@@ -23,7 +23,14 @@ export default function RootLayout({
                 </Script>
             </head>
             <body className="bg-background text-foreground antialiased">
-                <ThemeProvider>{children}</ThemeProvider>
+                <ThemeProvider>
+                    {children}
+                    <footer style={{ padding: "1rem", textAlign: "center", fontSize: ".8rem", opacity: 0.75 }}>
+                        <a href="https://shauryasaria.me" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textUnderlineOffset: "0.2em" }}>
+                            Personal website
+                        </a>
+                    </footer>
+                </ThemeProvider>
             </body>
         </html>
     );
