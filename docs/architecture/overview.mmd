@@ -1,0 +1,44 @@
+%% Source reviewed against hosted snapshot f935f1f487d93a56e40314a31c50d8b88a36accb
+%%{init: {"theme":"base","securityLevel":"loose","fontFamily":"Arial, sans-serif","themeVariables":{"background":"#0b1220","primaryColor":"#17283d","primaryTextColor":"#edf4ff","primaryBorderColor":"#71c4ec","lineColor":"#9fadc1","secondaryColor":"#213548","tertiaryColor":"#17283d","edgeLabelBackground":"#0b1220","clusterBkg":"#101d2e","clusterBorder":"#456783","fontSize":"17px"},"flowchart":{"htmlLabels":true,"curve":"linear","nodeSpacing":35,"rankSpacing":50}}}%%
+flowchart TD
+  UI["Role dashboards and human feedback"]
+  AUTH["Session roles and venue scope"]
+  SIM["Protected simulator"]
+  ALERT["Threshold detection and alert persistence"]
+  ADVICE["Bounded recommendations and Copilot"]
+  AI["Optional Fireworks inference"]
+  SNAP["Scoped snapshots and freshness"]
+  LIVE["Realtime subscriptions and poller"]
+  OPS["Volunteer actions and match reports"]
+  MAINT["Retention and telemetry rollup"]
+  DB["Supabase Postgres and server clients"]
+  SUPPORT["Tests, assets, docs and delivery configuration"]
+  AUTH --> UI
+  UI --> SNAP
+  SNAP --> AUTH
+  SNAP --> DB
+  SIM --> DB
+  SIM --> ALERT
+  ALERT --> ADVICE
+  ALERT --> DB
+  ADVICE -. optional inference .-> AI
+  AI -. structured or streamed response .-> ADVICE
+  DB --> LIVE
+  LIVE --> UI
+  UI --> ALERT
+  UI --> OPS
+  OPS --> DB
+  MAINT --> DB
+  SUPPORT -. supports .-> UI
+  click UI "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/components/dashboard/ops-command-center.tsx" "Open source"
+  click AUTH "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/auth/venue-scope.ts" "Open source"
+  click SIM "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/app/api/simulate-tick/route.ts" "Open source"
+  click ALERT "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/alerts/check-alerts.ts" "Open source"
+  click ADVICE "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/ai/alert-recommendation.ts" "Open source"
+  click AI "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/ai/client.ts" "Open source"
+  click SNAP "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/ops/load-snapshot.ts" "Open source"
+  click LIVE "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/components/dashboard-poller.tsx" "Open source"
+  click OPS "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/app/api/volunteers/[id]/reassign/route.ts" "Open source"
+  click MAINT "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/app/api/maintenance/telemetry-rollup/route.ts" "Open source"
+  click DB "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/src/lib/supabase/server.ts" "Open source"
+  click SUPPORT "https://github.com/icecold009/stadiumpulse-ai/blob/f935f1f487d93a56e40314a31c50d8b88a36accb/package.json" "Open source"
