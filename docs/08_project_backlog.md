@@ -301,3 +301,8 @@ The concise evidence table is recorded in `docs/09_verification_report.md`.
 | PLAN-01 | done | Align PRD and implementation plan to the Prompt Wars stadium challenge | Docs 01, 02, and 06 contain challenge alignment, GenAI contract, critical path, and submission package |
 | PLAN-02 | done | Establish agent guidance and a persistent backlog | Root `AGENTS.md`, `docs/README.md`, and this backlog exist and are linked |
 | PLAN-03 | done | Audit consolidated checklist Phases 0–8 against the repository | Phase audit above records complete, partial, unverified, and missing work; remaining items map to P0/P1/P2 and submission backlog entries |
+
+
+## Architecture documentation publication — 2026-10-04
+
+Goal: publish source-linked architecture documentation and diagram previews. Scope: README, this backlog and docs/architecture artifacts. Source snapshot: f935f1f487d93a56e40314a31c50d8b88a36accb; no runtime, dependency, data or deployment changes. Acceptance: pinned inventory/source-map/embedding checks, ten intended negative cases, renderer checks, bounded Jev review, documentation-only commit and remotely verified PR. Jev remains advisory; pre-existing workspace changes are excluded.
